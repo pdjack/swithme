@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스윗미 (Sweet Me) - 프리미엄 대시보드</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Slim Sidebar -->
+        <nav class="side-nav">
+            <div class="nav-logo">🎯</div>
+            <ul class="nav-items" id="side-nav-list">
+                <li class="active" data-tab="dashboard" title="Dashboard"><i data-lucide="layout-dashboard"></i></li>
+                <li data-tab="plan" title="Calendar"><i data-lucide="calendar"></i></li>
+                <li data-tab="analyze" title="Analysis"><i data-lucide="bar-chart-3"></i></li>
+                <li data-tab="settings" title="Settings"><i data-lucide="settings"></i></li>
+            </ul>
+            <div class="nav-bottom">
+                <div class="avatar-small"></div>
+            </div>
+        </nav>
+
+        <main class="main-viewport">
+            <header class="top-bar">
+                <div class="welcome-text">
+                    <h1>Deep Focus Dashboard</h1>
+                    <p class="dashboard-date-wrapper">
+                        <span id="display-date" class="clickable-date"></span>
+                        <input type="date" id="date-picker" class="hidden-date-input">
+                    </p>
+                </div>
+                <div class="top-actions">
+                    <button class="mode-pill">몰입 모드</button>
+                    <i data-lucide="bell" class="top-icon"></i>
+                </div>
+            </header>
+
+            <div id="dashboard-canvas" class="dashboard-canvas">
+                <!-- Left: Tasks ONLY -->
+                <section class="canvas-col col-left">
+                    <div class="glass-card plan-card" style="height: 45%;">
+                        <div class="card-title">
+                            <h3>Next Tasks</h3>
+                            <button id="open-task-modal" class="ghost-btn"><i data-lucide="plus"></i></button>
+                        </div>
+                        <ul id="task-list" class="task-list">
+                            <!-- Tasks injected here -->
+                        </ul>
+                    </div>
+
+                    <!-- Daily Reflection Area (User Request) -->
+                    <div class="glass-card reflection-card" style="margin-top: 20px; flex: 1;">
+                        <div class="card-title">
+                            <h3>Daily Reflection</h3>
+                            <div class="total-score-badge" id="total-reflection-score">0</div>
+                        </div>
+                        <div class="reflection-grid">
+                            <!-- Auto Calculated -->
+                            <div class="reflect-item auto">
+                                <span class="r-label">🎯 목표 달성률</span>
+                                <div class="r-score-wrap"><span id="score-achievement">0</span><small>/20</small></div>
+                            </div>
+                            <hr class="r-divider">
+                            <!-- Manual Input Items -->
+                            <div class="reflect-item auto">
+                                <span class="r-label">⏰ 시간 관리</span>
+                                <div class="r-score-wrap">
+                                    <input type="number" id="input-time" min="0" max="20" value="0" oninput="validateScore(this); updateReflection()" class="r-score-input">
+                                    <small>/20</small>
+                                </div>
+                            </div>
+                            <div class="reflect-item user">
+                                <span class="r-label">📝 오답 정리</span>
+                                <div class="r-score-wrap">
+                                    <input type="number" id="input-wrong" min="0" max="20" value="0" oninput="validateScore(this); updateReflection()" class="r-score-input">
+                                    <small>/20</small>
+                                </div>
+                            </div>
+                            <div class="reflect-item user">
+                                <span class="r-label">🔄 복습 진행</span>
+                                <div class="r-score-wrap">
+                                    <input type="number" id="input-review" min="0" max="20" value="0" oninput="validateScore(this); updateReflection()" class="r-score-input">
+                                    <small>/20</small>
+                                </div>
+                            </div>
+                            <div class="reflect-item user">
+                                <span class="r-label">📚 숙제 완수</span>
+                                <div class="r-score-wrap">
+                                    <input type="number" id="input-homework" min="0" max="20" value="0" oninput="validateScore(this); updateReflection()" class="r-score-input">
+                                    <small>/20</small>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-save-reflection" onclick="saveDailyReflection()">오늘 하루 저장하기</button>
+                    </div>
+                </section>
+
+                <!-- Center: Timer/Stopwatch ONLY -->
+                <section class="canvas-col col-center">
+                    <div class="hero-timer-card">
+                        <div class="mode-switcher">
+                            <button id="mode-timer-btn" class="sw-btn active">Timer</button>
+                            <button id="mode-stopwatch-btn" class="sw-btn">Stopwatch</button>
+                        </div>
+                        <div class="main-timer">
+                            <div class="timer-ring">
+                                <svg viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="48" class="ring-bg"></circle>
+                                    <circle cx="50" cy="50" r="48" class="ring-active" id="timer-progress"></circle>
+                                </svg>
+                                <div class="timer-val" id="timer-display" onclick="editTimer()">25:00</div>
+                            </div>
+                        </div>
+                        <div class="timer-btns">
+                            <button class="btn-start">START</button>
+                            <button class="btn-reset">RESET</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right: Timetable (Grid) ONLY -->
+                <section class="canvas-col col-right">
+                    <div class="glass-card grid-preview full-height">
+                        <div class="card-title">
+                            <h3>Study Timetable</h3>
+                            <button id="clear-timetable-btn" class="ghost-btn" title="Clear All Data"><i data-lucide="refresh-ccw"></i></button>
+                        </div>
+                        <div id="timetable-root" class="timetable-container">
+                            <!-- JS will generate 24 rows * 6 slots -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Calendar View (Phase 4.1) -->
+            <div id="calendar-canvas" class="dashboard-canvas" style="display: none;">
+                <section class="canvas-col" style="grid-column: span 3;">
+                    <div class="glass-card full-height">
+                        <div class="calendar-header">
+                            <button class="ghost-btn" id="prev-month"><i data-lucide="chevron-left"></i></button>
+                            <h2 id="calendar-month-year">MARCH 2026</h2>
+                            <button class="ghost-btn" id="next-month"><i data-lucide="chevron-right"></i></button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+                        </div>
+                        <div id="calendar-grid" class="calendar-grid">
+                            <!-- JS will generate calendar days -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Settings View (Phase 4.2) -->
+            <div id="settings-canvas" class="dashboard-canvas" style="display: none;">
+                <section class="canvas-col" style="grid-column: span 3;">
+                    <div class="glass-card full-height">
+                        <div class="card-title">
+                            <h3>Subject Settings</h3>
+                            <button id="add-subject-btn" class="ghost-btn"><i data-lucide="plus"></i> Add Subject</button>
+                        </div>
+                        <div id="subject-manager-list" class="subject-manager-list">
+                            <!-- JS will inject subject rows here -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Analysis View (Phase 1) -->
+            <div id="analyze-canvas" class="dashboard-canvas" style="display: none;">
+                <section class="canvas-col" style="grid-column: span 3;">
+                    <!-- Phase 2: AI Daily Adaptive Message -->
+                    <div id="ai-daily-message" class="glass-card ai-message-banner scale-in" style="margin-bottom: 24px; border: 1px solid rgba(0, 122, 255, 0.3); background: linear-gradient(90deg, rgba(0, 86, 179, 0.1) 0%, rgba(0, 0, 0, 0) 100%);">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="ai-status-pulse"></div>
+                            <div id="ai-message-text" style="font-size: 15px; color: #E5E5EA; font-weight: 500;">
+                                AI가 최근 학습 패턴을 분석하고 있습니다...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Action Cards -->
+                    <div class="analysis-actions">
+                        <div class="glass-card action-card" onclick="startAnalysis('test')">
+                            <i data-lucide="clipboard-check"></i>
+                            <h4>테스트 통해 분석</h4>
+                            <p>패턴 진단 및 솔루션</p>
+                        </div>
+                        <div class="glass-card action-card" onclick="startAnalysis('data')">
+                            <i data-lucide="line-chart"></i>
+                            <h4>학습 데이터 기반 분석</h4>
+                            <p>최근 성과 지표 리포트</p>
+                        </div>
+                        <div class="glass-card action-card" onclick="startAnalysis('history')">
+                            <i data-lucide="history"></i>
+                            <h4>지난 분석 결과 확인</h4>
+                            <p>분석 기록 및 추이</p>
+                        </div>
+                        <div class="glass-card action-card ai-special-btn" onclick="startAnalysis('ai_integrated')" style="border: 1px solid var(--primary); background: rgba(0, 86, 179, 0.1);">
+                            <i data-lucide="sparkles" style="color: #FFD700; opacity: 1;"></i>
+                            <h4>AI 통합 맞춤 처방</h4>
+                            <p>성향 + 데이터 기반 성적 예측</p>
+                        </div>
+                    </div>
+
+                    <!-- Content Area -->
+                    <div id="analysis-content" class="glass-card analysis-main-content">
+                        <div class="empty-state">
+                            <i data-lucide="brain-circuit"></i>
+                            <p>분석 항목을 선택하여 시작하세요.</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Tip Area -->
+                    <div class="analysis-footer">
+                        <div class="glass-card tip-card">
+                            <div class="tip-header">
+                                <i data-lucide="lightbulb"></i>
+                                <span>오늘의 분석 팁</span>
+                            </div>
+                            <p id="analysis-quick-tip">좌측 상단의 메뉴를 통해 공부 패턴을 정밀하게 진단해보세요.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Zen Mode Overlay (Phase 3) -->
+    <div id="zen-overlay" class="zen-overlay">
+        <div class="zen-content">
+            <h2 id="zen-task-name">영어 모의고사 오답</h2>
+            <div id="zen-timer-display">25:00</div>
+            <button id="exit-zen-btn" class="ghost-btn">몰입 종료</button>
+        </div>
+    </div>
+
+    <!-- Task Add Modal -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content glass-card">
+            <h2>새로운 할 일 기록</h2>
+            <div class="form-group">
+                <label>과목</label>
+                <select id="task-subject">
+                    <!-- Dynamic subjects -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label>내용</label>
+                <input type="text" id="task-name" placeholder="계획을 입력하세요">
+            </div>
+            <div class="modal-btns">
+                <button id="close-task-modal" class="btn-reset">취소</button>
+                <button id="confirm-add-task" class="btn-start">추가</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Script (Vite/ESM Entry Point) -->
+    <script type="module" src="js/main.js"></script>
+
+</body>
+</html>
