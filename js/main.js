@@ -6,6 +6,13 @@ import { setupMobileUI } from './mobile.js';
 import { watchDeviceLayout } from './device.js';
 import './analysis.js'; // For side effects (window attachments)
 
+// SW 업데이트 시 자동 리로드
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+    });
+}
+
 function init() {
     // 디바이스 감지 후 레이아웃 전환 (resize 시 자동 재적용)
     watchDeviceLayout((isMobile) => {
