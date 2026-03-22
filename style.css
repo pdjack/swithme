@@ -1970,6 +1970,12 @@ circle { fill: none; stroke-width: 3; stroke-linecap: round; }
 }
 
 /* ── 설정 탭 ───────────────────────── */
+#m-settings-panel .subject-manager-list {
+    max-height: 35vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .m-section-header {
     display: flex;
     align-items: center;
