@@ -242,15 +242,28 @@
     <!-- ===================================================== -->
     <div id="mobile-shell" style="display: none;">
 
-        <!-- Hero 타이머 영역 (사진의 빨간색 공간) -->
-        <section class="m-timer-section">
-            <div class="m-timer-meta">
-                <span id="m-display-date" class="m-date-label"></span>
+        <!-- 상단 헤더 -->
+        <header class="m-header">
+            <div class="m-header-left">
+                <!-- 타이머/스톱워치 모드 전환 -->
                 <div class="m-mode-switcher">
                     <button id="m-mode-timer-btn" class="m-sw-btn active">타이머</button>
                     <button id="m-mode-stopwatch-btn" class="m-sw-btn">스톱워치</button>
                 </div>
             </div>
+            <div class="m-header-center">
+                <span id="m-display-date" class="m-date-label"></span>
+            </div>
+            <div class="m-header-right">
+                <button class="m-zen-btn" id="m-zen-btn">
+                    <i data-lucide="focus"></i>
+                    <span>몰입</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Hero 타이머 영역 -->
+        <section class="m-timer-hero">
             <div class="m-timer-ring-wrap">
                 <svg class="m-timer-svg" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="45" class="m-ring-bg"></circle>
@@ -258,6 +271,27 @@
                 </svg>
                 <div class="m-timer-val" id="m-timer-display" onclick="editTimer()">25:00</div>
             </div>
+
+            <!-- 탭 네비게이션 (타이머 히어로 내부) -->
+            <nav class="m-tab-nav">
+                <button class="m-tab active" data-mtab="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>대시보드</span>
+                </button>
+                <button class="m-tab" data-mtab="plan">
+                    <i data-lucide="calendar"></i>
+                    <span>캘린더</span>
+                </button>
+                <button class="m-tab" data-mtab="analyze">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>분석</span>
+                </button>
+                <button class="m-tab" data-mtab="settings">
+                    <i data-lucide="settings"></i>
+                    <span>설정</span>
+                </button>
+            </nav>
+
             <div class="m-timer-controls">
                 <button class="m-btn-reset" id="m-btn-reset">
                     <i data-lucide="rotate-ccw"></i>
@@ -268,26 +302,6 @@
                 </button>
             </div>
         </section>
-
-        <!-- 기능 담당 버튼 공간 (사진의 초록색 공간: 대시보드, 분석 등) -->
-        <nav class="m-function-nav">
-            <button class="m-nav-btn active" data-mtab="dashboard">
-                <i data-lucide="layout-dashboard"></i>
-                <span>대시보드</span>
-            </button>
-            <button class="m-nav-btn" data-mtab="plan">
-                <i data-lucide="calendar"></i>
-                <span>캘린더</span>
-            </button>
-            <button class="m-nav-btn" data-mtab="analyze">
-                <i data-lucide="bar-chart-3"></i>
-                <span>분석</span>
-            </button>
-            <button class="m-nav-btn" data-mtab="settings">
-                <i data-lucide="settings"></i>
-                <span>설정</span>
-            </button>
-        </nav>
 
         <!-- 메인 콘텐츠 영역 -->
         <main class="m-content-area">
