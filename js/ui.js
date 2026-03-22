@@ -121,112 +121,16 @@ function renderCalendar() {
 
 export function updateDashboardDateDisplay() {
     const displayDate = document.getElementById('display-date');
-    const displayDateMobile = document.getElementById('display-date-mobile');
+    if (!displayDate) return;
     
     const d = new Date(state.selectedDate);
-    
-    // Desktop: Full format
-    const fullOptions = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
-    const fullDateStr = d.toLocaleDateString('ko-KR', fullOptions).replace(/\//g, '. ');
-    
-    // Mobile: Ref image style (3. 22. (일))
-    const mobileDateStr = `${d.getMonth() + 1}. ${d.getDate()}. (${d.toLocaleDateString('ko-KR', { weekday: 'short' })})`;
-    
-    if (displayDate) displayDate.textContent = fullDateStr;
-    if (displayDateMobile) displayDateMobile.textContent = mobileDateStr;
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
+    displayDate.textContent = d.toLocaleDateString('ko-KR', options).replace(/\//g, '. ');
 }
 
 export function setupEventListeners() {
     navItems = document.querySelectorAll('#side-nav-list li');
     
-    // New Mobile Header Listeners
-    const modeToggle = document.getElementById('mode-text-toggle');
-    if (modeToggle) {
-        modeToggle.onclick = () => {
-            if (state.timer.isRunning) return;
-            state.timer.mode = state.timer.mode === 'timer' ? 'stopwatch' : 'timer';
-            modeToggle.textContent = state.timer.mode === 'timer' ? '타이머' : '스톱워치';
-            updateTimerDisplay();
-        };
-    }
-
-    const mobileZenBtn = document.getElementById('mobile-zen-btn');
-    if (mobileZenBtn) {
-        mobileZenBtn.onclick = () => {
-            if (state.timer.activeTaskId) {
-                const activeTask = state.tasks.find(t => t.id === state.timer.activeTaskId);
-                const zenTaskName = document.getElementById('zen-task-name');
-                if (zenTaskName) zenTaskName.textContent = activeTask.name;
-                const zenOverlay = document.getElementById('zen-overlay');
-                if (zenOverlay) zenOverlay.classList.add('active');
-            } else {
-                alert('진행할 과목(재생 버튼)을 먼저 선택해주세요.');
-            }
-        };
-    }
-
-    const subTabs = document.querySelectorAll('.mobile-sub-tabs .tab-item');
-    subTabs.forEach(tab => {
-        tab.onclick = () => {
-            subTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            
-            const contentWrapper = document.getElementById('task-list-container');
-            const subtab = tab.dataset.subtab;
-            
-            if (subtab === 'timer') {
-                contentWrapper.innerHTML = '<ul id="task-list" class="task-list-minimal"></ul>';
-                renderTasks();
-            } else if (subtab === 'stats') {
-                contentWrapper.innerHTML = '<div id="mobile-stats-view" class="glass-card" style="margin: 16px; border:none; background:transparent;"><h4>학습 리포트</h4><canvas id="mobile-progress-chart" style="width:100% !important; height: 200px !important;"></canvas></div>';
-                renderMobileStats();
-            } else if (subtab === 'planner') {
-                contentWrapper.innerHTML = '<div id="mobile-planner-view"></div>';
-                renderTimetable('mobile-planner-view');
-            } else {
-                contentWrapper.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-dim);">${tab.textContent} 기능 준비 중...</div>`;
-            }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        };
-    });
-
-window.renderMobileStats = () => {
-    const ctx = document.getElementById('mobile-progress-chart');
-    if (!ctx) return;
-    
-    // Simple bar chart for mobile stats view
-    const labels = state.subjects.map(s => s.name);
-    const data = state.subjects.map(s => {
-        return state.history
-            .filter(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate))
-            .reduce((acc, h) => acc + h.duration, 0) / 60; // in minutes
-    });
-
-    if (window.activeMobileChart) window.activeMobileChart.destroy();
-    
-    window.activeMobileChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: '학습 시간 (분)',
-                data: data,
-                backgroundColor: state.subjects.map(s => s.color),
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E8E93' } },
-                x: { grid: { display: false }, ticks: { color: '#8E8E93' } }
-            }
-        }
-    });
-};
-
     const openTaskModalBtn = document.getElementById('open-task-modal');
     if (openTaskModalBtn) {
         openTaskModalBtn.onclick = () => { renderSubjectOptions(); document.getElementById('task-modal').classList.add('active'); };
@@ -257,14 +161,9 @@ window.renderMobileStats = () => {
     }
 
     const displayDate = document.getElementById('display-date');
-    const displayDateMobile = document.getElementById('display-date-mobile');
     const datePicker = document.getElementById('date-picker');
-    const triggerDatePicker = () => { if (datePicker) datePicker.showPicker(); };
-
-    if (displayDate) displayDate.onclick = triggerDatePicker;
-    if (displayDateMobile) displayDateMobile.onclick = triggerDatePicker;
-
-    if (datePicker) {
+    if (displayDate && datePicker) {
+        displayDate.onclick = () => datePicker.showPicker();
         datePicker.value = state.selectedDate;
         datePicker.onchange = (e) => {
             state.selectedDate = e.target.value;

@@ -3,10 +3,9 @@ import { renderTasks } from './tasks.js';
 
 const timetableRoot = document.getElementById('timetable-root');
 
-export function renderTimetable(targetId) {
-    const root = targetId ? document.getElementById(targetId) : document.getElementById('timetable-root');
-    if (!root) return;
-    root.innerHTML = '';
+export function renderTimetable() {
+    if (!timetableRoot) return;
+    timetableRoot.innerHTML = '';
     const startHour = 6;
     for (let i = 0; i < 24; i++) {
         const hour = (startHour + i) % 24;
@@ -46,7 +45,7 @@ export function renderTimetable(targetId) {
             slots.appendChild(slot);
         }
         row.appendChild(slots);
-        root.appendChild(row);
+        timetableRoot.appendChild(row);
     }
 }
 
