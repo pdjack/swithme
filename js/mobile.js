@@ -74,7 +74,7 @@ function switchMobileTab(tab) {
         settings:  'm-settings-panel',
     };
 
-    document.querySelectorAll('.m-tab').forEach(btn => {
+    document.querySelectorAll('.m-nav-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mtab === tab);
     });
 
@@ -344,7 +344,7 @@ export function setupMobileUI() {
     }
 
     // ── 탭 이벤트 ──────────────────────────────────────────────
-    document.querySelectorAll('.m-tab').forEach(btn => {
+    document.querySelectorAll('.m-nav-btn').forEach(btn => {
         btn.addEventListener('click', () => switchMobileTab(btn.dataset.mtab));
     });
 

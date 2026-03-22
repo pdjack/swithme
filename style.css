@@ -1431,31 +1431,21 @@ circle { fill: none; stroke-width: 3; stroke-linecap: round; }
 
 #mobile-shell {
     flex-direction: column;
-    height: 100dvh;          /* dynamic viewport height: 주소창 고려 */
-    overflow: hidden;
-    background: var(--bg);
+    height: 100dvh;
+    overflow-y: auto;        /* 전체 스크롤 허용 */
+    background: #3c4a50;     /* 이미지 가이드 배경색 */
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
 }
 
-/* ── 상단 헤더 ─────────────────── */
-.m-header {
+.m-timer-meta {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
-    padding-top: calc(12px + env(safe-area-inset-top));
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    gap: 8px;
-    flex-shrink: 0;
-    z-index: 10;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 0 4px;
 }
-
-.m-header-left { display: flex; align-items: center; }
-.m-header-center { flex: 1; text-align: center; }
-.m-header-right { display: flex; align-items: center; }
 
 .m-date-label {
     font-size: 13px;
@@ -1514,16 +1504,17 @@ circle { fill: none; stroke-width: 3; stroke-linecap: round; }
 .m-zen-btn i { width: 16px; height: 16px; }
 .m-zen-btn:active { transform: scale(0.94); }
 
-/* ── Hero 타이머 영역 ─────────────── */
-.m-timer-hero {
+/* ── Hero 타이머 영역 (이미지 가이드 빨간색 공간) ─────────────── */
+.m-timer-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 8px 16px 12px;
-    background: linear-gradient(160deg, #0F0F14 0%, #0A0A0B 100%);
+    justify-content: center;
+    padding: 32px 16px;
+    background: rgba(0, 0, 0, 0.1); /* 살짝 어둡게 처리 */
     flex-shrink: 0;
-    gap: 8px;
+    gap: 20px;
+    border-bottom: 2px solid rgba(255, 0, 0, 0.2); /* 가이드 시각화 (선택사항) */
 }
 
 .m-timer-ring-wrap {
@@ -1616,52 +1607,49 @@ circle { fill: none; stroke-width: 3; stroke-linecap: round; }
 .m-btn-task { color: var(--primary); border-color: rgba(0, 86, 179, 0.4); background: rgba(0, 86, 179, 0.08); }
 .m-btn-reset:active, .m-btn-task:active { transform: scale(0.9); }
 
-/* ── 탭 네비게이션 (기능 선택 버튼 그룹) ─────────────────── */
-.m-tab-nav {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+/* ── 기능 네비게이션 (이미지 가이드 초록색 공간) ─────────────────── */
+.m-function-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
     width: 100%;
-    max-width: 400px;
-    gap: 10px;
-    padding: 0 4px;
-    margin-bottom: 2px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 2px solid rgba(0, 255, 0, 0.2); /* 가이드 시각화 */
     flex-shrink: 0;
+    gap: 8px;
 }
 
-.m-tab {
+.m-nav-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    padding: 10px 4px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    color: var(--text-dim);
-    font-size: 10px;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
     font-weight: 600;
-    font-family: 'Inter', sans-serif;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    letter-spacing: 0.2px;
+    transition: all 0.2s;
+    flex: 1;
 }
 
-.m-tab i { 
-    width: 20px; 
-    height: 20px; 
+.m-nav-btn i {
+    width: 22px;
+    height: 22px;
     margin-bottom: 2px;
 }
 
-.m-tab.active {
+.m-nav-btn.active {
     color: #fff;
-    background: rgba(0, 122, 255, 0.15);
-    border-color: var(--primary);
-    box-shadow: 0 0 10px rgba(0, 122, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
 }
 
-.m-tab:active {
+.m-nav-btn:active {
     transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.08);
 }
 
 
