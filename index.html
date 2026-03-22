@@ -271,6 +271,27 @@
                 </svg>
                 <div class="m-timer-val" id="m-timer-display" onclick="editTimer()">25:00</div>
             </div>
+
+            <!-- 탭 네비게이션 (타이머 히어로 내부) -->
+            <nav class="m-tab-nav">
+                <button class="m-tab active" data-mtab="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>대시보드</span>
+                </button>
+                <button class="m-tab" data-mtab="plan">
+                    <i data-lucide="calendar"></i>
+                    <span>캘린더</span>
+                </button>
+                <button class="m-tab" data-mtab="analyze">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>분석</span>
+                </button>
+                <button class="m-tab" data-mtab="settings">
+                    <i data-lucide="settings"></i>
+                    <span>설정</span>
+                </button>
+            </nav>
+
             <div class="m-timer-controls">
                 <button class="m-btn-reset" id="m-btn-reset">
                     <i data-lucide="rotate-ccw"></i>
@@ -281,26 +302,6 @@
                 </button>
             </div>
         </section>
-
-        <!-- 탭 네비게이션 (가로 스크롤 가능) -->
-        <nav class="m-tab-nav">
-            <button class="m-tab active" data-mtab="dashboard">
-                <i data-lucide="layout-dashboard"></i>
-                <span>대시보드</span>
-            </button>
-            <button class="m-tab" data-mtab="plan">
-                <i data-lucide="calendar"></i>
-                <span>캘린더</span>
-            </button>
-            <button class="m-tab" data-mtab="analyze">
-                <i data-lucide="bar-chart-3"></i>
-                <span>분석</span>
-            </button>
-            <button class="m-tab" data-mtab="settings">
-                <i data-lucide="settings"></i>
-                <span>설정</span>
-            </button>
-        </nav>
 
         <!-- 메인 콘텐츠 영역 -->
         <main class="m-content-area">
