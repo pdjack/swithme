@@ -3,6 +3,7 @@ import { renderTasks } from './tasks.js';
 import { renderTimetable } from './timetable.js';
 
 const timerVal = document.getElementById('timer-display');
+const mobileTimerVal = document.getElementById('timer-display-main'); // New Mobile ID
 const zenTimerVal = document.getElementById('zen-timer-display');
 const timerProgress = document.getElementById('timer-progress');
 const zenOverlay = document.getElementById('zen-overlay');
@@ -10,11 +11,17 @@ const btnStart = document.querySelector('.btn-start');
 
 export function updateTimerDisplay() {
     const curSecs = state.timer.mode === 'timer' ? state.timer.seconds : state.timer.stopwatchSeconds;
-    const mins = Math.floor(curSecs / 60);
+    const hours = Math.floor(curSecs / 3600);
+    const mins = Math.floor((curSecs % 3600) / 60);
     const secs = curSecs % 60;
-    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     
-    if (timerVal) timerVal.textContent = timeStr;
+    // H:MM:SS 형식 (참고 사진 스타일)
+    const timeStr = `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    // 기존 MM:SS 형식 (필요시)
+    const mmssStr = `${(hours * 60 + mins).toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    
+    if (timerVal) timerVal.textContent = mmssStr;
+    if (mobileTimerVal) mobileTimerVal.textContent = timeStr;
     if (zenTimerVal) zenTimerVal.textContent = timeStr;
     
     if (state.timer.mode === 'timer') {
@@ -73,6 +80,7 @@ export function startTimer() {
             state.timer.stopwatchSeconds++;
         }
         updateTimerDisplay();
+        renderTasks(); // Real-time update for subject times in the list
     }, 1000);
 }
 
