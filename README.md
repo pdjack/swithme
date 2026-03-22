@@ -23,8 +23,35 @@
    ```
    브라우저에서 `http://localhost:5173` 접속.
 
+## 개발 도구
+
+### 린트 & 포매팅
+```bash
+npm run lint          # ESLint 검사
+npm run lint:fix      # ESLint 자동 수정
+npm run format        # Prettier 포매팅
+```
+
+### 테스트
+```bash
+npm test              # Vitest watch 모드
+npm run test:run      # 단일 실행
+```
+
+### 빌드 (PWA 포함)
+```bash
+npm run build         # 프로덕션 빌드 (Service Worker + manifest 자동 생성)
+npm run preview       # 빌드 결과 로컬 미리보기
+```
+
+> PWA 아이콘(`public/pwa-192x192.png`, `public/pwa-512x512.png`)은 별도 준비 필요. 현재 `public/favicon.svg`가 placeholder로 제공됩니다.
+
 ## 프로젝트 구조
 * `index.html`: 메인 대시보드 구조.
 * `style.css`: 전체 스타일링 (Glassmorphism 적용).
 * `js/`: 핵심 로직 (Store, UI, Timer 등).
+* `tests/`: Vitest 단위 테스트 (`store.test.js`, `timer.test.js`).
+* `vite.config.js`: Vite + PWA + Vitest 통합 설정.
+* `eslint.config.js`: ESLint Flat Config (ES Module 기반).
+* `.prettierrc`: Prettier 포매팅 규칙.
 * `agent.md`: 에이전트 작업 가이드 (AI 협업용).

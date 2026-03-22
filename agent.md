@@ -18,6 +18,9 @@
     * **고급스러운 미학 (Rich Aesthetics):** 활기찬 색상, 다크 모드, 글래스모피즘(Glassmorphism), 동적 애니메이션을 적극 활용합니다.
     * **시각적 탁월함:** 브라우저 기본 폰트 대신 현대적인 타이포그래피(Inter, Outfit 등)를 사용하고, 부드러운 그라데이션과 마이크로 인터랙션을 구현합니다.
 * **상태 관리:** `localStorage`를 활용한 클라이언트 사이드 상태 저장 및 관리.
+* **코드 품질:** ESLint (Flat Config) + Prettier로 린팅 및 포매팅 자동화.
+* **테스트:** Vitest + jsdom 환경에서 단위 테스트 (`tests/` 디렉토리).
+* **PWA:** `vite-plugin-pwa`를 통한 오프라인 지원, Service Worker 자동 생성.
 
 ## 4. 보안 및 안전 (Safety First)
 * **API 키 및 비밀번호:** 절대 코드에 하드코딩하지 않으며 `.env` 또는 보안 관리 방식을 사용합니다.
@@ -27,3 +30,14 @@
 ## 5. 프로젝트 환경 설정
 * 프로젝트는 `npm`과 `Vite`를 기반으로 로컬 개발 환경을 구성합니다.
 * 실행 방법: `npm install` 후 `npm start` (또는 `npm run dev`)를 통해 실행합니다.
+
+### 주요 스크립트
+| 명령어 | 설명 |
+|--------|------|
+| `npm run dev` | 개발 서버 실행 |
+| `npm run build` | 프로덕션 빌드 (PWA 포함) |
+| `npm run lint` | ESLint 검사 |
+| `npm run lint:fix` | ESLint 자동 수정 |
+| `npm run format` | Prettier 포매팅 |
+| `npm test` | Vitest watch 모드 |
+| `npm run test:run` | Vitest 단일 실행 |

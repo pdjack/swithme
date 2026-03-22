@@ -15,6 +15,9 @@
 - 상태는 `store.js`의 `state` 객체를 통해 중앙 관리되며, 변경 후 `saveToLocal()` 호출 필수
 - 모바일은 PC 타이머를 `MutationObserver`로 감시하여 동기화하는 구조
 - 새 전역 함수는 `window`에 등록하는 기존 패턴을 따를 것
+- JS 코드 수정 후 `npm run lint`로 린트 검사를 수행할 것. 새로운 warning/error를 추가하지 않도록 주의
+- 핵심 로직(`store.js`, `timer.js`) 변경 시 `npm run test:run`으로 기존 테스트 통과 여부를 확인할 것
+- 프로덕션 빌드 시 `npm run build`를 사용하며, PWA Service Worker와 manifest가 자동 생성됨
 
 ---
 
