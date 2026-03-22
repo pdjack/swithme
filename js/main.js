@@ -2,9 +2,19 @@ import { updateDashboardDateDisplay, setupEventListeners, renderSubjectManager }
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
 import { updateTimerDisplay, loadTodayReflection } from './timer.js';
+import { setupMobileUI } from './mobile.js';
+import { watchDeviceLayout } from './device.js';
 import './analysis.js'; // For side effects (window attachments)
 
 function init() {
+    // 디바이스 감지 후 레이아웃 전환 (resize 시 자동 재적용)
+    watchDeviceLayout((isMobile) => {
+        // 레이아웃 전환 시 필요한 데이터 재렌더링
+        renderTasks();
+        renderTimetable();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+
     updateDashboardDateDisplay();
     renderTasks();
     renderTimetable();
@@ -13,14 +23,13 @@ function init() {
     loadTodayReflection();
     setupEventListeners();
     updateTimerDisplay();
-    
-    // 사이드바 아이콘 렌더링
+    setupMobileUI();
+
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
 }
 
-// Start the app
 document.addEventListener('DOMContentLoaded', () => {
     init();
 });

@@ -57,7 +57,11 @@ export function renderTasks() {
     }
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // 모바일 할 일 목록도 동기화
+    if (window.renderMobileTasks) window.renderMobileTasks();
 }
+
 
 export function renderSubjectOptions() {
     if (!subjectSelect) return;
