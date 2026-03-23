@@ -250,6 +250,7 @@ function renderMobileSubjectManager() {
     `).join('');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
+window.renderMobileSubjectManager = renderMobileSubjectManager;
 
 // ── 하루 회고 동기화 (모바일 ↔ 데스크탑 공유 state) ──────────────
 function syncMobileReflectionInputs() {
@@ -490,6 +491,7 @@ export function setupMobileUI() {
         state.subjects.push({ id: id.toUpperCase(), name: '신규 과목', color: '#6A1B9A' });
         saveToLocal();
         renderMobileSubjectManager();
+        renderSubjectManager();
         renderSubjectOptions();
     });
 
