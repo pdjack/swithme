@@ -4,10 +4,10 @@
 
 기능 추가, 수정, 버그 수정 등 코드 작업을 시작하기 전에 반드시 아래 문서를 먼저 읽을 것:
 
-1. **`js-code-reference.md`** — JS 모듈별 구조, 함수 목록, 모듈 의존성, 데이터 흐름
-2. **`STRUCTURE.md`** — HTML 구조(Desktop/Mobile Shell), 데이터 흐름, PC↔모바일 ID 매핑
-3. **`style-reference.md`** — CSS 변수, 셀렉터, 반응형 미디어 쿼리, 애니메이션
-4. **`pwa-deploy.md`** — PWA 설정, Vercel 배포 흐름, 앱 설치 가이드
+1. **`directives/js-code-reference.md`** — JS 모듈별 구조, 함수 목록, 모듈 의존성, 데이터 흐름
+2. **`directives/STRUCTURE.md`** — HTML 구조(Desktop/Mobile Shell), 데이터 흐름, PC↔모바일 ID 매핑
+3. **`directives/style-reference.md`** — CSS 변수, 셀렉터, 반응형 미디어 쿼리, 애니메이션
+4. **`directives/pwa-deploy.md`** — PWA 설정, Vercel 배포 흐름, 앱 설치 가이드
 
 이 문서들을 통해 기존 코드 구조를 파악한 뒤 작업해야 불필요한 코드 탐색을 줄이고 기존 패턴과 일관된 구현이 가능하다.
 
