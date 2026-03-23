@@ -238,6 +238,21 @@ function renderMobileCalendar() {
             : '';
 
         div.innerHTML = `<span>${day}</span>${scoreHtml}`;
+        
+        // 날짜 선택 클릭 이벤트 추가
+        div.addEventListener('click', () => {
+            state.selectedDate = dateKey;
+            updateMobileDateDisplay();
+            switchMobileTab('dashboard'); // 대시보드 탭으로 전환하여 해당 날짜 계획 확인
+            
+            // 전역 동기화 (PC 쪽도 필요한 경우)
+            if (typeof window.updateDashboardDateDisplay === 'function') {
+                window.updateDashboardDateDisplay();
+                if (typeof window.renderTasks === 'function') window.renderTasks();
+                if (typeof window.renderTimetable === 'function') window.renderTimetable();
+            }
+        });
+
         grid.appendChild(div);
     }
 }
@@ -321,16 +336,47 @@ function syncMobileAnalysisContent() {
 // ── 날짜 표시 업데이트 (모바일 상단) ────────────────────────────
 function updateMobileDateDisplay() {
     const el = document.getElementById('m-display-date');
+    const picker = document.getElementById('m-date-picker');
     if (!el) return;
     const d = new Date(state.selectedDate);
     el.textContent = d.toLocaleDateString('ko-KR', {
         year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short'
     }).replace(/\//g, '. ');
+    
+    if (picker) {
+        picker.value = state.selectedDate;
+    }
 }
 
 // ── 메인 초기화 ──────────────────────────────────────────────────
 export function setupMobileUI() {
     updateMobileDateDisplay();
+
+    // ── 날짜 선택 제어 (모바일 헤더) ───────────────────────────
+    const mDisplayDate = document.getElementById('m-display-date');
+    const mDatePicker = document.getElementById('m-date-picker');
+    if (mDisplayDate && mDatePicker) {
+        mDisplayDate.addEventListener('click', () => {
+            if (typeof mDatePicker.showPicker === 'function') {
+                mDatePicker.showPicker();
+            } else {
+                mDatePicker.click();
+            }
+        });
+        mDatePicker.addEventListener('change', (e) => {
+            state.selectedDate = e.target.value;
+            updateMobileDateDisplay();
+            renderMobileTasks();
+            renderMobileTimetable();
+            
+            // PC 쪽과 동기화
+            if (typeof window.updateDashboardDateDisplay === 'function') {
+                window.updateDashboardDateDisplay();
+                if (typeof window.renderTasks === 'function') window.renderTasks();
+                if (typeof window.renderTimetable === 'function') window.renderTimetable();
+            }
+        });
+    }
 
     // 모바일 타이머 표시 hook: 기존 interval tick에 연동
     // timer.js의 updateTimerDisplay를 오버라이드하여 모바일도 함께 업데이트

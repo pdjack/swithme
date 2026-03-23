@@ -12,6 +12,11 @@ const subjectManagerList = document.getElementById('subject-manager-list');
 
 // 전역에서 접근 가능하도록 노출
 window.switchTab = switchTab;
+window.updateDashboardDateDisplay = updateDashboardDateDisplay;
+window.renderTasks = renderTasks;
+window.renderTimetable = renderTimetable;
+window.renderSubjectOptions = renderSubjectOptions;
+window.renderSubjectManager = renderSubjectManager;
 
 export function switchTab(tab) {
     if (navItems.length === 0) navItems = document.querySelectorAll('#side-nav-list li');
