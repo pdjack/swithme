@@ -302,6 +302,16 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     opacity: 1;
 }
 
+.play-btn:hover {
+    color: var(--primary) !important;
+    transform: scale(1.2) !important;
+}
+
+.play-btn i {
+    width: 18px;
+    height: 18px;
+}
+
 .delete-btn:hover {
     color: var(--pink) !important;
 }

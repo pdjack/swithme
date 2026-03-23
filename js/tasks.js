@@ -44,6 +44,9 @@ export function renderTasks() {
                             <span class="t-name">${task.name}</span>
                         </div>
                         <div class="task-actions">
+                            <button onclick="playTask(event, ${task.id})" class="ghost-btn play-btn" title="Start Timer">
+                                <i data-lucide="${state.timer.activeTaskId === task.id && state.timer.isRunning ? 'pause' : 'play'}"></i>
+                            </button>
                             <button onclick="deleteTask(event, ${task.id})" class="ghost-btn delete-btn" title="Delete"><i data-lucide="trash-2"></i></button>
                         </div>
                     </div>
@@ -65,6 +68,30 @@ export function renderTasks() {
 // 모듈 간 동기화를 위해 전역 노출
 window.renderTasks = renderTasks;
 window.renderSubjectOptions = renderSubjectOptions;
+
+import { startTimer, stopTimer } from './timer.js';
+
+window.playTask = (e, id) => {
+    e.stopPropagation();
+    
+    if (state.timer.isRunning) {
+        if (state.timer.activeTaskId === id) {
+            stopTimer();
+        } else {
+            // 다른 태스크로 전환
+            stopTimer();
+            state.timer.activeTaskId = id;
+            setTimeout(() => {
+                startTimer();
+                renderTasks();
+            }, 100);
+        }
+    } else {
+        state.timer.activeTaskId = id;
+        startTimer();
+    }
+    renderTasks();
+};
 
 
 export function renderSubjectOptions() {

@@ -455,19 +455,51 @@ export function setupMobileUI() {
     const mTaskList = document.getElementById('m-task-list');
     if (mTaskList) {
         mTaskList.addEventListener('click', (e) => {
-            // 플레이 버튼
+            // 1. 태스크 아이템 자체 클릭 (선택 및 토글)
+            const taskItem = e.target.closest('.m-task-item');
             const playBtn = e.target.closest('[data-play-id]');
-            if (playBtn) {
-                const id = Number(playBtn.dataset.playId);
-                if (state.timer.isRunning) return;
+            const doneBtn = e.target.closest('[data-done-id]');
+            const deleteBtn = e.target.closest('[data-delete-id]');
+
+            if (taskItem && !playBtn && !doneBtn && !deleteBtn) {
+                const id = Number(taskItem.dataset.taskId);
+                if (state.timer.isRunning) return; // 실행 중엔 선택 변경 불가
                 state.timer.activeTaskId = (state.timer.activeTaskId === id) ? null : id;
                 renderMobileTasks();
-                // PC 쪽도 동기화
-                if (window.switchTab) window.switchTab('dashboard');
+                if (typeof renderTasks === 'function') renderTasks();
+                return;
+            }
+
+            // 2. 플레이 버튼 클릭 (즉시 시작/중지 및 교체)
+            if (playBtn) {
+                const id = Number(playBtn.dataset.playId);
+                
+                if (state.timer.isRunning) {
+                    if (state.timer.activeTaskId === id) {
+                        // 현재 태스크 중지
+                        stopTimer();
+                        syncMobileStartBtn(false);
+                    } else {
+                        // 다른 태스크로 전환: 현재 완료하고 새 태스크 시작
+                        stopTimer();
+                        state.timer.activeTaskId = id;
+                        setTimeout(() => {
+                            startTimer();
+                            syncMobileStartBtn(true);
+                            renderMobileTasks();
+                        }, 100);
+                    }
+                } else {
+                    // 멈춰있는 상태: 선택하고 시작
+                    state.timer.activeTaskId = id;
+                    startTimer();
+                    syncMobileStartBtn(true);
+                }
+                renderMobileTasks();
+                if (typeof renderTasks === 'function') renderTasks();
                 return;
             }
             // 완료 버튼
-            const doneBtn = e.target.closest('[data-done-id]');
             if (doneBtn) {
                 const id = Number(doneBtn.dataset.doneId);
                 state.tasks = state.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
@@ -476,7 +508,6 @@ export function setupMobileUI() {
                 window.syncMobileReflection?.();
             }
             // 삭제 버튼
-            const deleteBtn = e.target.closest('[data-delete-id]');
             if (deleteBtn) {
                 const id = Number(deleteBtn.dataset.deleteId);
                 if (state.timer.activeTaskId === id) {
