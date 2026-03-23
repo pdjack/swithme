@@ -62,6 +62,10 @@ export function renderTasks() {
     if (window.renderMobileTasks) window.renderMobileTasks();
 }
 
+// 모듈 간 동기화를 위해 전역 노출
+window.renderTasks = renderTasks;
+window.renderSubjectOptions = renderSubjectOptions;
+
 
 export function renderSubjectOptions() {
     if (!subjectSelect) return;

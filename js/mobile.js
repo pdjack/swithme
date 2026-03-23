@@ -136,7 +136,12 @@ export function renderMobileTasks() {
                             <i data-lucide="${state.timer.activeTaskId === task.id ? 'pause' : 'play'}"></i>
                         </button>
                         <span class="m-t-name">${task.name}</span>
-                        <button class="m-t-done-btn" data-done-id="${task.id}"></button>
+                        <div class="m-task-actions">
+                            <button class="m-t-delete-btn" data-delete-id="${task.id}">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                            <button class="m-t-done-btn" data-done-id="${task.id}"></button>
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -469,6 +474,22 @@ export function setupMobileUI() {
                 saveToLocal();
                 renderMobileTasks();
                 window.syncMobileReflection?.();
+            }
+            // 삭제 버튼
+            const deleteBtn = e.target.closest('[data-delete-id]');
+            if (deleteBtn) {
+                const id = Number(deleteBtn.dataset.deleteId);
+                if (state.timer.activeTaskId === id) {
+                    return alert('진행 중인 태스크는 삭제할 수 없습니다.');
+                }
+                if (confirm('정말 이 할 일을 삭제하시겠습니까?')) {
+                    state.tasks = state.tasks.filter(t => t.id !== id);
+                    saveToLocal();
+                    renderMobileTasks();
+                    // PC 쪽도 동기화
+                    if (typeof window.renderTasks === 'function') window.renderTasks();
+                    window.syncMobileReflection?.();
+                }
             }
         });
     }
