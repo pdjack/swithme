@@ -69,7 +69,7 @@ window.renderSubjectOptions = renderSubjectOptions;
 
 export function renderSubjectOptions() {
     if (!subjectSelect) return;
-    subjectSelect.innerHTML = state.subjects.map(s => `<option value="${s.id}">${s.name} (${s.id})</option>`).join('');
+    subjectSelect.innerHTML = state.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 }
 
 window.deleteTask = (e, id) => { 
