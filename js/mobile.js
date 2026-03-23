@@ -485,10 +485,8 @@ export function setupMobileUI() {
 
     // ── 과목 추가 버튼 (설정 탭) ──────────────────────────────
     document.getElementById('m-add-subject-btn')?.addEventListener('click', () => {
-        const id = prompt('과목 코드를 입력하세요 (예: MATH2, PHYS)');
-        if (!id) return;
-        if (state.subjects.find(s => s.id === id.toUpperCase())) return alert('중복된 코드입니다.');
-        state.subjects.push({ id: id.toUpperCase(), name: '신규 과목', color: '#6A1B9A' });
+        const id = 'SUB_' + Date.now();
+        state.subjects.push({ id: id, name: '신규 과목', color: '#6A1B9A' });
         saveToLocal();
         renderMobileSubjectManager();
         renderSubjectManager();
