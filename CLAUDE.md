@@ -17,6 +17,29 @@
 
 ---
 
+## 기술 스택
+
+- **프론트엔드:** HTML5, Vanilla CSS, Vanilla JavaScript (ES6+)
+- **디자인 시스템:** 다크 모드, 글래스모피즘(Glassmorphism), 현대적 타이포그래피(Inter, Outfit), 부드러운 그라데이션과 마이크로 인터랙션
+- **상태 관리:** `localStorage` 기반 클라이언트 사이드 저장
+- **코드 품질:** ESLint (Flat Config) + Prettier
+- **테스트:** Vitest + jsdom (`tests/` 디렉토리)
+- **PWA:** `vite-plugin-pwa`를 통한 오프라인 지원, Service Worker 자동 생성
+
+### 주요 스크립트
+
+| 명령어 | 설명 |
+|--------|------|
+| `npm run dev` | 개발 서버 실행 |
+| `npm run build` | 프로덕션 빌드 (PWA 포함) |
+| `npm run lint` | ESLint 검사 |
+| `npm run lint:fix` | ESLint 자동 수정 |
+| `npm run format` | Prettier 포매팅 |
+| `npm test` | Vitest watch 모드 |
+| `npm run test:run` | Vitest 단일 실행 |
+
+---
+
 ## 작업 시 유의사항
 
 - PC(`#desktop-shell`)와 모바일(`#mobile-shell`)은 별도 셸로 분리되어 있으므로, UI 변경 시 양쪽 모두 반영할 것
@@ -25,7 +48,7 @@
 - 새 전역 함수는 `window`에 등록하는 기존 패턴을 따를 것
 - JS 코드 수정 후 `npm run lint`로 린트 검사를 수행할 것. 새로운 warning/error를 추가하지 않도록 주의
 - 핵심 로직(`store.js`, `timer.js`) 변경 시 `npm run test:run`으로 기존 테스트 통과 여부를 확인할 것
-- 프로덕션 빌드 시 `npm run build`를 사용하며, PWA Service Worker와 manifest가 자동 생성됨
+- API 키 및 비밀번호는 절대 코드에 하드코딩하지 않으며 `.env`를 사용할 것
 
 ---
 
