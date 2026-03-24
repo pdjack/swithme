@@ -7,7 +7,11 @@
 1. **`js-code-reference.md`** — JS 모듈별 구조, 함수 목록, 모듈 의존성, 데이터 흐름
 2. **`STRUCTURE.md`** — HTML 구조(Desktop/Mobile Shell), 데이터 흐름, PC↔모바일 ID 매핑
 3. **`style-reference.md`** — CSS 변수, 셀렉터, 반응형 미디어 쿼리, 애니메이션
+
+`docs/` 디렉토리의 참고 문서 (필요 시 수동 참조):
+
 4. **`pwa-deploy.md`** — PWA 설정, Vercel 배포 흐름, 앱 설치 가이드
+5. **`PRD.md`** — 프로젝트 기획서 (현행 상태 문서화)
 
 ## 문서 관리 원칙
 
