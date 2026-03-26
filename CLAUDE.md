@@ -8,6 +8,7 @@
 2. **`STRUCTURE.md`** — HTML 구조(Desktop/Mobile Shell), 데이터 흐름, PC↔모바일 ID 매핑
 3. **`style-reference.md`** — CSS 변수, 셀렉터, 반응형 미디어 쿼리, 애니메이션
 4. **`pwa-deploy.md`** — PWA 설정, Vercel 배포 흐름, 앱 설치 가이드
+5. **`doc-routing.md`** — 코드 변경 시 어떤 문서를 업데이트해야 하는지 매핑 테이블
 
 ## 문서 관리 원칙
 
