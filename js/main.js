@@ -1,9 +1,10 @@
 import { updateDashboardDateDisplay, setupEventListeners, renderSubjectManager } from './ui.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
-import { updateTimerDisplay, loadTodayReflection } from './timer.js';
+import { updateTimerDisplay, startTimer, loadTodayReflection } from './timer.js';
 import { setupMobileUI } from './mobile.js';
 import { watchDeviceLayout } from './device.js';
+import { restoreTimerState } from './store.js';
 import './analysis.js'; // For side effects (window attachments)
 
 // SW 업데이트 시 자동 리로드
@@ -29,7 +30,16 @@ function init() {
     renderSubjectManager();
     loadTodayReflection();
     setupEventListeners();
-    updateTimerDisplay();
+
+    // 앱 재시작 시 실행 중이던 타이머 복원
+    const timerRestored = restoreTimerState();
+    if (timerRestored) {
+        updateTimerDisplay();
+        startTimer();
+    } else {
+        updateTimerDisplay();
+    }
+
     setupMobileUI();
 
     if (typeof lucide !== 'undefined') {

@@ -1,6 +1,8 @@
-import { state, saveToLocal } from './store.js';
+import { state, saveToLocal, persistTimerState, clearTimerState } from './store.js';
 import { renderTasks } from './tasks.js';
 import { renderTimetable } from './timetable.js';
+
+let wakeLock = null;
 
 const timerVal = document.getElementById('timer-display');
 const zenTimerVal = document.getElementById('zen-timer-display');
@@ -52,8 +54,14 @@ window.editTimer = () => {
 
 export function startTimer() {
     state.timer.isRunning = true;
-    state.timer.sessionStartTime = new Date();
-    state.timer.sessionStartSeconds = state.timer.seconds; // 현재 시간 저장
+    if (!state.timer.sessionStartTime) {
+        state.timer.sessionStartTime = new Date();
+        state.timer.sessionStartSeconds = state.timer.mode === 'timer'
+            ? state.timer.seconds
+            : state.timer.stopwatchSeconds;
+        state.timer.elapsedAtPause = 0;
+    }
+    state.timer.wallStartTimestamp = Date.now();
     if (btnStart) {
         btnStart.textContent = 'STOP';
         btnStart.style.background = '#FF2D55';
@@ -65,25 +73,58 @@ export function startTimer() {
         if (zenTaskName) zenTaskName.textContent = activeTask.name;
         if (zenOverlay) zenOverlay.classList.add('active');
     }
+    persistTimerState();
+    requestWakeLock();
     state.timer.interval = setInterval(() => {
-        if (state.timer.mode === 'timer') {
-            if (state.timer.seconds > 0) state.timer.seconds--;
-            else completeSession();
-        } else {
-            state.timer.stopwatchSeconds++;
-        }
+        recalculateFromTimestamp();
         updateTimerDisplay();
+        persistTimerState();
     }, 1000);
+}
+
+function recalculateFromTimestamp() {
+    const elapsedSinceResume = Math.floor((Date.now() - state.timer.wallStartTimestamp) / 1000);
+    const totalElapsed = state.timer.elapsedAtPause + elapsedSinceResume;
+
+    if (state.timer.mode === 'timer') {
+        const remaining = Math.max(0, state.timer.sessionStartSeconds - totalElapsed);
+        state.timer.seconds = remaining;
+        if (remaining <= 0) completeSession();
+    } else {
+        state.timer.stopwatchSeconds = totalElapsed;
+    }
+}
+
+async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch {
+        // 배터리 부족 등 시스템 제한 — 무시
+    }
+}
+
+function releaseWakeLock() {
+    if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+    }
 }
 
 export function stopTimer() {
     state.timer.isRunning = false;
     clearInterval(state.timer.interval);
+    if (state.timer.wallStartTimestamp) {
+        state.timer.elapsedAtPause += Math.floor((Date.now() - state.timer.wallStartTimestamp) / 1000);
+        state.timer.wallStartTimestamp = null;
+    }
     if (btnStart) {
         btnStart.textContent = 'RESUME';
         btnStart.style.background = '#0056B3';
         btnStart.style.color = '#FFFFFF';
     }
+    releaseWakeLock();
     recordSession();
 }
 
@@ -95,6 +136,10 @@ export function resetTimer() {
     state.timer.sessionStartSeconds = 1500;
     state.timer.stopwatchSeconds = 0;
     state.timer.sessionStartTime = null;
+    state.timer.wallStartTimestamp = null;
+    state.timer.elapsedAtPause = 0;
+    clearTimerState();
+    releaseWakeLock();
     if (btnStart) {
         btnStart.textContent = 'START';
         btnStart.style.background = '#0056B3';
@@ -103,19 +148,24 @@ export function resetTimer() {
     updateTimerDisplay();
 }
 
-function completeSession() { 
-    recordSession(); 
-    if (zenOverlay) zenOverlay.classList.remove('active'); 
-    alert('Session Complete!'); 
-    resetTimer(); 
+function completeSession() {
+    recordSession();
+    clearTimerState();
+    if (zenOverlay) zenOverlay.classList.remove('active');
+    alert('Session Complete!');
+    resetTimer();
 }
 
 function recordSession() {
     if (!state.timer.sessionStartTime) return;
-    
-    let actualDuration = state.timer.mode === 'timer' 
-        ? (Math.max(0, state.timer.sessionStartSeconds - state.timer.seconds)) 
-        : state.timer.stopwatchSeconds;
+
+    const currentElapsed = state.timer.elapsedAtPause +
+        (state.timer.wallStartTimestamp
+            ? Math.floor((Date.now() - state.timer.wallStartTimestamp) / 1000)
+            : 0);
+    let actualDuration = state.timer.mode === 'timer'
+        ? Math.min(currentElapsed, state.timer.sessionStartSeconds)
+        : currentElapsed;
 
     if (actualDuration < 5) {
         state.timer.sessionStartTime = null;
@@ -152,6 +202,15 @@ function recordSession() {
     if (state.timer.mode === 'stopwatch') state.timer.stopwatchSeconds = 0;
     updateTimerDisplay();
 }
+
+// --- Page Visibility API: 화면 복귀 시 즉시 시간 보정 ---
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.timer.isRunning) {
+        recalculateFromTimestamp();
+        updateTimerDisplay();
+        requestWakeLock();
+    }
+});
 
 // --- Daily Reflection Logic ---
 window.updateReflection = () => {

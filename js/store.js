@@ -23,7 +23,9 @@ export let state = {
         isRunning: false,
         interval: null,
         activeTaskId: null,
-        isZenMode: false
+        isZenMode: false,
+        wallStartTimestamp: null, // Date.now() when timer started/resumed
+        elapsedAtPause: 0 // Accumulated seconds before current run
     },
     history: JSON.parse(localStorage.getItem('switme_history')) || [],
     reflections: JSON.parse(localStorage.getItem('switme_reflections')) || {},
@@ -45,6 +47,61 @@ export function saveToLocal() {
 export function getSubjectColor(id) {
     const sub = state.subjects.find(s => s.id === id);
     return sub ? sub.color : '#8E8E93';
+}
+
+export function persistTimerState() {
+    localStorage.setItem('switme_timer', JSON.stringify({
+        mode: state.timer.mode,
+        isRunning: state.timer.isRunning,
+        wallStartTimestamp: state.timer.wallStartTimestamp,
+        elapsedAtPause: state.timer.elapsedAtPause,
+        sessionStartSeconds: state.timer.sessionStartSeconds,
+        totalDuration: state.timer.totalDuration,
+        activeTaskId: state.timer.activeTaskId,
+        sessionStartTime: state.timer.sessionStartTime instanceof Date
+            ? state.timer.sessionStartTime.toISOString()
+            : state.timer.sessionStartTime || null
+    }));
+}
+
+export function restoreTimerState() {
+    const saved = localStorage.getItem('switme_timer');
+    if (!saved) return false;
+
+    try {
+        const data = JSON.parse(saved);
+        if (!data.isRunning || !data.wallStartTimestamp) {
+            clearTimerState();
+            return false;
+        }
+
+        state.timer.mode = data.mode;
+        state.timer.activeTaskId = data.activeTaskId;
+        state.timer.sessionStartSeconds = data.sessionStartSeconds;
+        state.timer.totalDuration = data.totalDuration;
+        state.timer.wallStartTimestamp = data.wallStartTimestamp;
+        state.timer.elapsedAtPause = data.elapsedAtPause;
+        state.timer.sessionStartTime = data.sessionStartTime ? new Date(data.sessionStartTime) : null;
+
+        const elapsedSinceResume = Math.floor((Date.now() - data.wallStartTimestamp) / 1000);
+        const totalElapsed = data.elapsedAtPause + elapsedSinceResume;
+
+        if (data.mode === 'timer') {
+            const remaining = Math.max(0, data.sessionStartSeconds - totalElapsed);
+            state.timer.seconds = remaining;
+        } else {
+            state.timer.stopwatchSeconds = totalElapsed;
+        }
+
+        return true;
+    } catch {
+        clearTimerState();
+        return false;
+    }
+}
+
+export function clearTimerState() {
+    localStorage.removeItem('switme_timer');
 }
 
 export function formatSeconds(totalSeconds) {
