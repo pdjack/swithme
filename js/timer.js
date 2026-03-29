@@ -125,6 +125,7 @@ export function stopTimer() {
         btnStart.style.color = '#FFFFFF';
     }
     releaseWakeLock();
+    clearTimerState();
     recordSession();
 }
 
