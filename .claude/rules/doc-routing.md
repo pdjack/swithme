@@ -16,6 +16,9 @@
 | CSS/스타일 변경 | `directives/style-reference.md` |
 | 모바일 전용 작업 | `directives/STRUCTURE.md` (ID 매핑) + `directives/js-code-reference.md` (mobile.js) |
 | 새 탭/캔버스 추가 | 위 3개 문서 모두 |
+| 기능 기획/분석 관련 | `docs/PRD.md` + `활용정보/` 내 관련 문서 + `directives/` 내 플랜 문서 |
+
+> **원칙**: 위 표에 매핑되지 않은 작업이라도, 질문 전에 프로젝트 내(`docs/`, `활용정보/`, `directives/`)에서 관련 문서를 능동적으로 탐색한다. 문서에 이미 답이 있는 내용을 유저에게 다시 질문하지 않는다.
 
 ---
 
