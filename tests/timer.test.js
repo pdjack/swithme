@@ -21,11 +21,24 @@ vi.stubGlobal(
       'timer-progress': createMockElement('timer-progress'),
       'zen-overlay': createMockElement('zen-overlay'),
     };
+    const body = {
+      appendChild: vi.fn(),
+      removeChild: vi.fn(),
+    };
     return {
       getElementById: vi.fn((id) => elements[id] || null),
       querySelector: vi.fn(() => createMockElement('btn-start')),
       querySelectorAll: vi.fn(() => []),
       addEventListener: vi.fn(),
+      createElement: vi.fn(() => {
+        const el = createMockElement('dynamic');
+        el.innerHTML = '';
+        el.remove = vi.fn();
+        el.appendChild = vi.fn();
+        el.addEventListener = vi.fn();
+        return el;
+      }),
+      body,
     };
   })(),
 );
@@ -97,6 +110,11 @@ describe('timer.js', () => {
   });
 
   describe('startTimer()', () => {
+    beforeEach(() => {
+      store.state.timer.activeTaskId = 1;
+      store.state.tasks = [{ id: 1, subject: 'ENG', name: 'Test', duration: '0s', completed: false, date: store.state.selectedDate }];
+    });
+
     it('타이머 시작 시 isRunning이 true가 되어야 한다', () => {
       timer.startTimer();
       expect(store.state.timer.isRunning).toBe(true);
@@ -124,6 +142,12 @@ describe('timer.js', () => {
       vi.advanceTimersByTime(1000);
       expect(store.state.timer.stopwatchSeconds).toBe(1);
     });
+
+    it('activeTaskId가 없으면 타이머가 시작되지 않아야 한다', () => {
+      store.state.timer.activeTaskId = null;
+      timer.startTimer();
+      expect(store.state.timer.isRunning).toBe(false);
+    });
   });
 
   describe('resetTimer()', () => {
@@ -140,6 +164,8 @@ describe('timer.js', () => {
 
   describe('stopTimer()', () => {
     it('타이머 중지 시 isRunning이 false가 되어야 한다', () => {
+      store.state.timer.activeTaskId = 1;
+      store.state.tasks = [{ id: 1, subject: 'ENG', name: 'Test', duration: '0s', completed: false, date: store.state.selectedDate }];
       timer.startTimer();
       timer.stopTimer();
       expect(store.state.timer.isRunning).toBe(false);

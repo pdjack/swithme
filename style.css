@@ -2044,3 +2044,97 @@ circle { fill: none; stroke-width: 3; stroke-linecap: round; }
     }
 }
 
+/* ── 할 일 미선택 알림 패널 ────────── */
+.no-task-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    animation: noTaskFadeIn 0.2s ease;
+}
+
+@keyframes noTaskFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.no-task-panel-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 28px 24px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.no-task-panel-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 45, 85, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pink);
+}
+
+.no-task-panel-icon i {
+    width: 24px;
+    height: 24px;
+}
+
+.no-task-panel-msg {
+    font-size: 15px;
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+.no-task-panel-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.no-task-panel-add-btn,
+.no-task-panel-close-btn {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.no-task-panel-add-btn {
+    background: var(--primary);
+    color: #fff;
+}
+
+.no-task-panel-add-btn:hover {
+    filter: brightness(1.2);
+}
+
+.no-task-panel-close-btn {
+    background: var(--glass);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+}
+
+.no-task-panel-close-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+

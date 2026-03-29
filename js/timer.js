@@ -52,7 +52,58 @@ window.editTimer = () => {
     }
 };
 
+function showNoTaskPanel() {
+    const existing = document.getElementById('no-task-panel');
+    if (existing) existing.remove();
+
+    const dailyTasks = state.tasks.filter(t => t.date === state.selectedDate);
+    const hasTasksToday = dailyTasks.length > 0;
+
+    const panel = document.createElement('div');
+    panel.id = 'no-task-panel';
+    panel.className = 'no-task-panel';
+    panel.innerHTML = `
+        <div class="no-task-panel-content">
+            <div class="no-task-panel-icon">
+                <i data-lucide="alert-circle"></i>
+            </div>
+            <p class="no-task-panel-msg">
+                ${hasTasksToday ? '할 일을 선택한 후 시작해주세요.' : '할 일을 먼저 추가해주세요.'}
+            </p>
+            <div class="no-task-panel-actions">
+                ${hasTasksToday ? '' : `<button class="no-task-panel-add-btn" id="no-task-add-btn">할 일 추가</button>`}
+                <button class="no-task-panel-close-btn" id="no-task-close-btn">확인</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(panel);
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    const closeBtn = document.getElementById('no-task-close-btn');
+    if (closeBtn) closeBtn.addEventListener('click', () => panel.remove());
+
+    const addBtn = document.getElementById('no-task-add-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            panel.remove();
+            if (window.renderSubjectOptions) window.renderSubjectOptions();
+            const modal = document.getElementById('task-modal');
+            if (modal) modal.classList.add('active');
+        });
+    }
+
+    panel.addEventListener('click', (e) => {
+        if (e.target === panel) panel.remove();
+    });
+}
+
 export function startTimer() {
+    if (!state.timer.activeTaskId) {
+        showNoTaskPanel();
+        return;
+    }
+
     state.timer.isRunning = true;
     if (!state.timer.sessionStartTime) {
         state.timer.sessionStartTime = new Date();

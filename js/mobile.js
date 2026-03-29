@@ -441,7 +441,7 @@ export function setupMobileUI() {
                 syncMobileStartBtn(false);
             } else {
                 startTimer();
-                syncMobileStartBtn(true);
+                syncMobileStartBtn(state.timer.isRunning);
             }
         });
     }
