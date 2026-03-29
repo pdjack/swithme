@@ -358,6 +358,27 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | `applyAIPlan(plans)` | 추천 과제를 내일 날짜로 state에 추가 |
 | `updateAIAdaptiveFeedback()` | 분석 탭 진입 시 AI 피드백 메시지 동적 생성 |
 
+### window 전역 함수 — 학습 패턴 진단
+
+| 함수 | 설명 |
+|------|------|
+| `renderPatternAnalysisFilter()` | 패턴 분석 기간 선택 UI (1주일 / 2주일 / 1개월) |
+| `executePatternAnalysis(days)` | 3가지 진단(메타인지/몰입/루틴) 실행 + 시나리오 감지 + 결과 저장 |
+| `renderPatternAnalysisResult(result)` | 패턴 진단 리포트 렌더링 (CSS-only 시각화) |
+
+### 내부 함수 — 학습 패턴 진단
+
+| 함수 | 설명 |
+|------|------|
+| `stdDeviation(arr)` | 표준편차 계산 |
+| `getHistoryForDays(days)` | 최근 N일 history 필터 |
+| `getReflectionsForDays(days)` | 최근 N일 reflections 필터 |
+| `groupHistoryByDate(history)` | history를 날짜별로 그룹핑 |
+| `calculateMetacognitionPattern(days)` | 메타인지 패턴 진단 (달성률/오답정리/시간투자 교차 분석) |
+| `calculateFocusDensity(days)` | 몰입 에너지 진단 (세션 집중 비율, 피로도 감지) |
+| `calculateRoutineConsistency(days)` | 루틴 일관성 진단 (시작 시각 편차, 주간 학습 일수, 요일별 하락) |
+| `detectReportScenarios(metacog, focus, routine)` | 4가지 리포트 시나리오 매칭 (가짜 공부/환경 방해/과도한 계획/복습 부재) |
+
 ### AI 예측 점수 공식
 ```
 predictedScore = (데이터분석점수 / 20 × 100) × 0.7 + (테스트점수 / 7 × 100) × 0.3

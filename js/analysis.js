@@ -227,6 +227,8 @@ window.startAnalysis = (type) => {
         window.renderAnalysisHistory();
     } else if (type === 'ai_integrated') {
         window.performIntegratedAnalysis();
+    } else if (type === 'pattern') {
+        window.renderPatternAnalysisFilter();
     }
 };
 
@@ -775,4 +777,568 @@ window.updateAIAdaptiveFeedback = () => {
     }
 
     messageText.textContent = alertMsg;
+};
+
+/* ─────────────────────────────────────────────────
+   📊 학습 패턴 진단 (Pattern Analysis)
+   ───────────────────────────────────────────────── */
+
+// ── Utilities ──
+
+function stdDeviation(arr) {
+    if (arr.length < 2) return 0;
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+    const sqDiffs = arr.map(v => (v - mean) ** 2);
+    return Math.sqrt(sqDiffs.reduce((a, b) => a + b, 0) / arr.length);
+}
+
+function getHistoryForDays(days) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    cutoff.setHours(0, 0, 0, 0);
+    return state.history.filter(h => new Date(h.startTime) >= cutoff);
+}
+
+function getReflectionsForDays(days) {
+    const result = {};
+    const today = new Date();
+    for (let i = 0; i < days; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        if (state.reflections[key]) result[key] = state.reflections[key];
+    }
+    return result;
+}
+
+function groupHistoryByDate(history) {
+    const groups = {};
+    history.forEach(h => {
+        const date = h.startTime.split('T')[0];
+        if (!groups[date]) groups[date] = [];
+        groups[date].push(h);
+    });
+    return groups;
+}
+
+// ── 진단 1: 메타인지 패턴 (Recognition Pattern) ──
+
+function calculateMetacognitionPattern(days) {
+    const reflections = getReflectionsForDays(days);
+    const dates = Object.keys(reflections);
+
+    if (dates.length < 3) {
+        return { available: false, needed: 3 - dates.length };
+    }
+
+    let sumAchievement = 0, sumWrong = 0, sumTime = 0, sumReview = 0;
+    dates.forEach(d => {
+        const r = reflections[d];
+        sumAchievement += Number(r.achievement) || 0;
+        sumWrong += Number(r.wrong) || 0;
+        sumTime += Number(r.time) || 0;
+        sumReview += Number(r.review) || 0;
+    });
+
+    const count = dates.length;
+    const avgAchievement = sumAchievement / count / 20;
+    const avgWrong = sumWrong / count / 20;
+    const avgTime = sumTime / count / 20;
+    const avgReview = sumReview / count / 20;
+
+    let diagnosis, level, prescription;
+
+    if (avgTime > 0.75 && avgAchievement < 0.5) {
+        diagnosis = '가짜 공부 의심';
+        level = 'danger';
+        prescription = '시간은 투자하지만 성과가 낮습니다. 타이머 중단 후 30분간 인출 연습(백지 복습)을 시도하세요.';
+    } else if (avgWrong < 0.5 && avgAchievement < 0.5) {
+        diagnosis = '약점 보완 필요';
+        level = 'warning';
+        prescription = '오답 정리와 달성률이 모두 낮습니다. 틀린 문제를 별도로 모아 반복 학습하세요.';
+    } else if (avgReview < 0.4) {
+        diagnosis = '복습 부족';
+        level = 'warning';
+        prescription = '복습 점수가 낮아 망각이 가속화될 수 있습니다. 3일 전 학습 내용을 15분만 훑어보세요.';
+    } else {
+        diagnosis = '안정 궤도';
+        level = 'good';
+        prescription = '메타인지 지표가 균형 잡혀 있습니다. 현재 루틴을 유지하세요.';
+    }
+
+    return {
+        available: true, diagnosis, level, prescription,
+        metrics: {
+            achievement: (avgAchievement * 100).toFixed(0),
+            wrongFocus: (avgWrong * 100).toFixed(0),
+            timeInvest: (avgTime * 100).toFixed(0),
+            reviewRate: (avgReview * 100).toFixed(0)
+        }
+    };
+}
+
+// ── 진단 2: 몰입 에너지 (Focus Density) ──
+
+function calculateFocusDensity(days) {
+    const history = getHistoryForDays(days);
+    const grouped = groupHistoryByDate(history);
+    const dates = Object.keys(grouped);
+
+    if (dates.length < 3) {
+        return { available: false, needed: 3 - dates.length };
+    }
+
+    let totalFocusRatios = 0;
+    let totalPureMinutes = 0;
+    let fatigueDays = 0;
+
+    dates.forEach(date => {
+        const sessions = grouped[date].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+        const studySeconds = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+        let gapSeconds = 0;
+
+        for (let i = 1; i < sessions.length; i++) {
+            const prevEnd = new Date(sessions[i - 1].startTime).getTime() + (sessions[i - 1].duration || 0) * 1000;
+            const nextStart = new Date(sessions[i].startTime).getTime();
+            const gap = (nextStart - prevEnd) / 1000;
+            if (gap > 0 && gap < 7200) gapSeconds += gap;
+        }
+
+        const totalActive = studySeconds + gapSeconds;
+        if (totalActive > 0) {
+            totalFocusRatios += studySeconds / totalActive;
+        }
+        totalPureMinutes += studySeconds / 60;
+
+        // 피로도: 전반부 vs 후반부
+        if (sessions.length >= 4) {
+            const mid = Math.floor(sessions.length / 2);
+            const firstHalfAvg = sessions.slice(0, mid).reduce((s, e) => s + (e.duration || 0), 0) / mid;
+            const secondHalfAvg = sessions.slice(mid).reduce((s, e) => s + (e.duration || 0), 0) / (sessions.length - mid);
+            if (secondHalfAvg < firstHalfAvg * 0.5) fatigueDays++;
+        }
+    });
+
+    const avgFocusRatio = totalFocusRatios / dates.length;
+    const avgPureMinutes = (totalPureMinutes / dates.length).toFixed(0);
+    const fatigueDetected = fatigueDays >= Math.ceil(dates.length * 0.4);
+
+    let diagnosis, level, prescription;
+
+    if (avgFocusRatio < 0.4) {
+        diagnosis = '에너지 고갈';
+        level = 'danger';
+        prescription = '학습 밀도가 낮습니다. 25분 집중 + 5분 휴식의 포모도로 기법을 활용하세요.';
+    } else if (avgFocusRatio < 0.7) {
+        diagnosis = '보통 몰입';
+        level = 'warning';
+        prescription = '집중 밀도에 개선 여지가 있습니다. 몰입 모드(Zen)를 적극 활용해보세요.';
+    } else {
+        diagnosis = '높은 몰입도';
+        level = 'good';
+        prescription = '훌륭한 집중력입니다. 현재 패턴을 유지하세요.';
+    }
+
+    if (fatigueDetected) {
+        prescription += ' 후반부 집중력 저하가 감지되었습니다. 중간 휴식을 늘려보세요.';
+    }
+
+    return {
+        available: true, diagnosis, level, prescription,
+        metrics: {
+            focusRatio: (avgFocusRatio * 100).toFixed(0),
+            pureMinutes: avgPureMinutes,
+            fatigueDetected
+        }
+    };
+}
+
+// ── 진단 3: 루틴 일관성 (Routine Consistency) ──
+
+function calculateRoutineConsistency(days) {
+    const history = getHistoryForDays(days);
+    const grouped = groupHistoryByDate(history);
+    const dates = Object.keys(grouped);
+
+    if (dates.length < 5) {
+        return { available: false, needed: 5 - dates.length };
+    }
+
+    // 일별 최초 학습 시작 시각(시간 단위)
+    const startHours = dates.map(date => {
+        const sessions = grouped[date].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+        const first = new Date(sessions[0].startTime);
+        return first.getHours() + first.getMinutes() / 60;
+    });
+
+    const startTimeStdDev = stdDeviation(startHours);
+    const avgStartHour = startHours.reduce((a, b) => a + b, 0) / startHours.length;
+
+    // 주간 학습 일수 편차
+    const weeks = Math.ceil(days / 7);
+    const weeklyDays = [];
+    for (let w = 0; w < weeks; w++) {
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - (w + 1) * 7);
+        const weekEnd = new Date();
+        weekEnd.setDate(weekEnd.getDate() - w * 7);
+        const count = dates.filter(d => {
+            const dt = new Date(d);
+            return dt >= weekStart && dt < weekEnd;
+        }).length;
+        weeklyDays.push(count);
+    }
+    const weeklyVariance = stdDeviation(weeklyDays);
+
+    // 요일별 하락 감지
+    const reflections = getReflectionsForDays(days);
+    const dayOfWeekTotals = {};
+    const dayOfWeekCounts = {};
+    Object.keys(reflections).forEach(dateStr => {
+        const dow = new Date(dateStr).getDay();
+        dayOfWeekTotals[dow] = (dayOfWeekTotals[dow] || 0) + (reflections[dateStr].total || 0);
+        dayOfWeekCounts[dow] = (dayOfWeekCounts[dow] || 0) + 1;
+    });
+
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    let weakDay = null;
+    const dayAvgs = {};
+    let overallDayAvg = 0;
+    let dayCount = 0;
+    Object.keys(dayOfWeekTotals).forEach(dow => {
+        dayAvgs[dow] = dayOfWeekTotals[dow] / dayOfWeekCounts[dow];
+        overallDayAvg += dayAvgs[dow];
+        dayCount++;
+    });
+    overallDayAvg = dayCount > 0 ? overallDayAvg / dayCount : 0;
+
+    Object.keys(dayAvgs).forEach(dow => {
+        if (dayAvgs[dow] < overallDayAvg * 0.7) {
+            weakDay = dayNames[dow];
+        }
+    });
+
+    let diagnosis, level, prescription;
+
+    if (startTimeStdDev > 3) {
+        diagnosis = '불규칙한 루틴';
+        level = 'danger';
+        prescription = `학습 시작 시각의 편차가 ${startTimeStdDev.toFixed(1)}시간입니다. 매일 같은 시각에 시작하는 습관을 만들어보세요.`;
+    } else if (startTimeStdDev > 1.5) {
+        diagnosis = '약간 불규칙';
+        level = 'warning';
+        prescription = '시작 시각이 다소 흔들리고 있습니다. 일정한 기상 시각을 설정하면 학습 루틴도 안정됩니다.';
+    } else {
+        diagnosis = '안정적인 루틴';
+        level = 'good';
+        prescription = '일관된 학습 루틴을 유지하고 있습니다. 이 패턴을 지속하세요.';
+    }
+
+    if (weakDay) {
+        prescription += ` ${weakDay}요일에 성과가 유독 낮습니다. 해당 요일의 학습 환경을 점검하세요.`;
+    }
+
+    if (weeklyVariance > 2) {
+        prescription += ` 주간 학습 일수 편차가 큽니다. 매주 최소 ${Math.max(3, Math.round(weeklyDays.reduce((a, b) => a + b, 0) / weeklyDays.length))}일은 학습하세요.`;
+    }
+
+    return {
+        available: true, diagnosis, level, prescription,
+        metrics: {
+            avgStartHour: `${Math.floor(avgStartHour)}:${String(Math.round((avgStartHour % 1) * 60)).padStart(2, '0')}`,
+            startTimeStdDev: startTimeStdDev.toFixed(1),
+            weeklyVariance: weeklyVariance.toFixed(1),
+            weakDay,
+            activeDays: dates.length,
+            totalDays: days
+        }
+    };
+}
+
+// ── 리포트 시나리오 감지 ──
+
+function detectReportScenarios(metacog, focus, routine) {
+    const scenarios = [];
+
+    if (metacog.available && metacog.level === 'danger' && metacog.diagnosis === '가짜 공부 의심') {
+        scenarios.push({
+            key: 'FAKE_STUDY',
+            title: '가짜 공부 패턴 감지',
+            desc: '시간 투자는 많지만 성과가 따라오지 않고 있습니다.',
+            action: '타이머 중단 후 30분간 인출 연습(백지에 써보기) 세션을 도입하세요.'
+        });
+    }
+
+    if (routine.available && routine.metrics.weakDay) {
+        scenarios.push({
+            key: 'ENVIRONMENTAL_DISTRACTION',
+            title: `${routine.metrics.weakDay}요일 성과 하락 감지`,
+            desc: '특정 요일에 학습 효율이 크게 떨어지고 있습니다.',
+            action: '해당 요일의 학습 환경(장소, 소음, 일정)을 점검하고 교차 학습으로 주의를 환기하세요.'
+        });
+    }
+
+    if (metacog.available && Number(metacog.metrics.achievement) < 50) {
+        const history = getHistoryForDays(7);
+        const grouped = groupHistoryByDate(history);
+        const recentDates = Object.keys(grouped).sort().reverse().slice(0, 5);
+        let lowDays = 0;
+        recentDates.forEach(d => {
+            const dayTasks = state.tasks.filter(t => t.date === d);
+            if (dayTasks.length > 0) {
+                const rate = dayTasks.filter(t => t.completed).length / dayTasks.length;
+                if (rate < 0.6) lowDays++;
+            }
+        });
+        if (lowDays >= 3) {
+            scenarios.push({
+                key: 'OVERAMBITIOUS',
+                title: '과도한 계획 감지',
+                desc: '최근 5일 중 3일 이상 계획 달성률이 60% 미만입니다.',
+                action: '주간 계획을 15% 줄이고, Buffer Day(여유일)를 확보하세요.'
+            });
+        }
+    }
+
+    if (metacog.available && Number(metacog.metrics.reviewRate) < 30) {
+        scenarios.push({
+            key: 'NO_REVIEW',
+            title: '복습 부재 경고',
+            desc: '복습 활동이 거의 기록되지 않아 망각이 가속화되고 있습니다.',
+            action: '최근 학습한 과목에 대해 복습 타이머를 즉시 가동하세요.'
+        });
+    }
+
+    return scenarios;
+}
+
+// ── 필터 UI ──
+
+window.renderPatternAnalysisFilter = () => {
+    const container = document.getElementById('analysis-content');
+    container.innerHTML = `
+        <div class="data-analysis-landing scale-in">
+            <div class="landing-header">
+                <i data-lucide="scan-search"></i>
+                <h2>학습 패턴 진단</h2>
+                <p>세션 기록과 회고 데이터를 교차 분석하여 메타인지, 몰입도, 루틴을 진단합니다.</p>
+            </div>
+            <div class="filter-options">
+                <button class="filter-btn" onclick="executePatternAnalysis(7)">최근 1주일</button>
+                <button class="filter-btn" onclick="executePatternAnalysis(14)">최근 2주일</button>
+                <button class="filter-btn primary" onclick="executePatternAnalysis(30)">최근 1개월</button>
+            </div>
+            <p style="margin-top:12px; font-size:12px; color:var(--text-dim); text-align:center;">
+                최소 5일 이상의 학습 기록이 필요합니다.
+            </p>
+        </div>
+    `;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+// ── 실행 함수 ──
+
+window.executePatternAnalysis = (days) => {
+    const history = getHistoryForDays(days);
+    const grouped = groupHistoryByDate(history);
+    const activeDays = Object.keys(grouped).length;
+
+    if (activeDays < 3) {
+        alert(`분석에 필요한 데이터가 부족합니다. 현재 ${activeDays}일의 기록이 있으며, 최소 3일 이상 필요합니다.`);
+        return;
+    }
+
+    const metacog = calculateMetacognitionPattern(days);
+    const focus = calculateFocusDensity(days);
+    const routine = calculateRoutineConsistency(days);
+    const scenarios = detectReportScenarios(metacog, focus, routine);
+
+    // 종합 점수 (가용한 진단만으로 산출)
+    const levelScores = { good: 100, warning: 60, danger: 30 };
+    const diagnostics = [metacog, focus, routine].filter(d => d.available);
+    const compositeScore = diagnostics.length > 0
+        ? Math.round(diagnostics.reduce((sum, d) => sum + levelScores[d.level], 0) / diagnostics.length)
+        : 0;
+
+    const resultObj = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        type: 'Pattern',
+        score: compositeScore,
+        days,
+        metacog, focus, routine, scenarios,
+        personaName: '학습 패턴 진단 리포트',
+        personaDesc: `${days}일간 데이터 기반 메타인지/몰입/루틴 진단`,
+        personaTip: scenarios.length > 0 ? scenarios[0].action : (diagnostics.find(d => d.level !== 'good')?.prescription || '전반적으로 양호합니다.')
+    };
+
+    state.analysisResults.push(resultObj);
+    saveToLocal();
+    window.renderPatternAnalysisResult(resultObj);
+};
+
+// ── 결과 렌더러 ──
+
+window.renderPatternAnalysisResult = (result) => {
+    const container = document.getElementById('analysis-content');
+
+    const levelBadge = (level, text) => {
+        const colors = { good: '#28A745', warning: '#FFB800', danger: '#FF2D55' };
+        return `<span style="display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; color:#000; background:${colors[level]};">${text}</span>`;
+    };
+
+    const metricBar = (label, value, max = 100) => {
+        const pct = Math.min(Number(value), max);
+        const color = pct >= 70 ? '#28A745' : (pct >= 40 ? '#FFB800' : '#FF2D55');
+        return `
+            <div style="margin:8px 0;">
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:4px;">
+                    <span>${label}</span><span>${value}%</span>
+                </div>
+                <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                    <div style="width:${pct}%; height:100%; background:${color}; border-radius:3px; transition:width 0.6s;"></div>
+                </div>
+            </div>
+        `;
+    };
+
+    const unavailableCard = (title, icon, needed) => `
+        <div class="glass-card" style="padding:20px; margin-bottom:16px; text-align:center; opacity:0.5;">
+            <i data-lucide="${icon}" style="width:24px; height:24px; color:var(--text-dim); margin-bottom:8px;"></i>
+            <h3 style="font-size:15px; color:var(--text-dim);">${title}</h3>
+            <p style="font-size:13px; color:var(--text-dim); margin-top:8px;">${needed}일 더 기록하면 분석 가능합니다.</p>
+        </div>
+    `;
+
+    // 메타인지 카드
+    let metacogHTML;
+    if (result.metacog.available) {
+        const m = result.metacog;
+        metacogHTML = `
+            <div class="glass-card scale-in" style="padding:20px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="font-size:16px; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="brain" style="width:20px; height:20px; color:var(--primary);"></i>
+                        메타인지 패턴
+                    </h3>
+                    ${levelBadge(m.level, m.diagnosis)}
+                </div>
+                ${metricBar('달성률', m.metrics.achievement)}
+                ${metricBar('오답 정리 집중도', m.metrics.wrongFocus)}
+                ${metricBar('시간 투자', m.metrics.timeInvest)}
+                ${metricBar('복습률', m.metrics.reviewRate)}
+                <p style="margin-top:14px; font-size:13px; color:var(--text-sub); line-height:1.6;">
+                    ${m.prescription}
+                </p>
+            </div>
+        `;
+    } else {
+        metacogHTML = unavailableCard('메타인지 패턴', 'brain', result.metacog.needed);
+    }
+
+    // 몰입 에너지 카드
+    let focusHTML;
+    if (result.focus.available) {
+        const f = result.focus;
+        focusHTML = `
+            <div class="glass-card scale-in" style="padding:20px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="font-size:16px; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="zap" style="width:20px; height:20px; color:#FFB800;"></i>
+                        몰입 에너지
+                    </h3>
+                    ${levelBadge(f.level, f.diagnosis)}
+                </div>
+                <div style="display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:100px; text-align:center; padding:12px; background:rgba(255,255,255,0.04); border-radius:12px;">
+                        <div style="font-size:28px; font-weight:800; color:var(--text-main);">${f.metrics.focusRatio}%</div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">집중 비율</div>
+                    </div>
+                    <div style="flex:1; min-width:100px; text-align:center; padding:12px; background:rgba(255,255,255,0.04); border-radius:12px;">
+                        <div style="font-size:28px; font-weight:800; color:var(--text-main);">${f.metrics.pureMinutes}</div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">일평균 순공부(분)</div>
+                    </div>
+                </div>
+                ${f.metrics.fatigueDetected ? '<div style="padding:8px 12px; background:rgba(255,45,85,0.1); border:1px solid rgba(255,45,85,0.3); border-radius:8px; font-size:12px; color:#FF2D55; margin-bottom:12px;">후반부 집중력 저하 감지됨</div>' : ''}
+                <p style="font-size:13px; color:var(--text-sub); line-height:1.6;">
+                    ${f.prescription}
+                </p>
+            </div>
+        `;
+    } else {
+        focusHTML = unavailableCard('몰입 에너지', 'zap', result.focus.needed);
+    }
+
+    // 루틴 일관성 카드
+    let routineHTML;
+    if (result.routine.available) {
+        const r = result.routine;
+        routineHTML = `
+            <div class="glass-card scale-in" style="padding:20px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="font-size:16px; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="clock" style="width:20px; height:20px; color:#8B5CF6;"></i>
+                        루틴 일관성
+                    </h3>
+                    ${levelBadge(r.level, r.diagnosis)}
+                </div>
+                <div style="display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:100px; text-align:center; padding:12px; background:rgba(255,255,255,0.04); border-radius:12px;">
+                        <div style="font-size:22px; font-weight:800; color:var(--text-main);">${r.metrics.avgStartHour}</div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">평균 시작 시각</div>
+                    </div>
+                    <div style="flex:1; min-width:100px; text-align:center; padding:12px; background:rgba(255,255,255,0.04); border-radius:12px;">
+                        <div style="font-size:22px; font-weight:800; color:var(--text-main);">&plusmn;${r.metrics.startTimeStdDev}h</div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">시작 시각 편차</div>
+                    </div>
+                </div>
+                <div style="font-size:12px; color:var(--text-dim); margin-bottom:12px;">
+                    분석 기간 중 <strong style="color:var(--text-main);">${r.metrics.activeDays}</strong>/${r.metrics.totalDays}일 학습
+                    ${r.metrics.weakDay ? ` · <span style="color:#FF2D55;">${r.metrics.weakDay}요일 성과 하락</span>` : ''}
+                </div>
+                <p style="font-size:13px; color:var(--text-sub); line-height:1.6;">
+                    ${r.prescription}
+                </p>
+            </div>
+        `;
+    } else {
+        routineHTML = unavailableCard('루틴 일관성', 'clock', result.routine.needed);
+    }
+
+    // 시나리오 경고 카드
+    let scenarioHTML = '';
+    if (result.scenarios.length > 0) {
+        scenarioHTML = result.scenarios.map(s => `
+            <div class="glass-card scale-in" style="padding:16px; margin-bottom:12px; border:1px solid rgba(255,215,0,0.4); background:rgba(255,215,0,0.06);">
+                <h4 style="font-size:14px; color:#FFD700; margin-bottom:6px;">${s.title}</h4>
+                <p style="font-size:12px; color:var(--text-sub); margin-bottom:8px;">${s.desc}</p>
+                <p style="font-size:13px; color:var(--text-main); font-weight:600;">${s.action}</p>
+            </div>
+        `).join('');
+    }
+
+    // 종합 점수 색상
+    const scoreColor = result.score >= 80 ? '#28A745' : (result.score >= 50 ? '#FFB800' : '#FF2D55');
+
+    container.innerHTML = `
+        <div class="pattern-result-view scale-in" style="max-width:480px; margin:0 auto;">
+            <div style="text-align:center; margin-bottom:24px;">
+                <span class="period-badge">PATTERN ${result.days} DAYS</span>
+                <h1 style="font-size:20px; font-weight:800; margin-top:12px;">학습 패턴 진단 리포트</h1>
+                <div style="font-size:48px; font-weight:900; color:${scoreColor}; margin-top:12px;">${result.score}</div>
+                <div style="font-size:12px; color:var(--text-dim);">종합 패턴 점수</div>
+            </div>
+
+            ${metacogHTML}
+            ${focusHTML}
+            ${routineHTML}
+
+            ${scenarioHTML ? `<div style="margin-top:8px;"><h3 style="font-size:14px; color:#FFD700; margin-bottom:12px; display:flex; align-items:center; gap:6px;"><i data-lucide="alert-triangle" style="width:16px; height:16px;"></i> 주의 패턴</h3>${scenarioHTML}</div>` : ''}
+
+            <button class="filter-btn primary" onclick="startAnalysis('pattern')" style="width:100%; margin-top:20px;">
+                다시 분석하기
+            </button>
+        </div>
+    `;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 };

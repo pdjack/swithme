@@ -1994,6 +1994,8 @@ circle { fill: none; stroke-width: 3; stroke-linecap: round; }
 .m-action-card:active { background: rgba(255,255,255,0.08); transform: scale(0.97); }
 .m-action-card--ai { border-color: rgba(0, 86, 179, 0.5); background: rgba(0, 86, 179, 0.08); }
 .m-action-card--ai i { color: #FFD700; }
+.m-action-card--pattern { border-color: rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.06); }
+.m-action-card--pattern i { color: #FFD700; }
 
 .m-analysis-content {
     flex: 1;

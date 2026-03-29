@@ -212,6 +212,11 @@
                             <h4>AI 통합 맞춤 처방</h4>
                             <p>성향 + 데이터 기반 성적 예측</p>
                         </div>
+                        <div class="glass-card action-card action-card--pattern" onclick="startAnalysis('pattern')" style="border: 1px solid rgba(255, 215, 0, 0.5); background: rgba(255, 215, 0, 0.06); width: 100%;">
+                            <i data-lucide="scan-search" style="color: #FFD700; opacity: 1;"></i>
+                            <h4>학습 패턴 진단</h4>
+                            <p>메타인지 + 몰입도 + 루틴 분석</p>
+                        </div>
                     </div>
 
                     <!-- Content Area -->
@@ -369,6 +374,10 @@
                     <div class="m-action-card m-action-card--ai" onclick="startAnalysis('ai_integrated')">
                         <i data-lucide="sparkles"></i>
                         <span>AI 처방</span>
+                    </div>
+                    <div class="m-action-card m-action-card--pattern" onclick="startAnalysis('pattern')" style="grid-column: span 2;">
+                        <i data-lucide="scan-search"></i>
+                        <span>학습 패턴 진단</span>
                     </div>
                 </div>
                 <div id="m-analysis-content" class="m-analysis-content">
