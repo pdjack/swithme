@@ -1,4 +1,4 @@
-import { state, saveToLocal, persistTimerState, clearTimerState } from './store.js';
+import { state, saveToLocal, persistTimerState, clearTimerState, getActiveHistory } from './store.js';
 import { renderTasks } from './tasks.js';
 import { renderTimetable } from './timetable.js';
 
@@ -232,12 +232,12 @@ function recordSession() {
         duration: actualDuration
     };
 
-    state.history.push(session);
+    getActiveHistory().push(session);
 
     if (state.timer.activeTaskId) {
         state.tasks = state.tasks.map(t => {
             if (t.id === state.timer.activeTaskId) {
-                const totalSecs = state.history.filter(h => h.taskId === t.id).reduce((acc, h) => acc + h.duration, 0);
+                const totalSecs = getActiveHistory().filter(h => h.taskId === t.id).reduce((acc, h) => acc + h.duration, 0);
                 const m = Math.floor(totalSecs / 60);
                 const s = totalSecs % 60;
                 let timeStr = (m > 0) ? `${m}m ${s}s` : `${s}s`;

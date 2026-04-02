@@ -140,6 +140,177 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     background: #FFFFFF;
 }
 
+/* ── 타임테이블 탭 바 (PC) ──────────────────────────────── */
+.tt-tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px 0;
+    background: transparent;
+    min-height: 36px;
+}
+
+.tt-tab-list {
+    display: flex;
+    flex: 1;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+}
+.tt-tab-list::-webkit-scrollbar { display: none; }
+
+.tt-tab {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 500;
+    color: #8E8E93;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid transparent;
+    border-bottom: none;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+    flex-shrink: 0;
+}
+.tt-tab:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #1C1C1E;
+}
+.tt-tab--active {
+    background: #FFFFFF;
+    color: #1C1C1E;
+    border-color: #E5E5EA;
+    font-weight: 600;
+}
+
+.tt-tab__name {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tt-tab__input {
+    width: 80px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    outline: 1px solid #0056B3;
+    border-radius: 3px;
+    padding: 0 4px;
+    background: #fff;
+    color: #1C1C1E;
+}
+
+.tt-tab__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 1px;
+    color: #8E8E93;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+.tt-tab:hover .tt-tab__close { opacity: 1; }
+.tt-tab__close:hover { color: #FF2D55; }
+
+.tt-scroll-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 4px;
+    color: #8E8E93;
+    border-radius: 4px;
+    flex-shrink: 0;
+    visibility: hidden;
+    transition: color 0.15s, background 0.15s;
+}
+.tt-scroll-btn--visible { visibility: visible; }
+.tt-scroll-btn:hover {
+    color: #0056B3;
+    background: rgba(0, 86, 179, 0.08);
+}
+
+.tt-add-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #8E8E93;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+}
+.tt-add-btn:hover {
+    color: #0056B3;
+    background: rgba(0, 86, 179, 0.08);
+}
+
+/* ── 타임테이블 탭 바 (모바일) ─────────────────────────── */
+.m-tt-tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0 2px;
+}
+
+.m-tt-tab-list {
+    display: flex;
+    flex: 1;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+}
+.m-tt-tab-list::-webkit-scrollbar { display: none; }
+
+.m-tt-tab {
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.06);
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+}
+.m-tt-tab--active {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.m-tt-add-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.5);
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+.m-tt-add-btn:hover, .m-tt-add-btn:active { color: #FFFFFF; }
+
 .hour-row {
     display: flex;
     height: 32px; /* Precision height */

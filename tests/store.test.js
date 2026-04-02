@@ -53,7 +53,8 @@ describe('store.js', () => {
       store.saveToLocal();
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_tasks', expect.any(String));
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_history', expect.any(String));
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_timetables', expect.any(String));
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_active_timetable_id', expect.any(String));
       expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_subjects', expect.any(String));
       expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_reflections', expect.any(String));
       expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_analysis', expect.any(String));

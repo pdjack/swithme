@@ -136,6 +136,13 @@
                             <h3>Study Timetable</h3>
                             <button id="clear-timetable-btn" class="ghost-btn" title="Clear All Data"><i data-lucide="refresh-ccw"></i></button>
                         </div>
+                        <!-- 탭 바 (PC 전용: ◀/▶ 화살표 포함) -->
+                        <div id="timetable-tab-bar" class="tt-tab-bar">
+                            <button id="tt-scroll-left" class="tt-scroll-btn" aria-label="이전 탭">&#8249;</button>
+                            <div id="tt-tab-list" class="tt-tab-list"></div>
+                            <button id="tt-scroll-right" class="tt-scroll-btn" aria-label="다음 탭">&#8250;</button>
+                            <button id="tt-add-btn" class="tt-add-btn" title="새 타임테이블 추가">+</button>
+                        </div>
                         <div id="timetable-root" class="timetable-container">
                             <!-- JS will generate 24 rows * 6 slots -->
                         </div>
@@ -326,6 +333,11 @@
                             <button class="m-ghost-btn" id="m-clear-timetable-btn">
                                 <i data-lucide="refresh-ccw"></i>
                             </button>
+                        </div>
+                        <!-- 탭 바 (모바일: 스와이프 스크롤, 화살표 없음) -->
+                        <div id="m-timetable-tab-bar" class="m-tt-tab-bar">
+                            <div id="m-tt-tab-list" class="m-tt-tab-list"></div>
+                            <button id="m-tt-add-btn" class="m-tt-add-btn" title="새 타임테이블 추가">+</button>
                         </div>
                         <div id="m-timetable-root" class="m-timetable-container">
                             <!-- JS 주입 -->

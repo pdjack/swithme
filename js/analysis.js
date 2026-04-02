@@ -1,4 +1,4 @@
-import { state, saveToLocal } from './store.js';
+import { state, saveToLocal, getActiveHistory } from './store.js';
 
 /**
  * 🧠 Analysis Module (Phase 2, 3, 4)
@@ -630,7 +630,7 @@ window.generateTomorrowPlan = () => {
     const latestData = state.analysisResults.slice().reverse().find(r => r.type.startsWith('Data'));
     
     // Find subject with least study time in history (recent 3 days)
-    const recentHistory = state.history.slice(-20);
+    const recentHistory = getActiveHistory().slice(-20);
     const subjectTimes = {};
     state.subjects.forEach(s => subjectTimes[s.id] = 0);
     recentHistory.forEach(h => {

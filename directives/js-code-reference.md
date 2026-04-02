@@ -57,7 +57,8 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | `tasks` | `Array` | 할 일 목록 (`id`, `subject`, `name`, `duration`, `completed`, `date`) |
 | `subjects` | `Array` | 과목 목록 (`id`, `name`, `color`) |
 | `timer` | `Object` | 타이머 상태 (`mode`, `seconds`, `totalDuration`, `stopwatchSeconds`, `isRunning`, `interval`, `activeTaskId`, `isZenMode`) |
-| `history` | `Array` | 학습 세션 기록 (`startTime`, `taskId`, `subject`, `duration`) |
+| `timetables` | `Array` | 타임테이블 목록 (`id`, `name`, `history[]`) — 각 타임테이블이 독립된 학습 세션 기록을 보유 |
+| `activeTimetableId` | `string` | 현재 활성 타임테이블 ID |
 | `reflections` | `Object` | 날짜별 하루 회고 (`{date: {achievement, time, wrong, review, homework, total}}`) |
 | `analysisResults` | `Array` | 분석 결과 이력 |
 | `selectedDate` | `string` | 현재 선택된 날짜 (YYYY-MM-DD) |
@@ -76,7 +77,8 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 
 | 함수 | 설명 |
 |------|------|
-| `saveToLocal()` | state의 tasks, history, subjects, reflections, analysisResults를 localStorage에 저장 |
+| `saveToLocal()` | state의 tasks, timetables, activeTimetableId, subjects, reflections, analysisResults를 localStorage에 저장 |
+| `getActiveHistory()` | 현재 활성 타임테이블의 history 배열 반환 |
 | `getSubjectColor(id)` | 과목 ID로 색상 반환 (없으면 `#8E8E93`) |
 | `formatSeconds(totalSeconds)` | 초를 `HH:MM:SS` 형식 문자열로 변환 |
 
@@ -194,22 +196,40 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 
 ## 6. timetable.js - 타임테이블
 
-**역할**: 24시간(06:00~) 타임테이블을 10분 단위 슬롯으로 렌더링.
+**역할**: 24시간(06:00~) 타임테이블을 10분 단위 슬롯으로 렌더링. 멀티 탭(타임테이블 여러 개) 관리.
 
 ### Export 함수
 
 | 함수 | 설명 |
 |------|------|
-| `renderTimetable()` | 데스크탑(`#timetable-root`) + 모바일(`#m-timetable-root`) 타임테이블 동시 렌더링 |
+| `renderTimetable()` | 데스크탑(`#timetable-root`) + 모바일(`#m-timetable-root`) 타임테이블 동시 렌더링 (활성 탭 기준) |
 
 ### 내부 함수
 
 | 함수 | 설명 |
 |------|------|
-| `buildTimetableRows(root)` | 24시간 × 6슬롯(10분) 그리드 생성, history 세션과 겹치는 슬롯에 과목 색상 채우기 |
+| `buildTimetableRows(root)` | 24시간 × 6슬롯(10분) 그리드 생성, `getActiveHistory()` 세션과 겹치는 슬롯에 과목 색상 채우기 |
+| `renderTabs()` | PC + 모바일 탭 바 동시 렌더링 |
+| `renderDesktopTabs()` | PC 탭 바 렌더링 (◀/▶ 화살표 포함) |
+| `renderMobileTabs()` | 모바일 탭 바 렌더링 (스와이프 스크롤, 화살표 없음) |
+| `updateScrollArrows()` | PC 전용 — 스크롤 위치 확인 후 ◀/▶ 버튼 표시 갱신 |
+| `scrollActiveTabIntoView(listEl)` | 활성 탭이 뷰포트 안에 오도록 자동 스크롤 |
+| `startRenameTab(tabEl, nameSpan, id)` | 탭 인라인 이름 편집 모드 진입 |
+| `switchTimetable(id)` | 활성 타임테이블 전환 |
+| `addTimetable()` | 새 타임테이블 추가 + 자동 활성화 |
+| `deleteTimetable(id)` | 타임테이블 삭제 (최소 1개 유지), 인접 탭 자동 활성화 |
+| `renameTimetable(id, name)` | 타임테이블 이름 변경 |
 
-### 추가 기능
-- `#clear-timetable-btn` 클릭 시 history 전체 삭제 + 태스크 duration 초기화
+### 탭 인터랙션
+- 탭 클릭: 활성 탭 전환
+- 탭 더블클릭: 인라인 이름 편집 (Enter/blur 저장)
+- `×` 버튼: 탭 삭제 (2개 이상일 때만 표시)
+- `+` 버튼: 새 탭 추가
+- PC `◀`/`▶` 버튼: 탭 목록 스크롤 (오버플로우 시만 표시)
+- 모바일: 터치 스와이프로 탭 스크롤
+
+### Clear 버튼
+- `#clear-timetable-btn` / `#m-clear-timetable-btn` 클릭 시 활성 탭의 history만 삭제 + 태스크 duration 초기화
 
 ---
 
@@ -406,7 +426,10 @@ localStorage ←→ store.js (state)
 | 키 | 내용 |
 |----|------|
 | `switme_tasks` | 할 일 목록 |
-| `switme_history` | 학습 세션 기록 |
+| `switme_timetables` | 타임테이블 목록 (`[{id, name, history[]}]`) |
+| `switme_active_timetable_id` | 현재 활성 타임테이블 ID |
 | `switme_subjects` | 과목 목록 |
 | `switme_reflections` | 날짜별 하루 회고 |
 | `switme_analysis` | 분석 결과 이력 |
+
+> **마이그레이션**: `switme_timetables`가 없고 `switme_history`가 있으면 자동으로 첫 번째 탭의 history로 이전.

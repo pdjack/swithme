@@ -1,4 +1,24 @@
 // --- State Management ---
+
+// 기존 switme_history 마이그레이션: switme_timetables가 없고 switme_history가 있으면 첫 번째 탭으로 이전
+function loadTimetables() {
+    const savedTimetables = localStorage.getItem('switme_timetables');
+    if (savedTimetables) {
+        return JSON.parse(savedTimetables);
+    }
+    const legacyHistory = localStorage.getItem('switme_history');
+    const history = legacyHistory ? JSON.parse(legacyHistory) : [];
+    return [{ id: 'tt_default', name: '플랜 1', history }];
+}
+
+function loadActiveTimetableId(timetables) {
+    const saved = localStorage.getItem('switme_active_timetable_id');
+    if (saved && timetables.find(t => t.id === saved)) return saved;
+    return timetables[0].id;
+}
+
+const _timetables = loadTimetables();
+
 export let state = {
     tasks: JSON.parse(localStorage.getItem('switme_tasks')) || [
         { id: 1, subject: 'ENG', name: '모의고사 1회', duration: '0s', completed: true, date: new Date().toISOString().split('T')[0] },
@@ -27,7 +47,8 @@ export let state = {
         wallStartTimestamp: null, // Date.now() when timer started/resumed
         elapsedAtPause: 0 // Accumulated seconds before current run
     },
-    history: JSON.parse(localStorage.getItem('switme_history')) || [],
+    timetables: _timetables,
+    activeTimetableId: loadActiveTimetableId(_timetables),
     reflections: JSON.parse(localStorage.getItem('switme_reflections')) || {},
     analysisResults: JSON.parse(localStorage.getItem('switme_analysis')) || [],
     selectedDate: new Date().toISOString().split('T')[0] // YYYY-MM-DD
@@ -38,10 +59,16 @@ state.tasks = state.tasks.map(t => ({ ...t, date: t.date || state.selectedDate }
 
 export function saveToLocal() {
     localStorage.setItem('switme_tasks', JSON.stringify(state.tasks));
-    localStorage.setItem('switme_history', JSON.stringify(state.history));
+    localStorage.setItem('switme_timetables', JSON.stringify(state.timetables));
+    localStorage.setItem('switme_active_timetable_id', state.activeTimetableId);
     localStorage.setItem('switme_subjects', JSON.stringify(state.subjects));
     localStorage.setItem('switme_reflections', JSON.stringify(state.reflections));
     localStorage.setItem('switme_analysis', JSON.stringify(state.analysisResults));
+}
+
+export function getActiveHistory() {
+    const active = state.timetables.find(t => t.id === state.activeTimetableId);
+    return active ? active.history : state.timetables[0].history;
 }
 
 export function getSubjectColor(id) {
