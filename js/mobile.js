@@ -4,7 +4,7 @@
  * 기존 store.js의 state를 공유하고, PC 사이드 함수(timer 등)를 재사용합니다.
  */
 
-import { state, saveToLocal, formatSeconds, getSubjectColor } from './store.js';
+import { state, saveToLocal, formatSeconds, getSubjectColor, getActiveHistory } from './store.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
 import { renderSubjectOptions } from './tasks.js';
 import { renderSubjectManager } from './ui.js';
@@ -109,11 +109,11 @@ export function renderMobileTasks() {
 
     const groupedSubjects = state.subjects.map(subject => {
         const tasks = dailyTasks.filter(t => t.subject === subject.id);
-        const totalSecs = state.history
+        const totalSecs = getActiveHistory()
             .filter(h => h.subject === subject.id && h.startTime.startsWith(state.selectedDate))
             .reduce((acc, h) => acc + h.duration, 0);
         return { ...subject, tasks, totalTimeFormatted: formatSeconds(totalSecs) };
-    }).filter(s => s.tasks.length > 0 || state.history.some(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate)));
+    }).filter(s => s.tasks.length > 0 || getActiveHistory().some(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate)));
 
     if (groupedSubjects.length === 0) {
         mTaskList.innerHTML = `<li style="text-align:center; padding:32px 12px; color:var(--text-dim); font-size:13px;">오늘의 계획이 없습니다.</li>`;
@@ -183,7 +183,7 @@ export function renderMobileTimetable() {
             const slotStart = slotTime.getTime();
             const slotEnd = slotStart + 10 * 60000;
 
-            const activeSession = state.history.find(session => {
+            const activeSession = getActiveHistory().find(session => {
                 const sStart = new Date(session.startTime).getTime();
                 const sEnd = sStart + session.duration * 1000;
                 return sStart < slotEnd && sEnd > slotStart;
@@ -488,7 +488,7 @@ export function setupMobileUI() {
     if (mClearBtn) {
         mClearBtn.addEventListener('click', () => {
             if (confirm('오늘의 모든 공부 기록(타임테이블)을 삭제하시겠습니까?')) {
-                state.history = [];
+                getActiveHistory().splice(0);
                 state.tasks = state.tasks.map(t => ({ ...t, duration: '0s' }));
                 saveToLocal();
                 renderMobileTasks();

@@ -288,19 +288,5 @@ if (clearTimetableBtn) {
     });
 }
 
-// Clear 버튼 (Mobile)
-const mClearBtn = document.getElementById('m-clear-timetable-btn');
-if (mClearBtn) {
-    mClearBtn.addEventListener('click', () => {
-        if (confirm('현재 타임테이블의 모든 공부 기록을 삭제하시겠습니까?')) {
-            getActiveHistory().splice(0);
-            state.tasks = state.tasks.map(t => ({ ...t, duration: '0s' }));
-            saveToLocal();
-            renderTasks();
-            renderTimetable();
-        }
-    });
-}
-
 // ─── 초기 탭 렌더링 ─────────────────────────────────────────────────
 renderTabs();
