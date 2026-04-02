@@ -1,4 +1,4 @@
-import { state, formatSeconds, saveToLocal } from './store.js';
+import { state, formatSeconds, saveToLocal, getActiveHistory } from './store.js';
 
 const taskList = document.getElementById('task-list');
 const subjectSelect = document.getElementById('task-subject');
@@ -14,16 +14,16 @@ export function renderTasks() {
         const tasksForSubject = dailyTasks.filter(t => t.subject === subject.id);
         
         // 해당 과목의 총 학습 시간 계산 (초 단위)
-        const totalSecs = state.history
+        const totalSecs = getActiveHistory()
             .filter(h => h.subject === subject.id && h.startTime.startsWith(state.selectedDate))
             .reduce((acc, h) => acc + h.duration, 0);
-            
+
         return {
             ...subject,
             tasks: tasksForSubject,
             totalTimeFormatted: formatSeconds(totalSecs)
         };
-    }).filter(s => s.tasks.length > 0 || state.history.some(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate)));
+    }).filter(s => s.tasks.length > 0 || getActiveHistory().some(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate)));
 
     taskList.innerHTML = groupedSubjects.map(group => `
         <div class="subject-group">
