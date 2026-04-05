@@ -139,12 +139,70 @@ function renderDesktopTabs() {
     }, 0);
 }
 
+// ─── 모바일 탭 컨텍스트 메뉴 ────────────────────────────────────────
+
+function closeMobileTabMenu() {
+    const existing = document.getElementById('m-tt-context-menu');
+    if (existing) existing.remove();
+}
+
+function showMobileTabMenu(targetTab, ttId) {
+    closeMobileTabMenu();
+
+    const menu = document.createElement('div');
+    menu.id = 'm-tt-context-menu';
+    menu.className = 'm-tt-context-menu';
+
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'm-tt-context-menu__item';
+    renameBtn.textContent = '이름 변경';
+    renameBtn.addEventListener('click', () => {
+        closeMobileTabMenu();
+        const tt = state.timetables.find(t => t.id === ttId);
+        if (!tt) return;
+        const newName = prompt('새 이름을 입력하세요', tt.name);
+        if (newName !== null && newName.trim()) {
+            renameTimetable(ttId, newName.trim().slice(0, 12));
+        }
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'm-tt-context-menu__item m-tt-context-menu__item--danger';
+    deleteBtn.textContent = '삭제';
+    if (state.timetables.length <= 1) {
+        deleteBtn.disabled = true;
+    }
+    deleteBtn.addEventListener('click', () => {
+        closeMobileTabMenu();
+        if (confirm('이 타임테이블을 삭제하시겠습니까?')) {
+            deleteTimetable(ttId);
+        }
+    });
+
+    menu.appendChild(renameBtn);
+    menu.appendChild(deleteBtn);
+
+    // 탭 위치 기준으로 메뉴 배치
+    const rect = targetTab.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 4) + 'px';
+    menu.style.left = Math.max(8, rect.left) + 'px';
+
+    document.body.appendChild(menu);
+
+    // 메뉴 밖 터치 시 닫기
+    setTimeout(() => {
+        document.addEventListener('touchstart', closeMobileTabMenu, { once: true });
+        document.addEventListener('click', closeMobileTabMenu, { once: true });
+    }, 0);
+}
+
 // ─── 탭 렌더링 (모바일) ─────────────────────────────────────────────
 
 function renderMobileTabs() {
     const list = document.getElementById('m-tt-tab-list');
     if (!list) return;
     list.innerHTML = '';
+    closeMobileTabMenu();
 
     state.timetables.forEach(tt => {
         const tab = document.createElement('div');
@@ -152,7 +210,33 @@ function renderMobileTabs() {
         tab.dataset.id = tt.id;
         tab.textContent = tt.name;
 
+        // 탭 클릭 → 활성화
         tab.addEventListener('click', () => switchTimetable(tt.id));
+
+        // 롱프레스 → 컨텍스트 메뉴
+        let longPressTimer = null;
+        let didLongPress = false;
+
+        tab.addEventListener('touchstart', e => {
+            didLongPress = false;
+            longPressTimer = setTimeout(() => {
+                didLongPress = true;
+                e.preventDefault();
+                showMobileTabMenu(tab, tt.id);
+            }, 500);
+        }, { passive: false });
+
+        tab.addEventListener('touchend', () => {
+            clearTimeout(longPressTimer);
+            if (didLongPress) {
+                // 롱프레스 후 click 이벤트 무시
+                tab.addEventListener('click', e => e.stopImmediatePropagation(), { once: true, capture: true });
+            }
+        });
+
+        tab.addEventListener('touchmove', () => {
+            clearTimeout(longPressTimer);
+        });
 
         list.appendChild(tab);
     });

@@ -297,6 +297,51 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     font-weight: 600;
 }
 
+/* ── 모바일 탭 컨텍스트 메뉴 ─────────────────────────── */
+.m-tt-context-menu {
+    position: fixed;
+    z-index: 9999;
+    min-width: 120px;
+    background: rgba(30, 30, 40, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    animation: mttMenuFadeIn 0.15s ease;
+}
+@keyframes mttMenuFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.m-tt-context-menu__item {
+    display: block;
+    width: 100%;
+    padding: 8px 14px;
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    text-align: left;
+    border-radius: 7px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.m-tt-context-menu__item:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+.m-tt-context-menu__item--danger {
+    color: #ff6b6b;
+}
+.m-tt-context-menu__item--danger:active {
+    background: rgba(255, 107, 107, 0.1);
+}
+.m-tt-context-menu__item:disabled {
+    color: rgba(255, 255, 255, 0.25);
+    cursor: default;
+}
+
 .m-tt-add-btn {
     background: none;
     border: none;
