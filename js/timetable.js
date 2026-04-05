@@ -191,8 +191,14 @@ function showMobileTabMenu(targetTab, ttId) {
 
     // 메뉴 밖 터치 시 닫기
     setTimeout(() => {
-        document.addEventListener('touchstart', closeMobileTabMenu, { once: true });
-        document.addEventListener('click', closeMobileTabMenu, { once: true });
+        function dismissIfOutside(e) {
+            if (menu.contains(e.target)) return;
+            closeMobileTabMenu();
+            document.removeEventListener('touchstart', dismissIfOutside, true);
+            document.removeEventListener('click', dismissIfOutside, true);
+        }
+        document.addEventListener('touchstart', dismissIfOutside, { capture: true });
+        document.addEventListener('click', dismissIfOutside, { capture: true });
     }, 0);
 }
 
