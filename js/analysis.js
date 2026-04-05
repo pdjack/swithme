@@ -627,8 +627,6 @@ window.renderImmersionHeatmap = () => {
 window.generateTomorrowPlan = () => {
     // 1. Data Analysis for Planning
     const latestTest = state.analysisResults.slice().reverse().find(r => r.type === 'Test');
-    const latestData = state.analysisResults.slice().reverse().find(r => r.type.startsWith('Data'));
-    
     // Find subject with least study time in history (recent 3 days)
     const recentHistory = getActiveHistory().slice(-20);
     const subjectTimes = {};
@@ -734,7 +732,7 @@ window.applyAIPlan = (plans) => {
     saveToLocal();
     alert('내일 계획에 추가되었습니다! 대시보드에서 날짜를 내일로 변경하여 확인하세요.');
     document.getElementById('ai-plan-modal').remove();
-    switchTab('dashboard');
+    window.switchTab('dashboard');
 };
 
 window.updateAIAdaptiveFeedback = () => {

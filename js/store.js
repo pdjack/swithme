@@ -131,6 +131,24 @@ export function clearTimerState() {
     localStorage.removeItem('switme_timer');
 }
 
+// ── 렌더링 배치 스케줄러 ────────────────────────────────────────────
+// 여러 렌더 함수를 Set으로 중복 제거 후 단일 rAF에서 한 번에 실행
+const pendingRenders = new Set();
+let renderRafId = null;
+
+export function scheduleRender(...fns) {
+    for (const fn of fns) {
+        if (fn) pendingRenders.add(fn);
+    }
+    if (renderRafId) return;
+    renderRafId = window.requestAnimationFrame(() => {
+        renderRafId = null;
+        const batch = [...pendingRenders];
+        pendingRenders.clear();
+        batch.forEach(fn => fn());
+    });
+}
+
 export function formatSeconds(totalSeconds) {
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);

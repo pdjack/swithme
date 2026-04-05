@@ -1,4 +1,4 @@
-import { state, saveToLocal } from './store.js';
+import { state, saveToLocal, scheduleRender } from './store.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay, loadTodayReflection } from './timer.js';
@@ -69,15 +69,27 @@ window.handleDrop = (e, targetIdx) => {
     const movedItem = state.subjects.splice(draggedIdx, 1)[0];
     state.subjects.splice(targetIdx, 0, movedItem);
     saveToLocal();
-    renderSubjectManager();
-    renderSubjectOptions();
-    if (window.renderMobileSubjectManager) window.renderMobileSubjectManager();
+    scheduleRender(renderSubjectManager, renderSubjectOptions, window.renderMobileSubjectManager);
 };
 window.handleDragEnd = (e) => { e.target.classList.remove('dragging'); draggedIdx = null; };
 
-window.updateSubjectName = (id, name) => { state.subjects = state.subjects.map(s => s.id === id ? { ...s, name } : s); saveToLocal(); renderSubjectOptions(); renderSubjectManager(); if(window.renderMobileSubjectManager) window.renderMobileSubjectManager(); renderTasks(); if(window.renderMobileTasks) window.renderMobileTasks(); };
-window.updateSubjectColor = (id, color) => { state.subjects = state.subjects.map(s => s.id === id ? { ...s, color } : s); saveToLocal(); renderTasks(); if(window.renderMobileTasks) window.renderMobileTasks(); renderTimetable(); renderSubjectManager(); if(window.renderMobileSubjectManager) window.renderMobileSubjectManager(); };
-window.deleteSubject = (id) => { if (state.subjects.length <= 1) return alert('최소 하나의 과목은 있어야 합니다.'); state.subjects = state.subjects.filter(s => s.id !== id); saveToLocal(); renderSubjectManager(); renderSubjectOptions(); if(window.renderMobileSubjectManager) window.renderMobileSubjectManager(); renderTasks(); if(window.renderMobileTasks) window.renderMobileTasks(); renderTimetable(); };
+window.updateSubjectName = (id, name) => {
+    state.subjects = state.subjects.map(s => s.id === id ? { ...s, name } : s);
+    saveToLocal();
+    // renderTasks 내부에서 renderMobileTasks를 이미 호출하므로 별도 호출 불필요
+    scheduleRender(renderSubjectOptions, renderSubjectManager, window.renderMobileSubjectManager, renderTasks);
+};
+window.updateSubjectColor = (id, color) => {
+    state.subjects = state.subjects.map(s => s.id === id ? { ...s, color } : s);
+    saveToLocal();
+    scheduleRender(renderTasks, renderTimetable, renderSubjectManager, window.renderMobileSubjectManager);
+};
+window.deleteSubject = (id) => {
+    if (state.subjects.length <= 1) return alert('최소 하나의 과목은 있어야 합니다.');
+    state.subjects = state.subjects.filter(s => s.id !== id);
+    saveToLocal();
+    scheduleRender(renderSubjectManager, renderSubjectOptions, window.renderMobileSubjectManager, renderTasks, renderTimetable);
+};
 
 let currentCalendarDate = new Date();
 
