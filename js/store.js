@@ -57,7 +57,15 @@ export let state = {
 // Ensure all tasks have a date
 state.tasks = state.tasks.map(t => ({ ...t, date: t.date || state.selectedDate }));
 
-export function saveToLocal() {
+// ── localStorage 디바운스 저장 ───────────────────────────────────────
+// 빠른 연속 조작 시 직렬화를 한 번으로 병합 (300ms)
+let saveTimerId = null;
+
+function flushSave() {
+    if (saveTimerId) {
+        clearTimeout(saveTimerId);
+        saveTimerId = null;
+    }
     localStorage.setItem('switme_tasks', JSON.stringify(state.tasks));
     localStorage.setItem('switme_timetables', JSON.stringify(state.timetables));
     localStorage.setItem('switme_active_timetable_id', state.activeTimetableId);
@@ -65,6 +73,17 @@ export function saveToLocal() {
     localStorage.setItem('switme_reflections', JSON.stringify(state.reflections));
     localStorage.setItem('switme_analysis', JSON.stringify(state.analysisResults));
 }
+
+export function saveToLocal() {
+    if (saveTimerId) return;
+    saveTimerId = setTimeout(flushSave, 300);
+}
+
+// 페이지 이탈·백그라운드 전환 시 미저장 데이터 즉시 기록
+window.addEventListener('beforeunload', flushSave);
+window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushSave();
+});
 
 export function getActiveHistory() {
     const active = state.timetables.find(t => t.id === state.activeTimetableId);
