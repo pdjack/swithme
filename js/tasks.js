@@ -3,27 +3,29 @@ import { state, formatSeconds, saveToLocal, getActiveHistory } from './store.js'
 const taskList = document.getElementById('task-list');
 const subjectSelect = document.getElementById('task-subject');
 
-export function renderTasks() {
-    if (!taskList) return;
-    
-    // 선택된 날짜의 태스크 필터링
+// 과목별 태스크 그룹핑 (PC/모바일 공용)
+export function getGroupedTaskData() {
     const dailyTasks = state.tasks.filter(t => t.date === state.selectedDate);
-    
-    // 과목별로 그룹화
-    const groupedSubjects = state.subjects.map(subject => {
-        const tasksForSubject = dailyTasks.filter(t => t.subject === subject.id);
-        
-        // 해당 과목의 총 학습 시간 계산 (초 단위)
-        const totalSecs = getActiveHistory()
+    const activeHistory = getActiveHistory();
+
+    return state.subjects.map(subject => {
+        const tasks = dailyTasks.filter(t => t.subject === subject.id);
+        const totalSecs = activeHistory
             .filter(h => h.subject === subject.id && h.startTime.startsWith(state.selectedDate))
             .reduce((acc, h) => acc + h.duration, 0);
 
         return {
             ...subject,
-            tasks: tasksForSubject,
+            tasks,
             totalTimeFormatted: formatSeconds(totalSecs)
         };
-    }).filter(s => s.tasks.length > 0 || getActiveHistory().some(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate)));
+    }).filter(s => s.tasks.length > 0 || activeHistory.some(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate)));
+}
+
+export function renderTasks() {
+    if (!taskList) return;
+
+    const groupedSubjects = getGroupedTaskData();
 
     taskList.innerHTML = groupedSubjects.map(group => `
         <div class="subject-group">

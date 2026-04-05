@@ -76,8 +76,8 @@ window.handleDrop = (e, targetIdx) => {
 window.handleDragEnd = (e) => { e.target.classList.remove('dragging'); draggedIdx = null; };
 
 window.updateSubjectName = (id, name) => { state.subjects = state.subjects.map(s => s.id === id ? { ...s, name } : s); saveToLocal(); renderSubjectOptions(); renderSubjectManager(); if(window.renderMobileSubjectManager) window.renderMobileSubjectManager(); renderTasks(); if(window.renderMobileTasks) window.renderMobileTasks(); };
-window.updateSubjectColor = (id, color) => { state.subjects = state.subjects.map(s => s.id === id ? { ...s, color } : s); saveToLocal(); renderTasks(); if(window.renderMobileTasks) window.renderMobileTasks(); renderTimetable(); if(window.renderMobileTimetable) window.renderMobileTimetable(); renderSubjectManager(); if(window.renderMobileSubjectManager) window.renderMobileSubjectManager(); };
-window.deleteSubject = (id) => { if (state.subjects.length <= 1) return alert('최소 하나의 과목은 있어야 합니다.'); state.subjects = state.subjects.filter(s => s.id !== id); saveToLocal(); renderSubjectManager(); renderSubjectOptions(); if(window.renderMobileSubjectManager) window.renderMobileSubjectManager(); renderTasks(); if(window.renderMobileTasks) window.renderMobileTasks(); renderTimetable(); if(window.renderMobileTimetable) window.renderMobileTimetable(); };
+window.updateSubjectColor = (id, color) => { state.subjects = state.subjects.map(s => s.id === id ? { ...s, color } : s); saveToLocal(); renderTasks(); if(window.renderMobileTasks) window.renderMobileTasks(); renderTimetable(); renderSubjectManager(); if(window.renderMobileSubjectManager) window.renderMobileSubjectManager(); };
+window.deleteSubject = (id) => { if (state.subjects.length <= 1) return alert('최소 하나의 과목은 있어야 합니다.'); state.subjects = state.subjects.filter(s => s.id !== id); saveToLocal(); renderSubjectManager(); renderSubjectOptions(); if(window.renderMobileSubjectManager) window.renderMobileSubjectManager(); renderTasks(); if(window.renderMobileTasks) window.renderMobileTasks(); renderTimetable(); };
 
 let currentCalendarDate = new Date();
 

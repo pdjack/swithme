@@ -4,10 +4,11 @@
  * 기존 store.js의 state를 공유하고, PC 사이드 함수(timer 등)를 재사용합니다.
  */
 
-import { state, saveToLocal, formatSeconds, getSubjectColor, getActiveHistory } from './store.js';
+import { state, saveToLocal, getActiveHistory } from './store.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
-import { renderSubjectOptions } from './tasks.js';
+import { renderSubjectOptions, getGroupedTaskData } from './tasks.js';
 import { renderSubjectManager } from './ui.js';
+import { renderTimetable } from './timetable.js';
 
 // ── 타이머 디스플레이 동기화 ─────────────────────────────────────
 // 기존 updateTimerDisplay는 #timer-display만 업데이트.
@@ -48,7 +49,6 @@ window.updateTimerDisplayExtended = () => {
 
 // 모듈 간 동기화를 위해 전역 노출
 window.renderMobileTasks = renderMobileTasks;
-window.renderMobileTimetable = renderMobileTimetable;
 
 // ── 모바일 START/STOP 버튼 상태 반영 ────────────────────────────
 function syncMobileStartBtn(isRunning) {
@@ -85,7 +85,7 @@ function switchMobileTab(tab) {
 
     if (tab === 'dashboard') {
         renderMobileTasks();
-        renderMobileTimetable();
+        renderTimetable();
     } else if (tab === 'plan') {
         renderMobileCalendar();
     } else if (tab === 'settings') {
@@ -105,15 +105,7 @@ export function renderMobileTasks() {
     const mTaskList = document.getElementById('m-task-list');
     if (!mTaskList) return;
 
-    const dailyTasks = state.tasks.filter(t => t.date === state.selectedDate);
-
-    const groupedSubjects = state.subjects.map(subject => {
-        const tasks = dailyTasks.filter(t => t.subject === subject.id);
-        const totalSecs = getActiveHistory()
-            .filter(h => h.subject === subject.id && h.startTime.startsWith(state.selectedDate))
-            .reduce((acc, h) => acc + h.duration, 0);
-        return { ...subject, tasks, totalTimeFormatted: formatSeconds(totalSecs) };
-    }).filter(s => s.tasks.length > 0 || getActiveHistory().some(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate)));
+    const groupedSubjects = getGroupedTaskData();
 
     if (groupedSubjects.length === 0) {
         mTaskList.innerHTML = `<li style="text-align:center; padding:32px 12px; color:var(--text-dim); font-size:13px;">오늘의 계획이 없습니다.</li>`;
@@ -149,55 +141,6 @@ export function renderMobileTasks() {
     `).join('');
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-// ── 모바일 타임테이블 렌더링 ─────────────────────────────────────
-export function renderMobileTimetable() {
-    const root = document.getElementById('m-timetable-root');
-    if (!root) return;
-
-    root.innerHTML = '';
-    const startHour = 6;
-
-    for (let i = 0; i < 24; i++) {
-        const hour = (startHour + i) % 24;
-        const row = document.createElement('div');
-        row.className = 'hour-row';
-
-        const label = document.createElement('div');
-        label.className = 'hour-label';
-        label.textContent = hour.toString().padStart(2, '0');
-        row.appendChild(label);
-
-        const slots = document.createElement('div');
-        slots.className = 'ten-min-slots';
-
-        for (let j = 0; j < 6; j++) {
-            const slot = document.createElement('div');
-            slot.className = 'slot';
-
-            const slotTime = new Date(state.selectedDate);
-            slotTime.setHours(hour, j * 10, 0, 0);
-            if (hour < startHour) slotTime.setDate(slotTime.getDate() + 1);
-
-            const slotStart = slotTime.getTime();
-            const slotEnd = slotStart + 10 * 60000;
-
-            const activeSession = getActiveHistory().find(session => {
-                const sStart = new Date(session.startTime).getTime();
-                const sEnd = sStart + session.duration * 1000;
-                return sStart < slotEnd && sEnd > slotStart;
-            });
-
-            if (activeSession) {
-                slot.classList.add('filled');
-                slot.style.background = getSubjectColor(activeSession.subject);
-            }
-            slots.appendChild(slot);
-        }
-        row.appendChild(slots);
-        root.appendChild(row);
-    }
 }
 
 // ── 모바일 캘린더 렌더링 ─────────────────────────────────────────
@@ -367,7 +310,7 @@ export function setupMobileUI() {
             state.selectedDate = e.target.value;
             updateMobileDateDisplay();
             renderMobileTasks();
-            renderMobileTimetable();
+            renderTimetable();
             
             // PC 쪽과 동기화
             if (typeof window.updateDashboardDateDisplay === 'function') {
@@ -492,7 +435,7 @@ export function setupMobileUI() {
                 state.tasks = state.tasks.map(t => ({ ...t, duration: '0s' }));
                 saveToLocal();
                 renderMobileTasks();
-                renderMobileTimetable();
+                renderTimetable();
             }
         });
     }
@@ -593,7 +536,7 @@ export function setupMobileUI() {
 
     // ── 첫 렌더 ────────────────────────────────────────────────
     renderMobileTasks();
-    renderMobileTimetable();
+    renderTimetable();
     syncMobileTimerDisplay();
 
     // ── 모달 확인(추가) 후 모바일 목록도 갱신 ─────────────────
