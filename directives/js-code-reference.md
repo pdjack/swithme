@@ -211,10 +211,12 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | `buildTimetableRows(root)` | 24시간 × 6슬롯(10분) 그리드 생성, `getActiveHistory()` 세션과 겹치는 슬롯에 과목 색상 채우기 |
 | `renderTabs()` | PC + 모바일 탭 바 동시 렌더링 |
 | `renderDesktopTabs()` | PC 탭 바 렌더링 (◀/▶ 화살표 포함) |
-| `renderMobileTabs()` | 모바일 탭 바 렌더링 (스와이프 스크롤, 화살표 없음) |
+| `renderMobileTabs()` | 모바일 탭 바 렌더링 (스와이프 스크롤, 롱프레스 컨텍스트 메뉴 포함) |
 | `updateScrollArrows()` | PC 전용 — 스크롤 위치 확인 후 ◀/▶ 버튼 표시 갱신 |
 | `scrollActiveTabIntoView(listEl)` | 활성 탭이 뷰포트 안에 오도록 자동 스크롤 |
-| `startRenameTab(tabEl, nameSpan, id)` | 탭 인라인 이름 편집 모드 진입 |
+| `startRenameTab(tabEl, nameSpan, id)` | PC 탭 인라인 이름 편집 모드 진입 |
+| `showMobileTabMenu(targetTab, ttId)` | 모바일 탭 롱프레스 컨텍스트 메뉴 표시 (이름 변경/삭제) |
+| `closeMobileTabMenu()` | 모바일 탭 컨텍스트 메뉴 닫기 |
 | `switchTimetable(id)` | 활성 타임테이블 전환 |
 | `addTimetable()` | 새 타임테이블 추가 + 자동 활성화 |
 | `deleteTimetable(id)` | 타임테이블 삭제 (최소 1개 유지), 인접 탭 자동 활성화 |
@@ -227,6 +229,7 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 - `+` 버튼: 새 탭 추가
 - PC `◀`/`▶` 버튼: 탭 목록 스크롤 (오버플로우 시만 표시)
 - 모바일: 터치 스와이프로 탭 스크롤
+- 모바일 롱프레스(500ms): 컨텍스트 메뉴 표시 → 이름 변경(`prompt`) / 삭제(`confirm`, 2개 이상일 때만 활성)
 
 ### Clear 버튼
 - `#clear-timetable-btn` / `#m-clear-timetable-btn` 클릭 시 활성 탭의 history만 삭제 + 태스크 duration 초기화
