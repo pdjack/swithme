@@ -3,11 +3,38 @@ import { renderTasks } from './tasks.js';
 
 // ─── 타임테이블 그리드 렌더링 ───────────────────────────────────────
 
-function buildTimetableRows(root) {
+// 세션 히스토리를 144개 슬롯(10분 단위, 06:00 기준 24시간) 배열로 인덱싱
+function buildSlotMap(activeHistory, selectedDate) {
+    const startHour = 6;
+    const slotMs = 10 * 60 * 1000;
+    const slotMap = new Array(144).fill(null);
+
+    const base = new Date(selectedDate);
+    base.setHours(startHour, 0, 0, 0);
+    const baseMs = base.getTime();
+    const totalMs = 144 * slotMs;
+
+    for (const session of activeHistory) {
+        const sStart = new Date(session.startTime).getTime();
+        const sEnd = sStart + session.duration * 1000;
+
+        if (sEnd <= baseMs || sStart >= baseMs + totalMs) continue;
+
+        const firstSlot = Math.max(0, Math.floor((sStart - baseMs) / slotMs));
+        const lastSlot = Math.min(143, Math.floor((sEnd - 1 - baseMs) / slotMs));
+
+        for (let s = firstSlot; s <= lastSlot; s++) {
+            if (!slotMap[s]) slotMap[s] = session;
+        }
+    }
+
+    return slotMap;
+}
+
+function buildTimetableRows(root, slotMap) {
     if (!root) return;
     root.innerHTML = '';
     const startHour = 6;
-    const activeHistory = getActiveHistory();
 
     for (let i = 0; i < 24; i++) {
         const hour = (startHour + i) % 24;
@@ -26,19 +53,7 @@ function buildTimetableRows(root) {
             const slot = document.createElement('div');
             slot.className = 'slot';
 
-            const slotTime = new Date(state.selectedDate);
-            slotTime.setHours(hour, j * 10, 0, 0);
-            if (hour < startHour) slotTime.setDate(slotTime.getDate() + 1);
-
-            const slotRangeStart = slotTime.getTime();
-            const slotRangeEnd = slotRangeStart + 10 * 60000;
-
-            const activeSession = activeHistory.find(session => {
-                const sStart = new Date(session.startTime).getTime();
-                const sEnd = sStart + session.duration * 1000;
-                return sStart < slotRangeEnd && sEnd > slotRangeStart;
-            });
-
+            const activeSession = slotMap[i * 6 + j];
             if (activeSession) {
                 slot.classList.add('filled');
                 slot.style.background = getSubjectColor(activeSession.subject);
@@ -51,8 +66,9 @@ function buildTimetableRows(root) {
 }
 
 export function renderTimetable() {
-    buildTimetableRows(document.getElementById('timetable-root'));
-    buildTimetableRows(document.getElementById('m-timetable-root'));
+    const slotMap = buildSlotMap(getActiveHistory(), state.selectedDate);
+    buildTimetableRows(document.getElementById('timetable-root'), slotMap);
+    buildTimetableRows(document.getElementById('m-timetable-root'), slotMap);
 }
 
 // ─── 탭 관련 유틸 ───────────────────────────────────────────────────
