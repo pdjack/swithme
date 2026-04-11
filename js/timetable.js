@@ -195,10 +195,11 @@ function bindPlanSelection(root, isPc) {
         });
 
         // 터치 이벤트 (모바일)
-        slot.addEventListener('touchstart', () => {
+        slot.addEventListener('touchstart', (e) => {
             const idx = parseInt(slot.dataset.slotIdx);
             if (isSlotOccupied(idx)) return;
-            startLongPress(root, idx, isPc);
+            const touch = e.touches[0];
+            startLongPress(root, idx, isPc, touch.clientX, touch.clientY);
         }, { passive: true });
     });
 
@@ -215,9 +216,14 @@ function bindPlanSelection(root, isPc) {
     // 터치 이동 (모바일)
     root.addEventListener('touchmove', (e) => {
         if (!planSelectState) return;
-        // 롱프레스 대기 중이면 취소
+        // 롱프레스 대기 중이면 일정 거리 이내 미세 움직임은 허용
         if (!planSelectState.active) {
-            cancelLongPress();
+            const touch = e.touches[0];
+            const dx = touch.clientX - (planSelectState.touchStartX || 0);
+            const dy = touch.clientY - (planSelectState.touchStartY || 0);
+            if (dx * dx + dy * dy > 100) { // 10px 반경 초과 시 취소
+                cancelLongPress();
+            }
             return;
         }
         const touch = e.touches[0];
@@ -241,7 +247,7 @@ function bindPlanSelection(root, isPc) {
     });
 }
 
-function startLongPress(root, slotIdx, isPc) {
+function startLongPress(root, slotIdx, isPc, touchX, touchY) {
     cancelLongPress();
 
     const slot = root.querySelector(`.slot[data-slot-idx="${slotIdx}"]`);
@@ -253,6 +259,8 @@ function startLongPress(root, slotIdx, isPc) {
         endSlot: slotIdx,
         isPc,
         active: false,
+        touchStartX: touchX || 0,
+        touchStartY: touchY || 0,
         longPressTimer: setTimeout(() => {
             if (!planSelectState) return;
             planSelectState.active = true;
