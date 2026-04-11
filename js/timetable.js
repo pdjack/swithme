@@ -304,12 +304,20 @@ function clearSelectionHighlight(root) {
 }
 
 function finishSelection() {
-    if (!planSelectState || !planSelectState.active) {
+    if (!planSelectState) return;
+
+    const { root, startSlot, endSlot, active } = planSelectState;
+
+    // 탭(롱프레스 미완료) → 단일 슬롯 선택
+    if (!active) {
+        const slotIdx = startSlot;
         cancelLongPress();
+        if (isSlotOccupied(slotIdx)) return;
+        showPlanSlotModal(slotIdx, slotIdx);
         return;
     }
 
-    const { root, startSlot, endSlot } = planSelectState;
+    // 롱프레스 완료 → 드래그 범위 선택
     const minSlot = Math.min(startSlot, endSlot);
     const maxSlot = Math.max(startSlot, endSlot);
 
