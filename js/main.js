@@ -17,7 +17,7 @@ if ('serviceWorker' in navigator) {
 
 function init() {
     // 디바이스 감지 후 레이아웃 전환 (resize 시 자동 재적용)
-    watchDeviceLayout((isMobile) => {
+    watchDeviceLayout((_isMobile) => {
         // 레이아웃 전환 시 필요한 데이터 재렌더링
         renderTasks();
         renderTimetable();

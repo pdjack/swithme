@@ -206,7 +206,7 @@ function renderMobileCalendar() {
 function renderMobileSubjectManager() {
     const list = document.getElementById('m-subject-manager-list');
     if (!list) return;
-    list.innerHTML = state.subjects.map((s, idx) => `
+    list.innerHTML = state.subjects.map((s) => `
         <div class="subject-row">
             <input type="text" value="${s.name}" onchange="updateSubjectName('${s.id}', this.value)" placeholder="Name">
             <input type="color" value="${s.color}" onchange="updateSubjectColor('${s.id}', this.value)">

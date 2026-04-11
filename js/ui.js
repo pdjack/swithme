@@ -2,7 +2,7 @@ import { state, saveToLocal, scheduleRender } from './store.js';
 import { icon } from './icons.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
-import { startTimer, stopTimer, resetTimer, updateTimerDisplay, loadTodayReflection } from './timer.js';
+import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
 
 let navItems = [];
 const dashboardView = document.getElementById('dashboard-canvas');
