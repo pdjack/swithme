@@ -479,7 +479,7 @@ function startResizeMode(plan) {
         bottomHandle.className = 'plan-resize-handle plan-resize-handle--bottom';
         block.appendChild(bottomHandle);
 
-        block.style.outline = '2px solid #007AFF';
+        block.classList.add('plan-block--resizing');
 
         function bindHandle(handle, isTop) {
             let startY = 0;
@@ -538,7 +538,7 @@ function startResizeMode(plan) {
         // 블록 외부 클릭 시 resize 모드 종료
         function dismissResize(e) {
             if (block.contains(e.target)) return;
-            block.style.outline = '';
+            block.classList.remove('plan-block--resizing');
             topHandle.remove();
             bottomHandle.remove();
             document.removeEventListener('mousedown', dismissResize, true);
