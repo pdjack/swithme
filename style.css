@@ -2445,39 +2445,14 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     width: 100%;
 }
 
-/* ── 계획 슬롯 렌더링 ────────────────────────────────────── */
-.plan-block {
-    position: absolute;
-    left: 0;
-    right: 0;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+/* ── 계획 슬롯 렌더링 (셀 단위) ──────────────────────────── */
+.slot.plan-filled {
     cursor: pointer;
-    z-index: 2;
+    position: relative;
     transition: opacity 0.15s;
-    border: 1px solid rgba(255, 255, 255, 0.15);
 }
-.plan-block:hover {
+.slot.plan-filled:hover {
     opacity: 0.85;
-}
-
-.plan-block--no-subject {
-    background: #C7C7CC;
-}
-
-.plan-block__memo {
-    font-size: 11px;
-    font-weight: 500;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 6px;
-    max-width: 100%;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* ── 계획 슬롯 선택 하이라이트 ────────────────────────────── */
@@ -2504,7 +2479,7 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 }
 
 /* ── 수정 모드 핸들 ───────────────────────────────────────── */
-.plan-block--resizing {
+.slot.plan-filled--resizing {
     filter: brightness(0.65);
 }
 .plan-resize-handle {
@@ -2516,25 +2491,9 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     cursor: ns-resize;
     z-index: 10;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-.plan-resize-handle--top {
-    top: -18px;
-    left: -18px;
-}
-.plan-resize-handle--bottom {
-    bottom: -18px;
-    right: -18px;
-}
-
-/* ── 계획 모드일 때 timetable-container에 relative 설정 ──── */
-.timetable-container--plan,
-.m-timetable-container--plan {
-    position: relative;
-}
-
-.timetable-container--plan .hour-row,
-.m-timetable-container--plan .hour-row {
-    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 /* plan 모드에서 슬롯에 호버 커서 */

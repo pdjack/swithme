@@ -88,9 +88,6 @@ function buildPlanRows(root, plans, isPc) {
     root.innerHTML = '';
     root.classList.add(isPc ? 'timetable-container--plan' : 'm-timetable-container--plan');
 
-    const rowHeight = isPc ? 32 : 28;
-    const labelWidth = isPc ? 50 : 36;
-
     // 빈 그리드 행 생성
     for (let i = 0; i < 24; i++) {
         const hour = (START_HOUR + i) % 24;
@@ -115,56 +112,33 @@ function buildPlanRows(root, plans, isPc) {
         root.appendChild(row);
     }
 
-    // 계획 블록 오버레이 렌더링
+    // 계획 셀 렌더링 (개별 슬롯에 직접 스타일 적용)
     for (const plan of plans) {
-        renderPlanBlock(root, plan, rowHeight, labelWidth);
+        renderPlanSlots(root, plan);
     }
 
     // 계획 슬롯 선택 이벤트 바인딩
     bindPlanSelection(root, isPc);
 }
 
-function renderPlanBlock(root, plan, rowHeight, labelWidth) {
-    const slotsContainer = root.querySelector('.ten-min-slots');
-    if (!slotsContainer) return;
+function renderPlanSlots(root, plan) {
+    for (let s = plan.startSlot; s <= plan.endSlot; s++) {
+        const slot = root.querySelector(`.slot[data-slot-idx="${s}"]`);
+        if (!slot) continue;
+        slot.classList.add('plan-filled');
+        slot.dataset.planId = plan.id;
 
-    const borderBottom = 1; // border-bottom 1px
-    const slotHeight = (rowHeight + borderBottom) / 6; // 10분 슬롯 높이
+        if (plan.subject) {
+            slot.style.background = lightenColor(getSubjectColor(plan.subject), 0.25);
+        } else {
+            slot.style.background = '#C7C7CC';
+        }
 
-    // 10분 슬롯 단위로 정확한 위치/높이 계산
-    const topPx = plan.startSlot * slotHeight;
-    const bottomPx = (plan.endSlot + 1) * slotHeight;
-    const height = bottomPx - topPx;
-
-    const block = document.createElement('div');
-    block.className = 'plan-block';
-    if (!plan.subject) block.classList.add('plan-block--no-subject');
-
-    block.style.position = 'absolute';
-    block.style.top = topPx + 'px';
-    block.style.left = labelWidth + 'px';
-    block.style.right = '0';
-    block.style.height = height + 'px';
-    block.dataset.planId = plan.id;
-
-    if (plan.subject) {
-        const baseColor = getSubjectColor(plan.subject);
-        block.style.background = lightenColor(baseColor, 0.25);
+        slot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showPlanDetailModal(plan);
+        });
     }
-
-    if (plan.memo) {
-        const memoEl = document.createElement('span');
-        memoEl.className = 'plan-block__memo';
-        memoEl.textContent = plan.memo;
-        block.appendChild(memoEl);
-    }
-
-    block.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showPlanDetailModal(plan);
-    });
-
-    root.appendChild(block);
 }
 
 const lightenCache = new Map();
@@ -457,41 +431,32 @@ function showPlanDetailModal(plan) {
 // ─── 수정 모드 (양끝 핸들 드래그) ──────────────────────────────────
 
 function startResizeMode(plan) {
-    // 양쪽 root에서 해당 블록 찾기
     const roots = [
         document.getElementById('timetable-root'),
         document.getElementById('m-timetable-root')
     ].filter(Boolean);
 
     roots.forEach(root => {
-        const block = root.querySelector(`.plan-block[data-plan-id="${plan.id}"]`);
-        if (!block) return;
+        const planSlots = root.querySelectorAll(`.slot[data-plan-id="${plan.id}"]`);
+        if (!planSlots.length) return;
 
-        const isRootPc = root.id === 'timetable-root';
-        const rowHeight = isRootPc ? 32 : 28;
+        planSlots.forEach(s => s.classList.add('plan-filled--resizing'));
 
-        // 상단 핸들
+        const firstSlot = planSlots[0];
+        const lastSlot = planSlots[planSlots.length - 1];
+
         const topHandle = document.createElement('div');
         topHandle.className = 'plan-resize-handle plan-resize-handle--top';
-        block.appendChild(topHandle);
+        firstSlot.appendChild(topHandle);
 
-        // 하단 핸들
         const bottomHandle = document.createElement('div');
         bottomHandle.className = 'plan-resize-handle plan-resize-handle--bottom';
-        block.appendChild(bottomHandle);
-
-        block.classList.add('plan-block--resizing');
+        lastSlot.appendChild(bottomHandle);
 
         function bindHandle(handle, isTop) {
-            let startY = 0;
-            let originalSlot = isTop ? plan.startSlot : plan.endSlot;
-
             function onStart(e) {
                 e.stopPropagation();
                 e.preventDefault();
-                const point = e.touches ? e.touches[0] : e;
-                startY = point.clientY;
-                originalSlot = isTop ? plan.startSlot : plan.endSlot;
                 document.addEventListener('mousemove', onMove);
                 document.addEventListener('mouseup', onEnd);
                 document.addEventListener('touchmove', onMove, { passive: false });
@@ -501,22 +466,22 @@ function startResizeMode(plan) {
             function onMove(e) {
                 e.preventDefault();
                 const point = e.touches ? e.touches[0] : e;
-                const dy = point.clientY - startY;
-                const slotDelta = Math.round(dy / ((rowHeight + 1) / 6));
-                let newSlot = originalSlot + slotDelta;
-                newSlot = Math.max(0, Math.min(SLOT_COUNT - 1, newSlot));
+                const el = document.elementFromPoint(point.clientX, point.clientY);
+                if (!el) return;
+                const slotEl = el.closest('.slot[data-slot-idx]');
+                if (!slotEl || !root.contains(slotEl)) return;
+                const newSlot = parseInt(slotEl.dataset.slotIdx);
 
                 if (isTop) {
-                    if (newSlot > plan.endSlot) newSlot = plan.endSlot;
+                    if (newSlot > plan.endSlot) return;
                     plan.startSlot = newSlot;
                 } else {
-                    if (newSlot < plan.startSlot) newSlot = plan.startSlot;
+                    if (newSlot < plan.startSlot) return;
                     plan.endSlot = newSlot;
                 }
 
                 saveToLocal();
                 renderTimetable();
-                // 리렌더 후 다시 resize 모드 재적용
                 window.requestAnimationFrame(() => startResizeMode(plan));
             }
 
@@ -536,10 +501,9 @@ function startResizeMode(plan) {
         bindHandle(topHandle, true);
         bindHandle(bottomHandle, false);
 
-        // 블록 외부 클릭 시 resize 모드 종료
         function dismissResize(e) {
-            if (block.contains(e.target)) return;
-            block.classList.remove('plan-block--resizing');
+            if (e.target.closest(`.slot[data-plan-id="${plan.id}"]`)) return;
+            planSlots.forEach(s => s.classList.remove('plan-filled--resizing'));
             topHandle.remove();
             bottomHandle.remove();
             document.removeEventListener('mousedown', dismissResize, true);
