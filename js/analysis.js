@@ -264,15 +264,21 @@ window.performDataAnalysis = (days) => {
         return;
     }
 
-    // Calculate Averages based on the full period (days) to reflect consistency
-    const avgAchievement = (reflections.reduce((sum, r) => sum + (Number(r.achievement) || 0), 0) / days).toFixed(1);
-    const avgTime = (reflections.reduce((sum, r) => sum + (Number(r.time) || 0), 0) / days).toFixed(1);
-    const avgWrong = (reflections.reduce((sum, r) => sum + (Number(r.wrong) || 0), 0) / days).toFixed(1);
-    const avgReview = (reflections.reduce((sum, r) => sum + (Number(r.review) || 0), 0) / days).toFixed(1);
-    const avgHomework = (reflections.reduce((sum, r) => sum + (Number(r.homework) || 0), 0) / days).toFixed(1);
-    
-    // Total average is the average of these averages
-    const avgTotal = ((Number(avgAchievement) + Number(avgTime) + Number(avgWrong) + Number(avgReview) + Number(avgHomework)) / 5).toFixed(1);
+    // 단일 패스로 5개 메트릭 합산
+    const sums = { achievement: 0, time: 0, wrong: 0, review: 0, homework: 0 };
+    for (const r of reflections) {
+        sums.achievement += Number(r.achievement) || 0;
+        sums.time += Number(r.time) || 0;
+        sums.wrong += Number(r.wrong) || 0;
+        sums.review += Number(r.review) || 0;
+        sums.homework += Number(r.homework) || 0;
+    }
+    const avgAchievement = (sums.achievement / days).toFixed(1);
+    const avgTime = (sums.time / days).toFixed(1);
+    const avgWrong = (sums.wrong / days).toFixed(1);
+    const avgReview = (sums.review / days).toFixed(1);
+    const avgHomework = (sums.homework / days).toFixed(1);
+    const avgTotal = ((sums.achievement + sums.time + sums.wrong + sums.review + sums.homework) / (days * 5)).toFixed(1);
 
     const resultObj = {
         id: Date.now(),

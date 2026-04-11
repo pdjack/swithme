@@ -380,9 +380,15 @@ export function setupMobileUI() {
     // MutationObserver로 PC 타이머 표시와 동기화합니다.
     const pcDisplay = document.getElementById('timer-display');
     if (pcDisplay) {
+        let rafPending = false;
         const observer = new MutationObserver(() => {
-            syncMobileTimerDisplay();
-            syncMobileStartBtn(state.timer.isRunning);
+            if (rafPending) return;
+            rafPending = true;
+            window.requestAnimationFrame(() => {
+                syncMobileTimerDisplay();
+                syncMobileStartBtn(state.timer.isRunning);
+                rafPending = false;
+            });
         });
         observer.observe(pcDisplay, { childList: true, characterData: true, subtree: true });
     }

@@ -167,12 +167,17 @@ function renderPlanBlock(root, plan, rowHeight, labelWidth) {
     root.appendChild(block);
 }
 
+const lightenCache = new Map();
 function lightenColor(hex, amount) {
+    const key = hex + amount;
+    if (lightenCache.has(key)) return lightenCache.get(key);
     const num = parseInt(hex.replace('#', ''), 16);
     const r = Math.min(255, ((num >> 16) & 0xFF) + Math.round(255 * amount));
     const g = Math.min(255, ((num >> 8) & 0xFF) + Math.round(255 * amount));
     const b = Math.min(255, (num & 0xFF) + Math.round(255 * amount));
-    return `rgb(${r}, ${g}, ${b})`;
+    const result = `rgb(${r}, ${g}, ${b})`;
+    lightenCache.set(key, result);
+    return result;
 }
 
 // ─── 계획 슬롯 선택 (1.5초 누르기 + 범위 확장) ─────────────────────
@@ -180,26 +185,24 @@ function lightenColor(hex, amount) {
 let planSelectState = null; // { root, startSlot, endSlot, isPc, longPressTimer, active }
 
 function bindPlanSelection(root, isPc) {
-    const allSlots = root.querySelectorAll('.slot[data-slot-idx]');
-
-    allSlots.forEach(slot => {
-        // 마우스 이벤트 (PC)
-        slot.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            const idx = parseInt(slot.dataset.slotIdx);
-            // 이미 계획이 있는 슬롯은 무시 (클릭은 plan-block이 처리)
-            if (isSlotOccupied(idx)) return;
-            startLongPress(root, idx, isPc);
-        });
-
-        // 터치 이벤트 (모바일)
-        slot.addEventListener('touchstart', (e) => {
-            const idx = parseInt(slot.dataset.slotIdx);
-            if (isSlotOccupied(idx)) return;
-            const touch = e.touches[0];
-            startLongPress(root, idx, isPc, touch.clientX, touch.clientY);
-        }, { passive: true });
+    // 이벤트 위임: 개별 슬롯 대신 root에 단일 리스너
+    root.addEventListener('mousedown', (e) => {
+        const slot = e.target.closest('.slot[data-slot-idx]');
+        if (!slot) return;
+        e.preventDefault();
+        const idx = parseInt(slot.dataset.slotIdx);
+        if (isSlotOccupied(idx)) return;
+        startLongPress(root, idx, isPc);
     });
+
+    root.addEventListener('touchstart', (e) => {
+        const slot = e.target.closest('.slot[data-slot-idx]');
+        if (!slot) return;
+        const idx = parseInt(slot.dataset.slotIdx);
+        if (isSlotOccupied(idx)) return;
+        const touch = e.touches[0];
+        startLongPress(root, idx, isPc, touch.clientX, touch.clientY);
+    }, { passive: true });
 
     // 마우스 이동 (PC)
     root.addEventListener('mousemove', (e) => {
@@ -583,19 +586,33 @@ export function renderTimetable() {
 
 // ─── 모드 바 동기화 ─────────────────────────────────────────────────
 
+// 모드 버튼 DOM 캐시
+const modeButtons = {
+    pc: { record: null, plan: null },
+    mobile: { record: null, plan: null },
+    cached: false,
+};
+
+function getModeButtons() {
+    if (!modeButtons.cached) {
+        modeButtons.pc.record = document.getElementById('tt-mode-record');
+        modeButtons.pc.plan = document.getElementById('tt-mode-plan');
+        modeButtons.mobile.record = document.getElementById('m-tt-mode-record');
+        modeButtons.mobile.plan = document.getElementById('m-tt-mode-plan');
+        modeButtons.cached = true;
+    }
+    return modeButtons;
+}
+
 function syncModeBar() {
     const tt = getActiveTimetable();
     const mode = tt.type || 'record';
+    const btns = getModeButtons();
 
-    [
-        { record: 'tt-mode-record', plan: 'tt-mode-plan' },
-        { record: 'm-tt-mode-record', plan: 'm-tt-mode-plan' }
-    ].forEach(ids => {
-        const recordBtn = document.getElementById(ids.record);
-        const planBtn = document.getElementById(ids.plan);
-        if (recordBtn) recordBtn.classList.toggle('tt-mode-btn--active', mode === 'record');
-        if (planBtn) planBtn.classList.toggle('tt-mode-btn--active', mode === 'plan');
-    });
+    for (const device of [btns.pc, btns.mobile]) {
+        if (device.record) device.record.classList.toggle('tt-mode-btn--active', mode === 'record');
+        if (device.plan) device.plan.classList.toggle('tt-mode-btn--active', mode === 'plan');
+    }
 }
 
 // ─── 모드 전환 로직 ─────────────────────────────────────────────────
