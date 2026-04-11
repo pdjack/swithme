@@ -645,7 +645,7 @@ window.generateTomorrowPlan = () => {
         { 
             subject: leastStudiedSubjectId, 
             name: `[AI 추천] ${leastSubjectName} 밀린 개념 보충`, 
-            reason: "최근 학습 비중이 가장 낮은 과목입니다. 밸런스를 맞춰주세요." 
+            reason: "최근 학습 비중이 가장 낮은 카테고리입니다. 밸런스를 맞춰주세요." 
         },
         { 
             subject: 'OTH', 

@@ -84,7 +84,7 @@ window.updateSubjectColor = (id, color) => {
     scheduleRender(renderTasks, renderTimetable, renderSubjectManager, window.renderMobileSubjectManager);
 };
 window.deleteSubject = (id) => {
-    if (state.subjects.length <= 1) return alert('최소 하나의 과목은 있어야 합니다.');
+    if (state.subjects.length <= 1) return alert('최소 하나의 카테고리는 있어야 합니다.');
     state.subjects = state.subjects.filter(s => s.id !== id);
     saveToLocal();
     scheduleRender(renderSubjectManager, renderSubjectOptions, window.renderMobileSubjectManager, renderTasks, renderTimetable);
@@ -239,7 +239,7 @@ export function setupEventListeners() {
     if (addSubjectBtn) {
         addSubjectBtn.onclick = () => {
             const id = 'SUB_' + Date.now();
-            state.subjects.push({ id: id, name: '신규 과목', color: '#6A1B9A' });
+            state.subjects.push({ id: id, name: '신규 카테고리', color: '#6A1B9A' });
             saveToLocal();
             renderSubjectManager();
             renderSubjectOptions();

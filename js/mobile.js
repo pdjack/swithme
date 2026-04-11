@@ -585,7 +585,7 @@ export function setupMobileUI() {
     // ── 과목 추가 버튼 (설정 탭) ──────────────────────────────
     document.getElementById('m-add-subject-btn')?.addEventListener('click', () => {
         const id = 'SUB_' + Date.now();
-        state.subjects.push({ id: id, name: '신규 과목', color: '#6A1B9A' });
+        state.subjects.push({ id: id, name: '신규 카테고리', color: '#6A1B9A' });
         saveToLocal();
         renderMobileSubjectManager();
         renderSubjectManager();
