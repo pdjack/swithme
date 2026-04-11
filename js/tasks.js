@@ -1,4 +1,5 @@
 import { state, formatSeconds, saveToLocal, getActiveHistory } from './store.js';
+import { icon } from './icons.js';
 
 const taskList = document.getElementById('task-list');
 const subjectSelect = document.getElementById('task-subject');
@@ -40,16 +41,16 @@ export function renderTasks() {
                 ${group.tasks.map(task => `
                     <div class="task-item ${task.completed ? 'completed' : ''} ${state.timer.activeTaskId === task.id ? 'active' : ''}" onclick="selectTask(${task.id})">
                         <button onclick="toggleComplete(event, ${task.id})" class="task-icon-btn ${task.completed ? 'completed' : ''}">
-                            <i data-lucide="${task.completed ? 'check-circle' : 'circle'}"></i>
+                            ${icon(task.completed ? 'check-circle' : 'circle')}
                         </button>
                         <div class="task-details">
                             <span class="t-name">${task.name}</span>
                         </div>
                         <div class="task-actions">
                             <button onclick="playTask(event, ${task.id})" class="ghost-btn play-btn" title="Start Timer">
-                                <i data-lucide="${state.timer.activeTaskId === task.id && state.timer.isRunning ? 'pause' : 'play'}"></i>
+                                ${icon(state.timer.activeTaskId === task.id && state.timer.isRunning ? 'pause' : 'play')}
                             </button>
-                            <button onclick="deleteTask(event, ${task.id})" class="ghost-btn delete-btn" title="Delete"><i data-lucide="trash-2"></i></button>
+                            <button onclick="deleteTask(event, ${task.id})" class="ghost-btn delete-btn" title="Delete">${icon('trash-2')}</button>
                         </div>
                     </div>
                 `).join('')}

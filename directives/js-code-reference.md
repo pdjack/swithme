@@ -15,7 +15,8 @@
 7. [device.js - 디바이스 감지](#7-devicejs---디바이스-감지)
 8. [mobile.js - 모바일 전용 UI](#8-mobilejs---모바일-전용-ui)
 9. [analysis.js - 분석 모듈](#9-analysisjs---분석-모듈)
-10. [모듈 의존성 다이어그램](#10-모듈-의존성-다이어그램)
+10. [icons.js - 인라인 SVG 아이콘](#10-iconsjs---인라인-svg-아이콘)
+11. [모듈 의존성 다이어그램](#11-모듈-의존성-다이어그램)
 
 ---
 
@@ -42,7 +43,7 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 6. `setupEventListeners()` — 이벤트 리스너 등록
 7. `updateTimerDisplay()` — 타이머 UI 초기화
 8. `setupMobileUI()` — 모바일 UI 초기화
-9. `lucide.createIcons()` — 아이콘 렌더링
+9. `initStaticIcons()` — 정적 HTML의 `<i data-lucide>` 요소를 인라인 SVG로 일괄 변환
 
 ---
 
@@ -399,7 +400,32 @@ predictedScore = (데이터분석점수 / 20 × 100) × 0.7 + (테스트점수 /
 
 ---
 
-## 10. 모듈 의존성 다이어그램
+## 10. icons.js - 인라인 SVG 아이콘
+
+**역할**: Lucide v1.8.0 기반 인라인 SVG 아이콘 모듈. CDN 의존 제거, PWA 오프라인 지원.
+
+### 주요 export
+
+| 함수 | 설명 |
+|------|------|
+| `icon(name, size?, extraStyle?)` | 인라인 SVG 문자열 반환. 동적 HTML에서 사용 |
+| `initStaticIcons()` | 정적 HTML의 `<i data-lucide="...">` 를 인라인 SVG로 일괄 변환 (초기화 시 1회) |
+
+### 사용 패턴
+
+- **동적 HTML** (template literal): `${icon('trash-2')}`, `${icon('sparkles', 14)}`
+- **정적 HTML** (index.html): `<i data-lucide="icon-name"></i>` → `initStaticIcons()`가 변환
+- 아이콘 목록 및 모양 묘사: `directives/icon-reference.md` 참조
+
+### window 전역
+
+| 함수 | 설명 |
+|------|------|
+| `window.icon` | `icon()` 함수를 인라인 onclick에서 사용할 수 있도록 노출 |
+
+---
+
+## 11. 모듈 의존성 다이어그램
 
 ```
 main.js

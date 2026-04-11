@@ -15,6 +15,7 @@
 | HTML 구조/ID 변경 | `directives/STRUCTURE.md` |
 | CSS/스타일 변경 | `directives/style-reference.md` |
 | 모바일 전용 작업 | `directives/STRUCTURE.md` (ID 매핑) + `directives/js-code-reference.md` (mobile.js) |
+| 아이콘 추가/변경 | `directives/icon-reference.md` + `directives/js-code-reference.md` (icons.js) |
 | 새 탭/캔버스 추가 | 위 3개 문서 모두 |
 | 기능 기획/분석 관련 | `docs/PRD.md` + `활용정보/` 내 관련 문서 + `directives/` 내 플랜 문서 |
 
@@ -36,6 +37,8 @@
 | 주요 셀렉터 추가/삭제 | `directives/style-reference.md` | 해당 영역 스타일 테이블 |
 | 반응형 브레이크포인트 변경 | `directives/style-reference.md` | 미디어 쿼리 섹션 |
 | 모바일 셸 전용 스타일 변경 | `directives/style-reference.md` | 모바일 셸 전용 섹션 |
+| 아이콘 추가/삭제/변경 | `directives/icon-reference.md` | 아이콘 목록 테이블 |
+| `js/icons.js` SVG_PATHS 변경 | `directives/icon-reference.md` + `directives/js-code-reference.md` | 아이콘 모양 묘사, 모듈 정보 |
 | 기술 스택/npm 스크립트 변경 | `CLAUDE.md` | 기술 스택, 주요 스크립트 섹션 |
 | 새 rules 파일 추가/삭제 | `CLAUDE.md` | 필수 참고 문서 섹션 |
 | 작업 유의사항/협업 원칙 변경 | `CLAUDE.md` | 해당 섹션 |

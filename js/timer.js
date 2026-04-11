@@ -1,4 +1,5 @@
-import { state, saveToLocal, persistTimerState, clearTimerState, getActiveHistory, refreshIcons } from './store.js';
+import { state, saveToLocal, persistTimerState, clearTimerState, getActiveHistory } from './store.js';
+import { icon } from './icons.js';
 import { renderTasks } from './tasks.js';
 import { renderTimetable } from './timetable.js';
 
@@ -65,7 +66,7 @@ function showNoTaskPanel() {
     panel.innerHTML = `
         <div class="no-task-panel-content">
             <div class="no-task-panel-icon">
-                <i data-lucide="alert-circle"></i>
+                ${icon('alert-circle')}
             </div>
             <p class="no-task-panel-msg">
                 ${hasTasksToday ? '할 일을 선택한 후 시작해주세요.' : '할 일을 먼저 추가해주세요.'}
@@ -77,8 +78,6 @@ function showNoTaskPanel() {
         </div>
     `;
     document.body.appendChild(panel);
-
-    refreshIcons();
 
     const closeBtn = document.getElementById('no-task-close-btn');
     if (closeBtn) closeBtn.addEventListener('click', () => panel.remove());

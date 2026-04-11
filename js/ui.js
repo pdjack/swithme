@@ -1,4 +1,5 @@
-import { state, saveToLocal, scheduleRender, refreshIcons } from './store.js';
+import { state, saveToLocal, scheduleRender } from './store.js';
+import { icon } from './icons.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay, loadTodayReflection } from './timer.js';
@@ -40,9 +41,8 @@ export function switchTab(tab) {
         // Reset analysis content if needed
         const content = document.getElementById('analysis-content');
         if (content && content.innerHTML.trim() === '') {
-             content.innerHTML = '<div class="empty-state"><i data-lucide="brain-circuit"></i><p>분석 항목을 선택하여 시작하세요.</p></div>';
+             content.innerHTML = '<div class="empty-state">' + icon('brain-circuit') + '<p>분석 항목을 선택하여 시작하세요.</p></div>';
         }
-        refreshIcons();
         if (window.updateAIAdaptiveFeedback) window.updateAIAdaptiveFeedback();
     }
 }
@@ -51,10 +51,10 @@ export function renderSubjectManager() {
     if (!subjectManagerList) return;
     subjectManagerList.innerHTML = state.subjects.map((s, idx) => `
         <div class="subject-row" draggable="true" ondragstart="handleDragStart(event, ${idx})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${idx})" ondragend="handleDragEnd(event)">
-            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+            <div class="drag-handle">${icon('grip-vertical')}</div>
             <input type="text" value="${s.name}" onchange="updateSubjectName('${s.id}', this.value)" placeholder="Name">
             <input type="color" value="${s.color}" onchange="updateSubjectColor('${s.id}', this.value)">
-            <button onclick="deleteSubject('${s.id}')" class="ghost-btn delete-btn" title="Delete"><i data-lucide="trash-2"></i></button>
+            <button onclick="deleteSubject('${s.id}')" class="ghost-btn delete-btn" title="Delete">${icon('trash-2')}</button>
         </div>
     `).join('');
 }

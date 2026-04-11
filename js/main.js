@@ -4,7 +4,8 @@ import { renderTimetable } from './timetable.js';
 import { updateTimerDisplay, startTimer, loadTodayReflection } from './timer.js';
 import { setupMobileUI } from './mobile.js';
 import { watchDeviceLayout } from './device.js';
-import { restoreTimerState, refreshIcons } from './store.js';
+import { restoreTimerState } from './store.js';
+import { initStaticIcons } from './icons.js';
 import './analysis.js'; // For side effects (window attachments)
 
 // SW 업데이트 시 자동 리로드
@@ -20,7 +21,7 @@ function init() {
         // 레이아웃 전환 시 필요한 데이터 재렌더링
         renderTasks();
         renderTimetable();
-        refreshIcons();
+        initStaticIcons();
     });
 
     updateDashboardDateDisplay();
@@ -42,7 +43,7 @@ function init() {
 
     setupMobileUI();
 
-    refreshIcons();
+    initStaticIcons();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

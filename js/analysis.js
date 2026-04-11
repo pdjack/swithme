@@ -1,4 +1,5 @@
-import { state, saveToLocal, getActiveHistory, refreshIcons } from './store.js';
+import { state, saveToLocal, getActiveHistory } from './store.js';
+import { icon } from './icons.js';
 
 /**
  * 🧠 Analysis Module (Phase 2, 3, 4)
@@ -205,7 +206,7 @@ window.renderAnalysisResult = (res) => {
             <p class="persona-desc">${res.personaDesc}</p>
             <div class="persona-solution-card">
                 <div class="sol-header">
-                    <i data-lucide="zap"></i>
+                    ${icon('zap')}
                     <span>핵심 처방전</span>
                 </div>
                 <p>${res.personaTip}</p>
@@ -213,8 +214,6 @@ window.renderAnalysisResult = (res) => {
             <button class="btn-start" style="margin-top: 30px;" onclick="switchTab('analyze')">분석 메뉴로 돌아가기</button>
         </div>
     `;
-    
-    refreshIcons();
 };
 
 window.startAnalysis = (type) => {
@@ -235,7 +234,7 @@ window.renderDataAnalysisFilter = () => {
     container.innerHTML = `
         <div class="data-analysis-landing scale-in">
             <div class="landing-header">
-                <i data-lucide="line-chart"></i>
+                ${icon('line-chart')}
                 <h2>학습 데이터 정밀 리포트</h2>
                 <p>기록된 Reflection 데이터를 기반으로 학습 성실도를 분석합니다.</p>
             </div>
@@ -245,7 +244,6 @@ window.renderDataAnalysisFilter = () => {
             </div>
         </div>
     `;
-    refreshIcons();
 };
 
 window.performDataAnalysis = (days) => {
@@ -356,7 +354,6 @@ window.renderDataAnalysisResult = (res, days) => {
             </div>
         </div>
     `;
-    refreshIcons();
 };
 
 window.deleteAnalysisResult = (id, event) => {
@@ -373,7 +370,7 @@ window.renderAnalysisHistory = () => {
     if (state.analysisResults.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <i data-lucide="database"></i>
+                ${icon('database')}
                 <p>과거 분석 기록이 없습니다.</p>
             </div>
         `;
@@ -395,7 +392,7 @@ window.renderAnalysisHistory = () => {
                                 <span class="h-type">${res.type}</span>
                             </div>
                             <button class="h-delete-btn" onclick="window.deleteAnalysisResult(${res.id}, event)" title="삭제">
-                                <i data-lucide="trash-2"></i>
+                                ${icon('trash-2')}
                             </button>
                         </div>
                         <div class="h-name">${res.personaName}</div>
@@ -408,7 +405,6 @@ window.renderAnalysisHistory = () => {
             </div>
         </div>
     `;
-    refreshIcons();
 };
 
 window.performIntegratedAnalysis = () => {
@@ -421,7 +417,7 @@ window.performIntegratedAnalysis = () => {
     if (!latestTest || !latestData) {
         container.innerHTML = `
             <div class="empty-state scale-in">
-                <i data-lucide="alert-circle" style="color: #FF2D55;"></i>
+                ${icon('alert-circle', 16, 'color: #FF2D55;')}
                 <h2>분석 데이터가 부족합니다</h2>
                 <p>AI가 정확하게 예측하려면 먼저 '성향 테스트'와 '데이터 분석'이 모두 필요합니다.</p>
                 <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
@@ -430,7 +426,6 @@ window.performIntegratedAnalysis = () => {
                 </div>
             </div>
         `;
-        refreshIcons();
         return;
     }
 
@@ -485,7 +480,7 @@ window.renderIntegratedResult = (res) => {
         <div class="integrated-report-view scale-in" style="width: 100%;">
             <div class="report-header" style="text-align: center;">
                 <div class="ai-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 86, 179, 0.15); color: var(--primary); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; border: 1px solid var(--primary); margin-bottom: 20px;">
-                    <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> AI INTEGRATED REPORT
+                    ${icon('sparkles', 14)} AI INTEGRATED REPORT
                 </div>
                 <h1 style="font-size: 84px; font-weight: 800; color: white; margin: 0;">${res.predictedScore}<small style="font-size: 24px; color: var(--text-dim); margin-left: 8px;">점</small></h1>
                 <p style="color: var(--text-dim); font-size: 15px; margin-top: 10px;">현재 습관을 유지할 시 도달 가능한 미래 성적 예측치</p>
@@ -495,7 +490,7 @@ window.renderIntegratedResult = (res) => {
                 <!-- Growth Trend Chart (New Phase 4) -->
                 <div class="glass-card chart-report" style="grid-column: span 2; padding: 24px;">
                     <div class="s-header" style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 20px;">
-                        <i data-lucide="trending-up" style="width: 14px;"></i> 성취도 추세 및 미래 예측
+                        ${icon('trending-up', 14)} 성취도 추세 및 미래 예측
                     </div>
                     <div style="height: 200px; width: 100%;">
                         <canvas id="predictionChart"></canvas>
@@ -504,7 +499,7 @@ window.renderIntegratedResult = (res) => {
 
                 <div class="glass-card sub-report" style="padding: 24px; background: rgba(255, 255, 255, 0.03);">
                     <div class="s-header" style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">
-                        <i data-lucide="user" style="width: 14px;"></i> 나의 공부 성향
+                        ${icon('user', 14)} 나의 공부 성향
                     </div>
                     <h3 style="color: var(--primary); font-size: 20px; margin: 15px 0 10px 0;">${res.latestTest.personaName}</h3>
                     <p style="font-size: 13px; color: var(--text-dim); line-height: 1.6; height: 65px; overflow-y: auto;">${res.latestTest.personaDesc}</p>
@@ -513,7 +508,7 @@ window.renderIntegratedResult = (res) => {
                 <!-- Learning Heatmap (New Phase 4) -->
                 <div class="glass-card sub-report" style="padding: 24px; background: rgba(255, 255, 255, 0.03);">
                     <div class="s-header" style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">
-                        <i data-lucide="layout-grid" style="width: 14px;"></i> 학습 몰입도 히트맵
+                        ${icon('layout-grid', 14)} 학습 몰입도 히트맵
                     </div>
                     <div id="immersion-heatmap" class="heatmap-container" style="margin-top: 20px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
                         <!-- Heatmap dots injected here -->
@@ -525,7 +520,7 @@ window.renderIntegratedResult = (res) => {
             <div class="prescription-card glass-card" style="margin-top: 30px; border: 1px dashed var(--primary); background: rgba(0, 86, 179, 0.08); padding: 30px;">
                 <div class="p-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
                     <div style="background: #FFD700; color: #000; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i data-lucide="zap" style="width: 14px; height: 14px; fill: currentColor;"></i>
+                        ${icon('zap', 14, 'fill: currentColor;')}
                     </div>
                     <span style="font-size: 14px; font-weight: 800; text-transform: uppercase; color: white; letter-spacing: 1px;">AI 어시스턴트의 실전 처방전</span>
                 </div>
@@ -540,8 +535,6 @@ window.renderIntegratedResult = (res) => {
             </div>
         </div>
     `;
-    
-    refreshIcons();
 
     // Init Phase 4 Visuals
     setTimeout(() => {
@@ -682,7 +675,7 @@ window.renderAIPlanModal = (plans) => {
         <div class="modal-content glass-card" style="width: 500px; border: 1px solid var(--primary);">
             <div style="text-align:center; margin-bottom:20px;">
                 <div style="background: var(--primary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                    <i data-lucide="sparkles" style="color: white;"></i>
+                    ${icon('sparkles', 16, 'color: white;')}
                 </div>
                 <h2 style="margin:0;">AI 내일 학습 추천</h2>
                 <p style="font-size:14px; color:var(--text-dim);">데이터 분석 기반으로 설계된 최적의 플랜입니다.</p>
@@ -708,7 +701,6 @@ window.renderAIPlanModal = (plans) => {
     `;
 
     document.body.appendChild(modal);
-    refreshIcons();
 };
 
 window.applyAIPlan = (plans) => {

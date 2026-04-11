@@ -150,14 +150,8 @@ export function clearTimerState() {
     localStorage.removeItem('switme_timer');
 }
 
-// ── Lucide 아이콘 갱신 유틸 ─────────────────────────────────────────
-export function refreshIcons() {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
 // ── 렌더링 배치 스케줄러 ────────────────────────────────────────────
 // 여러 렌더 함수를 Set으로 중복 제거 후 단일 rAF에서 한 번에 실행
-// flush 완료 후 lucide 아이콘을 1회만 갱신
 const pendingRenders = new Set();
 let renderRafId = null;
 
@@ -171,7 +165,6 @@ export function scheduleRender(...fns) {
         const batch = [...pendingRenders];
         pendingRenders.clear();
         batch.forEach(fn => fn());
-        refreshIcons();
     });
 }
 

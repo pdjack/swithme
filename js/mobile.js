@@ -4,7 +4,8 @@
  * 기존 store.js의 state를 공유하고, PC 사이드 함수(timer 등)를 재사용합니다.
  */
 
-import { state, saveToLocal, getActiveHistory, refreshIcons } from './store.js';
+import { state, saveToLocal, getActiveHistory } from './store.js';
+import { icon } from './icons.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
 import { renderSubjectOptions, getGroupedTaskData } from './tasks.js';
 import { renderSubjectManager } from './ui.js';
@@ -101,7 +102,6 @@ function switchMobileTab(tab) {
         syncMobileAnalysisContent();
     }
 
-    refreshIcons();
 }
 
 // ── 모바일 할 일 목록 렌더링 ─────────────────────────────────────
@@ -129,12 +129,12 @@ export function renderMobileTasks() {
                          data-task-id="${task.id}">
                         <button class="m-task-play-btn ${state.timer.activeTaskId === task.id ? 'playing' : ''}"
                                 data-play-id="${task.id}">
-                            <i data-lucide="${state.timer.activeTaskId === task.id ? 'pause' : 'play'}"></i>
+                            ${icon(state.timer.activeTaskId === task.id ? 'pause' : 'play')}
                         </button>
                         <span class="m-t-name">${task.name}</span>
                         <div class="m-task-actions">
                             <button class="m-t-delete-btn" data-delete-id="${task.id}">
-                                <i data-lucide="trash-2"></i>
+                                ${icon('trash-2')}
                             </button>
                             <button class="m-t-done-btn" data-done-id="${task.id}"></button>
                         </div>
@@ -210,7 +210,7 @@ function renderMobileSubjectManager() {
         <div class="subject-row">
             <input type="text" value="${s.name}" onchange="updateSubjectName('${s.id}', this.value)" placeholder="Name">
             <input type="color" value="${s.color}" onchange="updateSubjectColor('${s.id}', this.value)">
-            <button onclick="deleteSubject('${s.id}')" class="ghost-btn" title="Delete"><i data-lucide="trash-2"></i></button>
+            <button onclick="deleteSubject('${s.id}')" class="ghost-btn" title="Delete">${icon('trash-2')}</button>
         </div>
     `).join('');
 }
@@ -322,7 +322,6 @@ function syncMobileAnalysisContent() {
     const dst = document.getElementById('m-analysis-content');
     if (src && dst) {
         dst.innerHTML = src.innerHTML;
-        refreshIcons();
     }
 }
 
