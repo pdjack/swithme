@@ -1,5 +1,6 @@
 import { state, formatSeconds, saveToLocal, getActiveHistory } from './store.js';
 import { icon } from './icons.js';
+import { startTimer, stopTimer } from './timer.js';
 
 const taskList = document.getElementById('task-list');
 const subjectSelect = document.getElementById('task-subject');
@@ -69,8 +70,6 @@ export function renderTasks() {
 // 모듈 간 동기화를 위해 전역 노출
 window.renderTasks = renderTasks;
 window.renderSubjectOptions = renderSubjectOptions;
-
-import { startTimer, stopTimer } from './timer.js';
 
 window.playTask = (e, id) => {
     e.stopPropagation();

@@ -125,17 +125,15 @@ function buildPlanRows(root, plans, isPc) {
 }
 
 function renderPlanBlock(root, plan, rowHeight, labelWidth) {
-    const startRow = Math.floor(plan.startSlot / 6);
-    const endRow = Math.floor(plan.endSlot / 6);
-
     const slotsContainer = root.querySelector('.ten-min-slots');
     if (!slotsContainer) return;
 
     const borderBottom = 1; // border-bottom 1px
+    const slotHeight = (rowHeight + borderBottom) / 6; // 10분 슬롯 높이
 
-    // 시작 row top ~ 끝 row bottom
-    const topPx = startRow * (rowHeight + borderBottom);
-    const bottomPx = (endRow + 1) * (rowHeight + borderBottom);
+    // 10분 슬롯 단위로 정확한 위치/높이 계산
+    const topPx = plan.startSlot * slotHeight;
+    const bottomPx = (plan.endSlot + 1) * slotHeight;
     const height = bottomPx - topPx;
 
     const block = document.createElement('div');

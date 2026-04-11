@@ -2519,8 +2519,8 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 }
 .plan-resize-handle {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: #a8c8f0;
     cursor: ns-resize;
@@ -2528,12 +2528,12 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 .plan-resize-handle--top {
-    top: -10px;
-    left: -10px;
+    top: -18px;
+    left: -18px;
 }
 .plan-resize-handle--bottom {
-    bottom: -10px;
-    right: -10px;
+    bottom: -18px;
+    right: -18px;
 }
 
 /* ── 계획 모드일 때 timetable-container에 relative 설정 ──── */
