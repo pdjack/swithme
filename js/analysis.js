@@ -1,4 +1,4 @@
-import { state, saveToLocal, getActiveHistory } from './store.js';
+import { state, saveToLocal, getActiveHistory, refreshIcons } from './store.js';
 
 /**
  * 🧠 Analysis Module (Phase 2, 3, 4)
@@ -214,7 +214,7 @@ window.renderAnalysisResult = (res) => {
         </div>
     `;
     
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    refreshIcons();
 };
 
 window.startAnalysis = (type) => {
@@ -245,7 +245,7 @@ window.renderDataAnalysisFilter = () => {
             </div>
         </div>
     `;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    refreshIcons();
 };
 
 window.performDataAnalysis = (days) => {
@@ -356,7 +356,7 @@ window.renderDataAnalysisResult = (res, days) => {
             </div>
         </div>
     `;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    refreshIcons();
 };
 
 window.deleteAnalysisResult = (id, event) => {
@@ -408,7 +408,7 @@ window.renderAnalysisHistory = () => {
             </div>
         </div>
     `;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    refreshIcons();
 };
 
 window.performIntegratedAnalysis = () => {
@@ -430,7 +430,7 @@ window.performIntegratedAnalysis = () => {
                 </div>
             </div>
         `;
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        refreshIcons();
         return;
     }
 
@@ -541,7 +541,7 @@ window.renderIntegratedResult = (res) => {
         </div>
     `;
     
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    refreshIcons();
 
     // Init Phase 4 Visuals
     setTimeout(() => {
@@ -708,7 +708,7 @@ window.renderAIPlanModal = (plans) => {
     `;
 
     document.body.appendChild(modal);
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    refreshIcons();
 };
 
 window.applyAIPlan = (plans) => {

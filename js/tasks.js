@@ -61,8 +61,6 @@ export function renderTasks() {
         taskList.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-dim);">오늘의 계획이 없습니다.</div>';
     }
 
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-
     // 모바일 할 일 목록도 동기화
     if (window.renderMobileTasks) window.renderMobileTasks();
 }

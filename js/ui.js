@@ -1,4 +1,4 @@
-import { state, saveToLocal, scheduleRender } from './store.js';
+import { state, saveToLocal, scheduleRender, refreshIcons } from './store.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay, loadTodayReflection } from './timer.js';
@@ -42,7 +42,7 @@ export function switchTab(tab) {
         if (content && content.innerHTML.trim() === '') {
              content.innerHTML = '<div class="empty-state"><i data-lucide="brain-circuit"></i><p>분석 항목을 선택하여 시작하세요.</p></div>';
         }
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        refreshIcons();
         if (window.updateAIAdaptiveFeedback) window.updateAIAdaptiveFeedback();
     }
 }
@@ -57,7 +57,6 @@ export function renderSubjectManager() {
             <button onclick="deleteSubject('${s.id}')" class="ghost-btn delete-btn" title="Delete"><i data-lucide="trash-2"></i></button>
         </div>
     `).join('');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 let draggedIdx = null;

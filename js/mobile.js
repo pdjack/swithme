@@ -4,7 +4,7 @@
  * 기존 store.js의 state를 공유하고, PC 사이드 함수(timer 등)를 재사용합니다.
  */
 
-import { state, saveToLocal, getActiveHistory } from './store.js';
+import { state, saveToLocal, getActiveHistory, refreshIcons } from './store.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
 import { renderSubjectOptions, getGroupedTaskData } from './tasks.js';
 import { renderSubjectManager } from './ui.js';
@@ -86,18 +86,22 @@ function switchMobileTab(tab) {
     if (tab === 'dashboard') {
         renderMobileTasks();
         renderTimetable();
+        // 회고 탭이 활성 상태면 데이터 동기화
+        const activeColTab = document.querySelector('.m-col-tab.active');
+        if (activeColTab && activeColTab.dataset.colTab === 'reflection') {
+            syncMobileReflectionInputs();
+        }
     } else if (tab === 'plan') {
         renderMobileCalendar();
     } else if (tab === 'settings') {
         renderMobileSubjectManager();
-        syncMobileReflectionInputs();
     } else if (tab === 'analyze') {
         if (window.updateAIAdaptiveFeedback) window.updateAIAdaptiveFeedback();
         // 분석 탭의 analysis-content를 모바일 영역에 복사
         syncMobileAnalysisContent();
     }
 
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    refreshIcons();
 }
 
 // ── 모바일 할 일 목록 렌더링 ─────────────────────────────────────
@@ -139,8 +143,6 @@ export function renderMobileTasks() {
             </div>
         </li>
     `).join('');
-
-    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // ── 모바일 캘린더 렌더링 ─────────────────────────────────────────
@@ -211,9 +213,57 @@ function renderMobileSubjectManager() {
             <button onclick="deleteSubject('${s.id}')" class="ghost-btn" title="Delete"><i data-lucide="trash-2"></i></button>
         </div>
     `).join('');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 window.renderMobileSubjectManager = renderMobileSubjectManager;
+
+// ── 할 일 / 회고 컬럼 탭 전환 ─────────────────────────────────────
+function initColumnTabs() {
+    const tabs = document.querySelectorAll('.m-col-tab');
+    if (!tabs.length) return;
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => switchColumnTab(tab.dataset.colTab));
+    });
+
+    // 초기 인디케이터 위치 설정
+    updateTabIndicator();
+}
+
+function switchColumnTab(tabName) {
+    const taskList = document.getElementById('m-task-list');
+    const reflectionContent = document.getElementById('m-reflection-content');
+    const addBtn = document.getElementById('m-open-task-btn');
+
+    document.querySelectorAll('.m-col-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.colTab === tabName);
+    });
+
+    if (tabName === 'tasks') {
+        if (taskList) taskList.style.display = '';
+        if (reflectionContent) reflectionContent.style.display = 'none';
+        if (addBtn) addBtn.style.display = '';
+    } else if (tabName === 'reflection') {
+        if (taskList) taskList.style.display = 'none';
+        if (reflectionContent) reflectionContent.style.display = 'flex';
+        if (addBtn) addBtn.style.display = 'none';
+        syncMobileReflectionInputs();
+    }
+
+    updateTabIndicator();
+}
+
+function updateTabIndicator() {
+    const activeTab = document.querySelector('.m-col-tab.active');
+    const indicator = document.querySelector('.m-col-tab-indicator');
+    if (!activeTab || !indicator) return;
+
+    const parentLeft = activeTab.parentElement.getBoundingClientRect().left;
+    const tabRect = activeTab.getBoundingClientRect();
+    indicator.style.left = (tabRect.left - parentLeft) + 'px';
+    indicator.style.width = tabRect.width + 'px';
+}
+
+window.switchColumnTab = switchColumnTab;
 
 // ── 하루 회고 동기화 (모바일 ↔ 데스크탑 공유 state) ──────────────
 function syncMobileReflectionInputs() {
@@ -230,7 +280,7 @@ function syncMobileReflectionInputs() {
     setVal('m-input-review', 'review');
     setVal('m-input-homework', 'homework');
 
-    syncMobileReflection();
+    window.syncMobileReflection();
 }
 
 window.syncMobileReflection = () => {
@@ -272,7 +322,7 @@ function syncMobileAnalysisContent() {
     const dst = document.getElementById('m-analysis-content');
     if (src && dst) {
         dst.innerHTML = src.innerHTML;
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        refreshIcons();
     }
 }
 
@@ -342,6 +392,9 @@ export function setupMobileUI() {
     document.querySelectorAll('.m-tab').forEach(btn => {
         btn.addEventListener('click', () => switchMobileTab(btn.dataset.mtab));
     });
+
+    // ── 할 일 / 회고 컬럼 탭 전환 ───────────────────────────────
+    initColumnTabs();
 
     // ── 타이머 모드 전환 (모바일 헤더) ────────────────────────
     const mTimerBtn = document.getElementById('m-mode-timer-btn');
@@ -455,7 +508,7 @@ export function setupMobileUI() {
                 if (state.timer.isRunning) return; // 실행 중엔 선택 변경 불가
                 state.timer.activeTaskId = (state.timer.activeTaskId === id) ? null : id;
                 renderMobileTasks();
-                if (typeof renderTasks === 'function') renderTasks();
+                if (typeof window.renderTasks === 'function') window.renderTasks();
                 return;
             }
 
@@ -485,7 +538,7 @@ export function setupMobileUI() {
                     syncMobileStartBtn(true);
                 }
                 renderMobileTasks();
-                if (typeof renderTasks === 'function') renderTasks();
+                if (typeof window.renderTasks === 'function') window.renderTasks();
                 return;
             }
             // 완료 버튼

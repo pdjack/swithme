@@ -1,4 +1,4 @@
-import { state, saveToLocal, persistTimerState, clearTimerState, getActiveHistory } from './store.js';
+import { state, saveToLocal, persistTimerState, clearTimerState, getActiveHistory, refreshIcons } from './store.js';
 import { renderTasks } from './tasks.js';
 import { renderTimetable } from './timetable.js';
 
@@ -78,7 +78,7 @@ function showNoTaskPanel() {
     `;
     document.body.appendChild(panel);
 
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    refreshIcons();
 
     const closeBtn = document.getElementById('no-task-close-btn');
     if (closeBtn) closeBtn.addEventListener('click', () => panel.remove());

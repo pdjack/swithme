@@ -1969,6 +1969,59 @@ circle { fill: none; stroke-width: 3; stroke-linecap: round; }
     letter-spacing: 0.8px;
 }
 
+/* ── 할 일 / 회고 탭 스위처 ────────── */
+.m-col-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: relative;
+}
+
+.m-col-tab {
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: color 0.2s;
+    position: relative;
+}
+
+.m-col-tab.active {
+    color: var(--primary);
+}
+
+.m-col-tab-indicator {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 2px 2px 0 0;
+    transition: left 0.25s ease, width 0.25s ease;
+}
+
+/* 회고 콘텐츠 영역 */
+.m-reflection-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.m-reflection-score-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 8px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
 .m-ghost-btn {
     background: transparent;
     border: none;

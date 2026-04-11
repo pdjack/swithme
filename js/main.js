@@ -4,7 +4,7 @@ import { renderTimetable } from './timetable.js';
 import { updateTimerDisplay, startTimer, loadTodayReflection } from './timer.js';
 import { setupMobileUI } from './mobile.js';
 import { watchDeviceLayout } from './device.js';
-import { restoreTimerState } from './store.js';
+import { restoreTimerState, refreshIcons } from './store.js';
 import './analysis.js'; // For side effects (window attachments)
 
 // SW 업데이트 시 자동 리로드
@@ -20,7 +20,7 @@ function init() {
         // 레이아웃 전환 시 필요한 데이터 재렌더링
         renderTasks();
         renderTimetable();
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        refreshIcons();
     });
 
     updateDashboardDateDisplay();
@@ -42,9 +42,7 @@ function init() {
 
     setupMobileUI();
 
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+    refreshIcons();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

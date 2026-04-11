@@ -276,6 +276,9 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | `renderMobileCalendar()` | 모바일 캘린더 렌더링 |
 | `renderMobileSubjectManager()` | 모바일 과목 관리자 렌더링 |
 | `syncMobileReflectionInputs()` | 모바일 회고 입력 필드 동기화 |
+| `initColumnTabs()` | 할 일/회고 컬럼 탭 초기화 (이벤트 바인딩 + 인디케이터) |
+| `switchColumnTab(tabName)` | 할 일/회고 컬럼 탭 전환 (`tasks` / `reflection`) |
+| `updateTabIndicator()` | 탭 밑줄 인디케이터 위치 업데이트 |
 | `syncMobileAnalysisContent()` | 데스크탑 분석 결과를 모바일 영역에 복사 |
 | `updateMobileDateDisplay()` | 모바일 상단 날짜 표시 업데이트 |
 
@@ -285,6 +288,7 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 |------|------|
 | `syncMobileReflection()` | 모바일 회고 점수 재계산 |
 | `saveMobileReflection()` | 모바일에서 회고 저장 |
+| `switchColumnTab(tabName)` | 할 일/회고 컬럼 탭 전환 |
 | `renderMobileTasks()` | 전역 노출 (다른 모듈에서 호출용) |
 | `renderMobileTimetable()` | 전역 노출 |
 
