@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // localStorage mock
 const localStorageMock = (() => {
@@ -48,9 +48,18 @@ describe('store.js', () => {
   });
 
   describe('saveToLocal()', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it('state의 핵심 데이터를 localStorage에 저장해야 한다', () => {
       store.state.tasks.push({ id: 99, subject: 'ENG', name: 'test', duration: '0s', completed: false });
       store.saveToLocal();
+      vi.advanceTimersByTime(300);
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_tasks', expect.any(String));
       expect(localStorageMock.setItem).toHaveBeenCalledWith('switme_timetables', expect.any(String));
@@ -63,6 +72,7 @@ describe('store.js', () => {
     it('저장된 tasks JSON에 추가한 항목이 포함되어야 한다', () => {
       store.state.tasks.push({ id: 100, subject: 'MATH', name: '수학 문제', duration: '0s', completed: false });
       store.saveToLocal();
+      vi.advanceTimersByTime(300);
 
       const lastCall = localStorageMock.setItem.mock.calls.filter((c) => c[0] === 'switme_tasks').pop();
       const savedTasks = JSON.parse(lastCall[1]);

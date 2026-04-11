@@ -75,7 +75,7 @@ function flushSave() {
 }
 
 export function saveToLocal() {
-    if (saveTimerId) return;
+    if (saveTimerId) clearTimeout(saveTimerId);
     saveTimerId = setTimeout(flushSave, 300);
 }
 
