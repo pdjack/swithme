@@ -142,6 +142,11 @@
                             <button id="tt-scroll-right" class="tt-scroll-btn" aria-label="다음 탭">&#8250;</button>
                             <button id="tt-add-btn" class="tt-add-btn" title="새 타임테이블 추가">+</button>
                         </div>
+                        <!-- 모드 선택 (기록 / 계획) -->
+                        <div id="tt-mode-bar" class="tt-mode-bar">
+                            <button id="tt-mode-record" class="tt-mode-btn tt-mode-btn--active" data-mode="record">기록</button>
+                            <button id="tt-mode-plan" class="tt-mode-btn" data-mode="plan">계획</button>
+                        </div>
                         <div id="timetable-root" class="timetable-container">
                             <!-- JS will generate 24 rows * 6 slots -->
                         </div>
@@ -386,6 +391,11 @@
                             <div id="m-tt-tab-list" class="m-tt-tab-list"></div>
                             <button id="m-tt-add-btn" class="m-tt-add-btn" title="새 타임테이블 추가">+</button>
                         </div>
+                        <!-- 모드 선택 (기록 / 계획) -->
+                        <div id="m-tt-mode-bar" class="tt-mode-bar">
+                            <button id="m-tt-mode-record" class="tt-mode-btn tt-mode-btn--active" data-mode="record">기록</button>
+                            <button id="m-tt-mode-plan" class="tt-mode-btn" data-mode="plan">계획</button>
+                        </div>
                         <div id="m-timetable-root" class="m-timetable-container">
                             <!-- JS 주입 -->
                         </div>
@@ -462,6 +472,53 @@
             <h2 id="zen-task-name">영어 모의고사 오답</h2>
             <div id="zen-timer-display">25:00</div>
             <button id="exit-zen-btn" class="ghost-btn">몰입 종료</button>
+        </div>
+    </div>
+
+    <!-- 타임테이블 모드 전환 확인 모달 -->
+    <div id="tt-mode-confirm-modal" class="modal">
+        <div class="modal-content glass-card">
+            <h2>이 탭에 기존 데이터가 있습니다</h2>
+            <p class="tt-mode-confirm-desc">모드를 변경하면 기존 데이터를 어떻게 처리할까요?</p>
+            <div class="modal-btns tt-mode-confirm-btns">
+                <button id="tt-mode-new-tab" class="btn-start">새 탭으로 만들기</button>
+                <button id="tt-mode-overwrite" class="btn-reset" style="color: #FF3B30;">이 탭에 덮어쓰기</button>
+                <button id="tt-mode-cancel" class="btn-reset">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 계획 슬롯 설정 팝업 -->
+    <div id="plan-slot-modal" class="modal">
+        <div class="modal-content glass-card">
+            <h2 id="plan-slot-time-label">09:00 ~ 10:30</h2>
+            <div class="form-group">
+                <label>과목</label>
+                <select id="plan-slot-subject">
+                    <option value="">선택 안 함</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>메모</label>
+                <input type="text" id="plan-slot-memo" placeholder="메모를 입력하세요">
+            </div>
+            <div class="modal-btns">
+                <button id="plan-slot-cancel" class="btn-reset">취소</button>
+                <button id="plan-slot-confirm" class="btn-start">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 계획 슬롯 상세/수정/삭제 팝업 -->
+    <div id="plan-detail-modal" class="modal">
+        <div class="modal-content glass-card">
+            <h2 id="plan-detail-time-label">09:00 ~ 10:30</h2>
+            <p id="plan-detail-subject" class="plan-detail-subject"></p>
+            <p id="plan-detail-memo" class="plan-detail-memo"></p>
+            <div class="modal-btns">
+                <button id="plan-detail-delete" class="btn-reset" style="color: #FF3B30;">삭제</button>
+                <button id="plan-detail-edit" class="btn-start">수정</button>
+            </div>
         </div>
     </div>
 

@@ -1,18 +1,20 @@
-import { state, getSubjectColor, saveToLocal, getActiveHistory } from './store.js';
+import { state, getSubjectColor, saveToLocal, getActiveHistory, getActiveTimetable, getActivePlans } from './store.js';
 import { renderTasks } from './tasks.js';
 
-// ─── 타임테이블 그리드 렌더링 ───────────────────────────────────────
+// ─── 상수 ───────────────────────────────────────────────────────────
+const START_HOUR = 6;
+const SLOT_COUNT = 144; // 24h × 6 slots
+const SLOT_MS = 10 * 60 * 1000; // 10분
 
-// 세션 히스토리를 144개 슬롯(10분 단위, 06:00 기준 24시간) 배열로 인덱싱
+// ─── 타임테이블 그리드 렌더링 (기록 모드) ──────────────────────────
+
 function buildSlotMap(activeHistory, selectedDate) {
-    const startHour = 6;
-    const slotMs = 10 * 60 * 1000;
-    const slotMap = new Array(144).fill(null);
+    const slotMap = new Array(SLOT_COUNT).fill(null);
 
     const base = new Date(selectedDate);
-    base.setHours(startHour, 0, 0, 0);
+    base.setHours(START_HOUR, 0, 0, 0);
     const baseMs = base.getTime();
-    const totalMs = 144 * slotMs;
+    const totalMs = SLOT_COUNT * SLOT_MS;
 
     for (const session of activeHistory) {
         const sStart = new Date(session.startTime).getTime();
@@ -20,8 +22,8 @@ function buildSlotMap(activeHistory, selectedDate) {
 
         if (sEnd <= baseMs || sStart >= baseMs + totalMs) continue;
 
-        const firstSlot = Math.max(0, Math.floor((sStart - baseMs) / slotMs));
-        const lastSlot = Math.min(143, Math.floor((sEnd - 1 - baseMs) / slotMs));
+        const firstSlot = Math.max(0, Math.floor((sStart - baseMs) / SLOT_MS));
+        const lastSlot = Math.min(SLOT_COUNT - 1, Math.floor((sEnd - 1 - baseMs) / SLOT_MS));
 
         for (let s = firstSlot; s <= lastSlot; s++) {
             if (!slotMap[s]) slotMap[s] = session;
@@ -31,13 +33,27 @@ function buildSlotMap(activeHistory, selectedDate) {
     return slotMap;
 }
 
-function buildTimetableRows(root, slotMap) {
+// ─── 슬롯 인덱스 ↔ 시간 변환 ───────────────────────────────────────
+
+function slotToTimeLabel(slotIdx) {
+    const totalMinutes = (START_HOUR * 60) + (slotIdx * 10);
+    const h = Math.floor(totalMinutes / 60) % 24;
+    const m = totalMinutes % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+
+function slotRangeLabel(startSlot, endSlot) {
+    return `${slotToTimeLabel(startSlot)} ~ ${slotToTimeLabel(endSlot + 1)}`;
+}
+
+// ─── 기록 모드 그리드 빌드 ──────────────────────────────────────────
+
+function buildRecordRows(root, slotMap) {
     if (!root) return;
     root.innerHTML = '';
-    const startHour = 6;
 
     for (let i = 0; i < 24; i++) {
-        const hour = (startHour + i) % 24;
+        const hour = (START_HOUR + i) % 24;
         const row = document.createElement('div');
         row.className = 'hour-row';
 
@@ -65,10 +81,573 @@ function buildTimetableRows(root, slotMap) {
     }
 }
 
+// ─── 계획 모드 그리드 빌드 ──────────────────────────────────────────
+
+function buildPlanRows(root, plans, isPc) {
+    if (!root) return;
+    root.innerHTML = '';
+    root.classList.add(isPc ? 'timetable-container--plan' : 'm-timetable-container--plan');
+
+    const rowHeight = isPc ? 32 : 28;
+    const labelWidth = isPc ? 50 : 36;
+
+    // 빈 그리드 행 생성
+    for (let i = 0; i < 24; i++) {
+        const hour = (START_HOUR + i) % 24;
+        const row = document.createElement('div');
+        row.className = 'hour-row';
+
+        const label = document.createElement('div');
+        label.className = 'hour-label';
+        label.textContent = hour.toString().padStart(2, '0');
+        row.appendChild(label);
+
+        const slots = document.createElement('div');
+        slots.className = 'ten-min-slots';
+
+        for (let j = 0; j < 6; j++) {
+            const slot = document.createElement('div');
+            slot.className = 'slot';
+            slot.dataset.slotIdx = String(i * 6 + j);
+            slots.appendChild(slot);
+        }
+        row.appendChild(slots);
+        root.appendChild(row);
+    }
+
+    // 계획 블록 오버레이 렌더링
+    for (const plan of plans) {
+        renderPlanBlock(root, plan, rowHeight, labelWidth);
+    }
+
+    // 계획 슬롯 선택 이벤트 바인딩
+    bindPlanSelection(root, isPc);
+}
+
+function renderPlanBlock(root, plan, rowHeight, labelWidth) {
+    const startRow = Math.floor(plan.startSlot / 6);
+    const endRow = Math.floor(plan.endSlot / 6);
+
+    const slotsContainer = root.querySelector('.ten-min-slots');
+    if (!slotsContainer) return;
+
+    const borderBottom = 1; // border-bottom 1px
+
+    // 시작 row top ~ 끝 row bottom
+    const topPx = startRow * (rowHeight + borderBottom);
+    const bottomPx = (endRow + 1) * (rowHeight + borderBottom);
+    const height = bottomPx - topPx;
+
+    const block = document.createElement('div');
+    block.className = 'plan-block';
+    if (!plan.subject) block.classList.add('plan-block--no-subject');
+
+    block.style.position = 'absolute';
+    block.style.top = topPx + 'px';
+    block.style.left = labelWidth + 'px';
+    block.style.right = '0';
+    block.style.height = height + 'px';
+    block.dataset.planId = plan.id;
+
+    if (plan.subject) {
+        const baseColor = getSubjectColor(plan.subject);
+        block.style.background = lightenColor(baseColor, 0.25);
+    }
+
+    if (plan.memo) {
+        const memoEl = document.createElement('span');
+        memoEl.className = 'plan-block__memo';
+        memoEl.textContent = plan.memo;
+        block.appendChild(memoEl);
+    }
+
+    block.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showPlanDetailModal(plan);
+    });
+
+    root.appendChild(block);
+}
+
+function lightenColor(hex, amount) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.min(255, ((num >> 16) & 0xFF) + Math.round(255 * amount));
+    const g = Math.min(255, ((num >> 8) & 0xFF) + Math.round(255 * amount));
+    const b = Math.min(255, (num & 0xFF) + Math.round(255 * amount));
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+// ─── 계획 슬롯 선택 (1.5초 누르기 + 범위 확장) ─────────────────────
+
+let planSelectState = null; // { root, startSlot, endSlot, isPc, longPressTimer, active }
+
+function bindPlanSelection(root, isPc) {
+    const allSlots = root.querySelectorAll('.slot[data-slot-idx]');
+
+    allSlots.forEach(slot => {
+        // 마우스 이벤트 (PC)
+        slot.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const idx = parseInt(slot.dataset.slotIdx);
+            // 이미 계획이 있는 슬롯은 무시 (클릭은 plan-block이 처리)
+            if (isSlotOccupied(idx)) return;
+            startLongPress(root, idx, isPc);
+        });
+
+        // 터치 이벤트 (모바일)
+        slot.addEventListener('touchstart', () => {
+            const idx = parseInt(slot.dataset.slotIdx);
+            if (isSlotOccupied(idx)) return;
+            startLongPress(root, idx, isPc);
+        }, { passive: true });
+    });
+
+    // 마우스 이동 (PC)
+    root.addEventListener('mousemove', (e) => {
+        if (!planSelectState || !planSelectState.active) return;
+        const slotEl = getSlotFromPoint(e.clientX, e.clientY, root);
+        if (slotEl) {
+            const idx = parseInt(slotEl.dataset.slotIdx);
+            updateSelection(root, idx);
+        }
+    });
+
+    // 터치 이동 (모바일)
+    root.addEventListener('touchmove', (e) => {
+        if (!planSelectState) return;
+        // 롱프레스 대기 중이면 취소
+        if (!planSelectState.active) {
+            cancelLongPress();
+            return;
+        }
+        const touch = e.touches[0];
+        const slotEl = getSlotFromPoint(touch.clientX, touch.clientY, root);
+        if (slotEl) {
+            const idx = parseInt(slotEl.dataset.slotIdx);
+            updateSelection(root, idx);
+        }
+        e.preventDefault(); // 스크롤 방지
+    }, { passive: false });
+
+    // 선택 완료: mouseup / touchend
+    root.addEventListener('mouseup', () => finishSelection());
+    root.addEventListener('touchend', () => finishSelection());
+
+    // 선택 취소: mouseleave
+    root.addEventListener('mouseleave', () => {
+        if (planSelectState && !planSelectState.active) {
+            cancelLongPress();
+        }
+    });
+}
+
+function startLongPress(root, slotIdx, isPc) {
+    cancelLongPress();
+
+    const slot = root.querySelector(`.slot[data-slot-idx="${slotIdx}"]`);
+    if (slot) slot.classList.add('plan-hover');
+
+    planSelectState = {
+        root,
+        startSlot: slotIdx,
+        endSlot: slotIdx,
+        isPc,
+        active: false,
+        longPressTimer: setTimeout(() => {
+            if (!planSelectState) return;
+            planSelectState.active = true;
+            // 롱프레스 성공 - 선택 시작 피드백
+            if (slot) {
+                slot.classList.remove('plan-hover');
+                slot.classList.add('plan-selecting');
+            }
+        }, 1500)
+    };
+}
+
+function cancelLongPress() {
+    if (planSelectState) {
+        clearTimeout(planSelectState.longPressTimer);
+        clearSelectionHighlight(planSelectState.root);
+        planSelectState = null;
+    }
+}
+
+function updateSelection(root, slotIdx) {
+    if (!planSelectState || !planSelectState.active) return;
+
+    planSelectState.endSlot = slotIdx;
+
+    // 하이라이트 갱신
+    clearSelectionHighlight(root);
+    const minSlot = Math.min(planSelectState.startSlot, planSelectState.endSlot);
+    const maxSlot = Math.max(planSelectState.startSlot, planSelectState.endSlot);
+
+    for (let i = minSlot; i <= maxSlot; i++) {
+        const el = root.querySelector(`.slot[data-slot-idx="${i}"]`);
+        if (el) el.classList.add('plan-selecting');
+    }
+}
+
+function clearSelectionHighlight(root) {
+    root.querySelectorAll('.slot.plan-selecting, .slot.plan-hover').forEach(el => {
+        el.classList.remove('plan-selecting', 'plan-hover');
+    });
+}
+
+function finishSelection() {
+    if (!planSelectState || !planSelectState.active) {
+        cancelLongPress();
+        return;
+    }
+
+    const { root, startSlot, endSlot } = planSelectState;
+    const minSlot = Math.min(startSlot, endSlot);
+    const maxSlot = Math.max(startSlot, endSlot);
+
+    clearSelectionHighlight(root);
+    planSelectState = null;
+
+    // 겹침 검사
+    const plans = getActivePlans();
+    for (const p of plans) {
+        if (minSlot <= p.endSlot && maxSlot >= p.startSlot) {
+            // 겹치는 계획이 있으면 무시
+            return;
+        }
+    }
+
+    showPlanSlotModal(minSlot, maxSlot);
+}
+
+function isSlotOccupied(slotIdx) {
+    const plans = getActivePlans();
+    return plans.some(p => slotIdx >= p.startSlot && slotIdx <= p.endSlot);
+}
+
+function getSlotFromPoint(x, y, root) {
+    const el = document.elementFromPoint(x, y);
+    if (!el) return null;
+    if (el.classList.contains('slot') && el.dataset.slotIdx !== undefined && root.contains(el)) {
+        return el;
+    }
+    return null;
+}
+
+// ─── 계획 슬롯 설정 모달 ───────────────────────────────────────────
+
+function showPlanSlotModal(startSlot, endSlot) {
+    const modal = document.getElementById('plan-slot-modal');
+    const timeLabel = document.getElementById('plan-slot-time-label');
+    const subjectSelect = document.getElementById('plan-slot-subject');
+    const memoInput = document.getElementById('plan-slot-memo');
+
+    timeLabel.textContent = slotRangeLabel(startSlot, endSlot);
+
+    // 과목 드롭다운 채우기
+    subjectSelect.innerHTML = '<option value="">선택 안 함</option>';
+    state.subjects.forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub.id;
+        opt.textContent = sub.name;
+        subjectSelect.appendChild(opt);
+    });
+
+    memoInput.value = '';
+    modal.classList.add('active');
+
+    // 이벤트 리스너 (한 번만)
+    const confirmBtn = document.getElementById('plan-slot-confirm');
+    const cancelBtn = document.getElementById('plan-slot-cancel');
+
+    function closeModal() {
+        modal.classList.remove('active');
+        confirmBtn.removeEventListener('click', onConfirm);
+        cancelBtn.removeEventListener('click', closeModal);
+    }
+
+    function onConfirm() {
+        const subject = subjectSelect.value || null;
+        const memo = memoInput.value.trim() || '';
+
+        const newPlan = {
+            id: 'plan_' + Date.now(),
+            startSlot,
+            endSlot,
+            subject,
+            memo
+        };
+
+        getActivePlans().push(newPlan);
+        saveToLocal();
+        renderTimetable();
+        closeModal();
+    }
+
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', closeModal);
+}
+
+// ─── 계획 상세/수정/삭제 모달 ───────────────────────────────────────
+
+function showPlanDetailModal(plan) {
+    const modal = document.getElementById('plan-detail-modal');
+    const timeLabel = document.getElementById('plan-detail-time-label');
+    const subjectEl = document.getElementById('plan-detail-subject');
+    const memoEl = document.getElementById('plan-detail-memo');
+
+    timeLabel.textContent = slotRangeLabel(plan.startSlot, plan.endSlot);
+
+    if (plan.subject) {
+        const sub = state.subjects.find(s => s.id === plan.subject);
+        subjectEl.textContent = sub ? sub.name : plan.subject;
+        subjectEl.style.color = getSubjectColor(plan.subject);
+        subjectEl.style.display = '';
+    } else {
+        subjectEl.style.display = 'none';
+    }
+
+    memoEl.textContent = plan.memo || '(메모 없음)';
+    modal.classList.add('active');
+
+    const deleteBtn = document.getElementById('plan-detail-delete');
+    const editBtn = document.getElementById('plan-detail-edit');
+
+    function closeModal() {
+        modal.classList.remove('active');
+        deleteBtn.removeEventListener('click', onDelete);
+        editBtn.removeEventListener('click', onEdit);
+    }
+
+    function onDelete() {
+        const plans = getActivePlans();
+        const idx = plans.findIndex(p => p.id === plan.id);
+        if (idx !== -1) plans.splice(idx, 1);
+        saveToLocal();
+        renderTimetable();
+        closeModal();
+    }
+
+    function onEdit() {
+        closeModal();
+        startResizeMode(plan);
+    }
+
+    deleteBtn.addEventListener('click', onDelete);
+    editBtn.addEventListener('click', onEdit);
+}
+
+// ─── 수정 모드 (양끝 핸들 드래그) ──────────────────────────────────
+
+function startResizeMode(plan) {
+    // 양쪽 root에서 해당 블록 찾기
+    const roots = [
+        document.getElementById('timetable-root'),
+        document.getElementById('m-timetable-root')
+    ].filter(Boolean);
+
+    roots.forEach(root => {
+        const block = root.querySelector(`.plan-block[data-plan-id="${plan.id}"]`);
+        if (!block) return;
+
+        const isRootPc = root.id === 'timetable-root';
+        const rowHeight = isRootPc ? 32 : 28;
+
+        // 상단 핸들
+        const topHandle = document.createElement('div');
+        topHandle.className = 'plan-resize-handle plan-resize-handle--top';
+        block.appendChild(topHandle);
+
+        // 하단 핸들
+        const bottomHandle = document.createElement('div');
+        bottomHandle.className = 'plan-resize-handle plan-resize-handle--bottom';
+        block.appendChild(bottomHandle);
+
+        block.style.outline = '2px solid #007AFF';
+
+        function bindHandle(handle, isTop) {
+            let startY = 0;
+            let originalSlot = isTop ? plan.startSlot : plan.endSlot;
+
+            function onStart(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                const point = e.touches ? e.touches[0] : e;
+                startY = point.clientY;
+                originalSlot = isTop ? plan.startSlot : plan.endSlot;
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onEnd);
+                document.addEventListener('touchmove', onMove, { passive: false });
+                document.addEventListener('touchend', onEnd);
+            }
+
+            function onMove(e) {
+                e.preventDefault();
+                const point = e.touches ? e.touches[0] : e;
+                const dy = point.clientY - startY;
+                const slotDelta = Math.round(dy / ((rowHeight + 1) / 6));
+                let newSlot = originalSlot + slotDelta;
+                newSlot = Math.max(0, Math.min(SLOT_COUNT - 1, newSlot));
+
+                if (isTop) {
+                    if (newSlot > plan.endSlot) newSlot = plan.endSlot;
+                    plan.startSlot = newSlot;
+                } else {
+                    if (newSlot < plan.startSlot) newSlot = plan.startSlot;
+                    plan.endSlot = newSlot;
+                }
+
+                saveToLocal();
+                renderTimetable();
+                // 리렌더 후 다시 resize 모드 재적용
+                window.requestAnimationFrame(() => startResizeMode(plan));
+            }
+
+            function onEnd() {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onEnd);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend', onEnd);
+                saveToLocal();
+                renderTimetable();
+            }
+
+            handle.addEventListener('mousedown', onStart);
+            handle.addEventListener('touchstart', onStart, { passive: false });
+        }
+
+        bindHandle(topHandle, true);
+        bindHandle(bottomHandle, false);
+
+        // 블록 외부 클릭 시 resize 모드 종료
+        function dismissResize(e) {
+            if (block.contains(e.target)) return;
+            block.style.outline = '';
+            topHandle.remove();
+            bottomHandle.remove();
+            document.removeEventListener('mousedown', dismissResize, true);
+            document.removeEventListener('touchstart', dismissResize, true);
+        }
+
+        setTimeout(() => {
+            document.addEventListener('mousedown', dismissResize, { capture: true });
+            document.addEventListener('touchstart', dismissResize, { capture: true });
+        }, 0);
+    });
+}
+
+// ─── 메인 렌더 함수 ─────────────────────────────────────────────────
+
 export function renderTimetable() {
-    const slotMap = buildSlotMap(getActiveHistory(), state.selectedDate);
-    buildTimetableRows(document.getElementById('timetable-root'), slotMap);
-    buildTimetableRows(document.getElementById('m-timetable-root'), slotMap);
+    const tt = getActiveTimetable();
+    const pcRoot = document.getElementById('timetable-root');
+    const mRoot = document.getElementById('m-timetable-root');
+
+    // 모드 바 동기화
+    syncModeBar();
+
+    if (tt.type === 'plan') {
+        // 계획 모드
+        if (pcRoot) {
+            pcRoot.classList.remove('timetable-container--plan');
+            buildPlanRows(pcRoot, tt.plans, true);
+        }
+        if (mRoot) {
+            mRoot.classList.remove('m-timetable-container--plan');
+            buildPlanRows(mRoot, tt.plans, false);
+        }
+    } else {
+        // 기록 모드
+        if (pcRoot) pcRoot.classList.remove('timetable-container--plan');
+        if (mRoot) mRoot.classList.remove('m-timetable-container--plan');
+
+        const slotMap = buildSlotMap(getActiveHistory(), state.selectedDate);
+        buildRecordRows(pcRoot, slotMap);
+        buildRecordRows(mRoot, slotMap);
+    }
+}
+
+// ─── 모드 바 동기화 ─────────────────────────────────────────────────
+
+function syncModeBar() {
+    const tt = getActiveTimetable();
+    const mode = tt.type || 'record';
+
+    [
+        { record: 'tt-mode-record', plan: 'tt-mode-plan' },
+        { record: 'm-tt-mode-record', plan: 'm-tt-mode-plan' }
+    ].forEach(ids => {
+        const recordBtn = document.getElementById(ids.record);
+        const planBtn = document.getElementById(ids.plan);
+        if (recordBtn) recordBtn.classList.toggle('tt-mode-btn--active', mode === 'record');
+        if (planBtn) planBtn.classList.toggle('tt-mode-btn--active', mode === 'plan');
+    });
+}
+
+// ─── 모드 전환 로직 ─────────────────────────────────────────────────
+
+function switchMode(targetMode) {
+    const tt = getActiveTimetable();
+    if (tt.type === targetMode) return;
+
+    // 기존 데이터가 있는지 확인
+    const hasData = (tt.type === 'record' && tt.history.length > 0) ||
+                    (tt.type === 'plan' && tt.plans.length > 0);
+
+    if (hasData) {
+        showModeConfirmModal(targetMode);
+    } else {
+        tt.type = targetMode;
+        saveToLocal();
+        renderTimetable();
+    }
+}
+
+function showModeConfirmModal(targetMode) {
+    const modal = document.getElementById('tt-mode-confirm-modal');
+    modal.classList.add('active');
+
+    const newTabBtn = document.getElementById('tt-mode-new-tab');
+    const overwriteBtn = document.getElementById('tt-mode-overwrite');
+    const cancelBtn = document.getElementById('tt-mode-cancel');
+
+    function closeModal() {
+        modal.classList.remove('active');
+        newTabBtn.removeEventListener('click', onNewTab);
+        overwriteBtn.removeEventListener('click', onOverwrite);
+        cancelBtn.removeEventListener('click', closeModal);
+    }
+
+    function onNewTab() {
+        // 새 탭 생성 후 해당 모드로 설정
+        const newTt = {
+            id: generateTimetableId(),
+            name: getNextPlanName(),
+            type: targetMode,
+            history: [],
+            plans: []
+        };
+        state.timetables.push(newTt);
+        state.activeTimetableId = newTt.id;
+        saveToLocal();
+        renderTabs();
+        renderTimetable();
+        closeModal();
+    }
+
+    function onOverwrite() {
+        const tt = getActiveTimetable();
+        tt.type = targetMode;
+        tt.history = [];
+        tt.plans = [];
+        saveToLocal();
+        renderTimetable();
+        closeModal();
+    }
+
+    newTabBtn.addEventListener('click', onNewTab);
+    overwriteBtn.addEventListener('click', onOverwrite);
+    cancelBtn.addEventListener('click', closeModal);
 }
 
 // ─── 탭 관련 유틸 ───────────────────────────────────────────────────
@@ -101,7 +680,7 @@ function updateScrollArrows() {
 
 function scrollActiveTabIntoView(listEl) {
     if (!listEl) return;
-    const activeTab = listEl.querySelector('.tt-tab--active');
+    const activeTab = listEl.querySelector('.tt-tab--active, .m-tt-tab--active');
     if (activeTab) {
         activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
@@ -308,7 +887,7 @@ function switchTimetable(id) {
 }
 
 function addTimetable() {
-    const newTt = { id: generateTimetableId(), name: getNextPlanName(), history: [] };
+    const newTt = { id: generateTimetableId(), name: getNextPlanName(), type: 'record', history: [], plans: [] };
     state.timetables.push(newTt);
     state.activeTimetableId = newTt.id;
     saveToLocal();
@@ -380,16 +959,33 @@ if (ttTabBar && typeof window.ResizeObserver !== 'undefined') {
 const mAddBtn = document.getElementById('m-tt-add-btn');
 if (mAddBtn) mAddBtn.addEventListener('click', addTimetable);
 
+// 모드 전환 버튼 (PC)
+document.getElementById('tt-mode-record')?.addEventListener('click', () => switchMode('record'));
+document.getElementById('tt-mode-plan')?.addEventListener('click', () => switchMode('plan'));
+
+// 모드 전환 버튼 (모바일)
+document.getElementById('m-tt-mode-record')?.addEventListener('click', () => switchMode('record'));
+document.getElementById('m-tt-mode-plan')?.addEventListener('click', () => switchMode('plan'));
+
 // Clear 버튼 (PC)
 const clearTimetableBtn = document.getElementById('clear-timetable-btn');
 if (clearTimetableBtn) {
     clearTimetableBtn.addEventListener('click', () => {
-        if (confirm('현재 타임테이블의 모든 공부 기록을 삭제하시겠습니까?')) {
-            getActiveHistory().splice(0);
-            state.tasks = state.tasks.map(t => ({ ...t, duration: '0s' }));
-            saveToLocal();
-            renderTasks();
-            renderTimetable();
+        const tt = getActiveTimetable();
+        if (tt.type === 'plan') {
+            if (confirm('현재 타임테이블의 모든 계획을 삭제하시겠습니까?')) {
+                tt.plans.splice(0);
+                saveToLocal();
+                renderTimetable();
+            }
+        } else {
+            if (confirm('현재 타임테이블의 모든 공부 기록을 삭제하시겠습니까?')) {
+                getActiveHistory().splice(0);
+                state.tasks = state.tasks.map(t => ({ ...t, duration: '0s' }));
+                saveToLocal();
+                renderTasks();
+                renderTimetable();
+            }
         }
     });
 }

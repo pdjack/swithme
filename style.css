@@ -2407,3 +2407,161 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     color: var(--text-main);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   타임테이블 계획 모드
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 모드 선택 바 ─────────────────────────────────────────── */
+.tt-mode-bar {
+    display: flex;
+    gap: 4px;
+    padding: 6px 12px 4px;
+    background: #F2F2F7;
+    border-bottom: 1px solid #E5E5EA;
+}
+
+.tt-mode-btn {
+    flex: 1;
+    padding: 5px 0;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: #8E8E93;
+    transition: background 0.2s, color 0.2s;
+}
+.tt-mode-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+.tt-mode-btn--active {
+    background: #FFFFFF;
+    color: #1C1C1E;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ── 모드 전환 확인 모달 ──────────────────────────────────── */
+.tt-mode-confirm-desc {
+    color: #8E8E93;
+    font-size: 14px;
+    margin: 8px 0 20px;
+}
+.tt-mode-confirm-btns {
+    flex-direction: column;
+    gap: 8px;
+}
+.tt-mode-confirm-btns button {
+    width: 100%;
+}
+
+/* ── 계획 슬롯 렌더링 ────────────────────────────────────── */
+.plan-block {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+    z-index: 2;
+    transition: opacity 0.15s;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.plan-block:hover {
+    opacity: 0.85;
+}
+
+.plan-block--no-subject {
+    background: #C7C7CC;
+}
+
+.plan-block__memo {
+    font-size: 11px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 6px;
+    max-width: 100%;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ── 계획 슬롯 선택 하이라이트 ────────────────────────────── */
+.slot.plan-selecting {
+    background: rgba(0, 122, 255, 0.3) !important;
+}
+
+.slot.plan-hover {
+    background: rgba(0, 122, 255, 0.15) !important;
+}
+
+/* ── 계획 상세 모달 ───────────────────────────────────────── */
+.plan-detail-subject {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1C1C1E;
+    margin: 4px 0;
+}
+.plan-detail-memo {
+    font-size: 14px;
+    color: #636366;
+    margin: 4px 0 16px;
+    word-break: break-word;
+}
+
+/* ── 수정 모드 핸들 ───────────────────────────────────────── */
+.plan-resize-handle {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    cursor: ns-resize;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.plan-resize-handle::after {
+    content: '';
+    width: 30px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.8);
+}
+.plan-resize-handle--top {
+    top: -4px;
+}
+.plan-resize-handle--bottom {
+    bottom: -4px;
+}
+
+/* ── 계획 모드일 때 timetable-container에 relative 설정 ──── */
+.timetable-container--plan,
+.m-timetable-container--plan {
+    position: relative;
+}
+
+.timetable-container--plan .hour-row,
+.m-timetable-container--plan .hour-row {
+    position: relative;
+}
+
+/* plan 모드에서 슬롯에 호버 커서 */
+.timetable-container--plan .slot,
+.m-timetable-container--plan .slot {
+    cursor: cell;
+}
+
+/* ── 모바일 모드 바 오버라이드 ─────────────────────────────── */
+.m-timetable-col .tt-mode-bar {
+    padding: 4px 8px 2px;
+}
+.m-timetable-col .tt-mode-btn {
+    font-size: 11px;
+    padding: 4px 0;
+}
+

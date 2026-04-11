@@ -4,11 +4,17 @@
 function loadTimetables() {
     const savedTimetables = localStorage.getItem('switme_timetables');
     if (savedTimetables) {
-        return JSON.parse(savedTimetables);
+        const parsed = JSON.parse(savedTimetables);
+        // 마이그레이션: type/plans 필드가 없는 기존 데이터에 기본값 추가
+        return parsed.map(tt => ({
+            ...tt,
+            type: tt.type || 'record',
+            plans: tt.plans || []
+        }));
     }
     const legacyHistory = localStorage.getItem('switme_history');
     const history = legacyHistory ? JSON.parse(legacyHistory) : [];
-    return [{ id: 'tt_default', name: '플랜 1', history }];
+    return [{ id: 'tt_default', name: '플랜 1', type: 'record', history, plans: [] }];
 }
 
 function loadActiveTimetableId(timetables) {
@@ -85,9 +91,16 @@ window.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') flushSave();
 });
 
+export function getActiveTimetable() {
+    return state.timetables.find(t => t.id === state.activeTimetableId) || state.timetables[0];
+}
+
 export function getActiveHistory() {
-    const active = state.timetables.find(t => t.id === state.activeTimetableId);
-    return active ? active.history : state.timetables[0].history;
+    return getActiveTimetable().history;
+}
+
+export function getActivePlans() {
+    return getActiveTimetable().plans;
 }
 
 export function getSubjectColor(id) {
