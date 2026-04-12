@@ -2481,6 +2481,7 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 /* ── 수정 모드 핸들 ───────────────────────────────────────── */
 .slot.plan-filled--resizing {
     filter: brightness(0.65);
+    touch-action: none;
 }
 .plan-resize-handle {
     position: absolute;
@@ -2495,6 +2496,10 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     left: 50%;
     transform: translate(-50%, -50%);
     touch-action: none;
+}
+.plan-resize-handle--active {
+    background: #7ab0e8;
+    transform: translate(-50%, -50%) scale(1.2);
 }
 .plan-resize-handle::after {
     content: '';

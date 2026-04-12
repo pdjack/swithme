@@ -458,11 +458,29 @@ function updateResizeVisual(roots, plan, topHandle, bottomHandle) {
     });
 }
 
+function lockMobileScroll() {
+    const mc = document.getElementById('m-timetable-root');
+    if (mc) {
+        mc.style.overflowY = 'hidden';
+        mc.style.touchAction = 'none';
+    }
+}
+
+function unlockMobileScroll() {
+    const mc = document.getElementById('m-timetable-root');
+    if (mc) {
+        mc.style.overflowY = '';
+        mc.style.touchAction = '';
+    }
+}
+
 function startResizeMode(plan) {
     const roots = [
         document.getElementById('timetable-root'),
         document.getElementById('m-timetable-root')
     ].filter(Boolean);
+
+    lockMobileScroll();
 
     roots.forEach(root => {
         const planSlots = root.querySelectorAll(`.slot[data-plan-id="${plan.id}"]`);
@@ -482,9 +500,13 @@ function startResizeMode(plan) {
         lastSlot.appendChild(bottomHandle);
 
         function bindHandle(handle, isTop) {
+            let dragging = false;
+
             function onStart(e) {
                 e.stopPropagation();
                 e.preventDefault();
+                dragging = true;
+                handle.classList.add('plan-resize-handle--active');
                 document.addEventListener('mousemove', onMove);
                 document.addEventListener('mouseup', onEnd);
                 document.addEventListener('touchmove', onMove, { passive: false });
@@ -492,7 +514,9 @@ function startResizeMode(plan) {
             }
 
             function onMove(e) {
+                if (!dragging) return;
                 e.preventDefault();
+                e.stopPropagation();
                 const point = e.touches ? e.touches[0] : e;
                 handle.style.pointerEvents = 'none';
                 const el = document.elementFromPoint(point.clientX, point.clientY);
@@ -514,10 +538,13 @@ function startResizeMode(plan) {
             }
 
             function onEnd() {
+                dragging = false;
+                handle.classList.remove('plan-resize-handle--active');
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('mouseup', onEnd);
                 document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('touchend', onEnd);
+                unlockMobileScroll();
                 saveToLocal();
                 renderTimetable();
             }
@@ -534,6 +561,7 @@ function startResizeMode(plan) {
             planSlots.forEach(s => s.classList.remove('plan-filled--resizing'));
             topHandle.remove();
             bottomHandle.remove();
+            unlockMobileScroll();
             document.removeEventListener('mousedown', dismissResize, true);
             document.removeEventListener('touchstart', dismissResize, true);
         }
