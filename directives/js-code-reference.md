@@ -60,7 +60,8 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | `timer` | `Object` | 타이머 상태 (`mode`, `seconds`, `totalDuration`, `stopwatchSeconds`, `isRunning`, `interval`, `activeTaskId`, `isZenMode`) |
 | `timetables` | `Array` | 타임테이블 목록 (`id`, `name`, `history[]`) — 각 타임테이블이 독립된 학습 세션 기록을 보유 |
 | `activeTimetableId` | `string` | 현재 활성 타임테이블 ID |
-| `reflections` | `Object` | 날짜별 하루 회고 (`{date: {achievement, time, wrong, review, homework, total}}`) |
+| `reflectionItems` | `Array` | 사용자 정의 회고 항목 (`id`, `name`, `emoji`). 목표 달성률(achievement)은 자동 계산으로 별도 관리 |
+| `reflections` | `Object` | 날짜별 하루 회고 (`{date: {achievement, [동적 항목 id]: score, ..., total}}`) |
 | `analysisResults` | `Array` | 분석 결과 이력 |
 | `selectedDate` | `string` | 현재 선택된 날짜 (YYYY-MM-DD) |
 
@@ -104,9 +105,10 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | 함수 | 설명 |
 |------|------|
 | `editTimer()` | 프롬프트로 타이머 시간 직접 설정 (MM:SS) |
-| `updateReflection()` | 하루 회고 점수 계산 (달성률 자동 + 수동 입력 4개 항목) |
-| `saveDailyReflection()` | 회고 데이터를 state에 저장 |
-| `loadReflectionForDate(date)` | 특정 날짜의 회고 데이터 불러오기 |
+| `renderReflectionInputs()` | `state.reflectionItems` 기반으로 PC 회고 입력 UI 동적 생성 |
+| `updateReflection()` | 하루 회고 점수 계산 (달성률 자동 + 사용자 정의 항목 합산) |
+| `saveDailyReflection()` | 회고 데이터를 state에 저장 (동적 항목 키 기반) |
+| `loadReflectionForDate(date)` | 특정 날짜의 회고 데이터 불러오기 (동적 항목 기반) |
 | `validateScore(input)` | 회고 점수 입력값 검증 (0~20 범위) |
 
 ### 내부 함수
@@ -116,12 +118,11 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | `completeSession()` | 세션 완료 시 기록 저장 → 알림 → 리셋 |
 | `recordSession()` | 학습 세션을 history에 기록 (5초 미만은 무시), 태스크 duration 갱신 |
 
-### 회고 점수 체계 (각 항목 0~20점, 총 100점)
-- **달성률** (`achievement`): 완료 태스크 비율 × 20 (자동 계산)
-- **시간 관리** (`time`): 수동 입력
-- **오답 정리** (`wrong`): 수동 입력
-- **복습 진행** (`review`): 수동 입력
-- **숙제 완수** (`homework`): 수동 입력
+### 회고 점수 체계 (각 항목 0~20점)
+- **달성률** (`achievement`): 완료 태스크 비율 × 20 (자동 계산, 고정)
+- **사용자 정의 항목**: `state.reflectionItems` 배열 기반 동적 생성 (각 수동 입력, 0~20점)
+- **총점** = 달성률 + 사용자 정의 항목 합산
+- 만점 = 20 + (항목 수 × 20)
 
 ---
 
@@ -157,10 +158,14 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 
 | 함수 | 설명 |
 |------|------|
-| `handleDragStart/Over/Drop/End` | 과목 드래그앤드롭 정렬 |
-| `updateSubjectName(id, name)` | 과목 이름 변경 |
-| `updateSubjectColor(id, color)` | 과목 색상 변경 |
-| `deleteSubject(id)` | 과목 삭제 (최소 1개 유지) |
+| `handleDragStart/Over/Drop/End` | 카테고리 드래그앤드롭 정렬 |
+| `updateSubjectName(id, name)` | 카테고리 이름 변경 |
+| `updateSubjectColor(id, color)` | 카테고리 색상 변경 |
+| `deleteSubject(id)` | 카테고리 삭제 (최소 1개 유지) |
+| `addReflectionItem()` | 새 회고 항목 추가 (이름+이모지 prompt 입력) |
+| `updateReflectionItemName(id, name)` | 회고 항목 이름 변경 |
+| `deleteReflectionItem(id)` | 회고 항목 삭제 (최소 1개 유지) |
+| `renderReflectionItemManager()` | PC 설정 탭의 회고 항목 관리 UI 렌더링 |
 
 ### 내부 함수
 
@@ -278,7 +283,8 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | `switchMobileTab(tab)` | 모바일 탭 전환 (`dashboard`, `plan`, `analyze`, `settings`) |
 | `renderMobileCalendar()` | 모바일 캘린더 렌더링 |
 | `renderMobileSubjectManager()` | 모바일 과목 관리자 렌더링 |
-| `syncMobileReflectionInputs()` | 모바일 회고 입력 필드 동기화 |
+| `syncMobileReflectionInputs()` | 모바일 회고 입력 UI 동적 렌더링 + 데이터 동기화 |
+| `renderMobileReflectionItemManager()` | 모바일 설정 탭의 회고 항목 관리 UI 렌더링 |
 | `initColumnTabs()` | 할 일/회고 컬럼 탭 초기화 (이벤트 바인딩 + 인디케이터) |
 | `switchColumnTab(tabName)` | 할 일/회고 컬럼 탭 전환 (`tasks` / `reflection`) |
 | `updateTabIndicator()` | 탭 밑줄 인디케이터 위치 업데이트 |
@@ -289,8 +295,9 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 
 | 함수 | 설명 |
 |------|------|
-| `syncMobileReflection()` | 모바일 회고 점수 재계산 |
-| `saveMobileReflection()` | 모바일에서 회고 저장 |
+| `renderMobileReflectionInputs()` | `state.reflectionItems` 기반으로 모바일 회고 입력 UI 동적 생성 |
+| `syncMobileReflection()` | 모바일 회고 점수 재계산 (동적 항목 기반) |
+| `saveMobileReflection()` | 모바일에서 회고 저장 (동적 항목 기반) |
 | `switchColumnTab(tabName)` | 할 일/회고 컬럼 탭 전환 |
 | `renderMobileTasks()` | 전역 노출 (다른 모듈에서 호출용) |
 | `renderMobileTimetable()` | 전역 노출 |
@@ -463,7 +470,8 @@ localStorage ←→ store.js (state)
 | `switme_tasks` | 할 일 목록 |
 | `switme_timetables` | 타임테이블 목록 (`[{id, name, history[]}]`) |
 | `switme_active_timetable_id` | 현재 활성 타임테이블 ID |
-| `switme_subjects` | 과목 목록 |
+| `switme_subjects` | 카테고리 목록 |
+| `switme_reflection_items` | 사용자 정의 회고 항목 목록 |
 | `switme_reflections` | 날짜별 하루 회고 |
 | `switme_analysis` | 분석 결과 이력 |
 
