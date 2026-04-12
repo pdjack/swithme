@@ -1,4 +1,4 @@
-import { state, saveToLocal, persistTimerState, clearTimerState, getActiveHistory } from './store.js';
+import { state, saveToLocal, persistTimerState, clearTimerState, getRecordHistory } from './store.js';
 import { icon } from './icons.js';
 import { renderTasks } from './tasks.js';
 import { renderTimetable } from './timetable.js';
@@ -231,12 +231,14 @@ function recordSession() {
         duration: actualDuration
     };
 
-    getActiveHistory().push(session);
+    // 계획 모드에서도 record 타임테이블에 세션 저장
+    const { history: targetHistory, wasRedirected } = getRecordHistory();
+    targetHistory.push(session);
 
     if (state.timer.activeTaskId) {
         state.tasks = state.tasks.map(t => {
             if (t.id === state.timer.activeTaskId) {
-                const totalSecs = getActiveHistory().filter(h => h.taskId === t.id).reduce((acc, h) => acc + h.duration, 0);
+                const totalSecs = targetHistory.filter(h => h.taskId === t.id).reduce((acc, h) => acc + h.duration, 0);
                 const m = Math.floor(totalSecs / 60);
                 const s = totalSecs % 60;
                 let timeStr = (m > 0) ? `${m}m ${s}s` : `${s}s`;
@@ -249,9 +251,38 @@ function recordSession() {
     saveToLocal();
     renderTasks();
     renderTimetable();
+
+    if (wasRedirected) {
+        showRecordToast();
+        showRecordBadge();
+    }
+
     state.timer.sessionStartTime = null;
     if (state.timer.mode === 'stopwatch') state.timer.stopwatchSeconds = 0;
     updateTimerDisplay();
+}
+
+function showRecordToast() {
+    let toast = document.getElementById('record-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'record-toast';
+        toast.className = 'record-toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = '기록 탭에 저장되었습니다';
+    toast.classList.add('record-toast--visible');
+    setTimeout(() => toast.classList.remove('record-toast--visible'), 2500);
+}
+
+function showRecordBadge() {
+    const badges = [
+        document.getElementById('tt-mode-record'),
+        document.getElementById('m-tt-mode-record')
+    ];
+    for (const btn of badges) {
+        if (btn) btn.classList.add('tt-mode-btn--badge');
+    }
 }
 
 // --- Page Visibility API: 화면 복귀 시 즉시 시간 보정 ---
@@ -264,26 +295,46 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // --- Daily Reflection Logic ---
+
+window.renderReflectionInputs = () => {
+    const container = document.getElementById('reflection-items-container');
+    if (!container) return;
+
+    const items = state.reflectionItems;
+    container.innerHTML = `
+        <div class="reflect-item auto">
+            <span class="r-label">🎯 목표 달성률</span>
+            <div class="r-score-wrap"><span id="score-achievement">0</span><small>/20</small></div>
+        </div>
+        <hr class="r-divider">
+        ${items.map(item => `
+            <div class="reflect-item user">
+                <span class="r-label">${item.emoji} ${item.name}</span>
+                <div class="r-score-wrap">
+                    <input type="number" id="input-${item.id}" min="0" max="20" value="0"
+                        oninput="validateScore(this); updateReflection()" class="r-score-input">
+                    <small>/20</small>
+                </div>
+            </div>
+        `).join('')}
+    `;
+};
+
 window.updateReflection = () => {
     const dailyTasks = state.tasks.filter(t => t.date === state.selectedDate);
     const totalTasks = dailyTasks.length;
     const completedTasks = dailyTasks.filter(t => t.completed).length;
     const scoreAchievement = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 20) : 0;
-    
+
     const scoreAchievementEl = document.getElementById('score-achievement');
     if (scoreAchievementEl) scoreAchievementEl.textContent = scoreAchievement;
 
-    const scoreTimeInput = document.getElementById('input-time');
-    const scoreWrongInput = document.getElementById('input-wrong');
-    const scoreReviewInput = document.getElementById('input-review');
-    const scoreHomeworkInput = document.getElementById('input-homework');
-    
-    const scoreTime = scoreTimeInput ? (parseInt(scoreTimeInput.value) || 0) : 0;
-    const scoreWrong = scoreWrongInput ? (parseInt(scoreWrongInput.value) || 0) : 0;
-    const scoreReview = scoreReviewInput ? (parseInt(scoreReviewInput.value) || 0) : 0;
-    const scoreHomework = scoreHomeworkInput ? (parseInt(scoreHomeworkInput.value) || 0) : 0;
+    let total = scoreAchievement;
+    for (const item of state.reflectionItems) {
+        const input = document.getElementById(`input-${item.id}`);
+        total += input ? (parseInt(input.value) || 0) : 0;
+    }
 
-    const total = scoreAchievement + scoreTime + scoreWrong + scoreReview + scoreHomework;
     const totalScoreEl = document.getElementById('total-reflection-score');
     if (totalScoreEl) totalScoreEl.textContent = total;
 };
@@ -291,14 +342,13 @@ window.updateReflection = () => {
 window.saveDailyReflection = () => {
     const targetDate = state.selectedDate;
     const reflection = {
-        achievement: parseInt(document.getElementById('score-achievement').textContent),
-        time: parseInt(document.getElementById('input-time').value) || 0,
-        wrong: parseInt(document.getElementById('input-wrong').value) || 0,
-        review: parseInt(document.getElementById('input-review').value) || 0,
-        homework: parseInt(document.getElementById('input-homework').value) || 0,
-        total: parseInt(document.getElementById('total-reflection-score').textContent)
+        achievement: parseInt(document.getElementById('score-achievement')?.textContent) || 0
     };
-    
+    for (const item of state.reflectionItems) {
+        reflection[item.id] = parseInt(document.getElementById(`input-${item.id}`)?.value) || 0;
+    }
+    reflection.total = parseInt(document.getElementById('total-reflection-score')?.textContent) || 0;
+
     state.reflections[targetDate] = reflection;
     saveToLocal();
     alert(`[${targetDate}] 하루 회고가 저장되었습니다! 총점: ${reflection.total}점`);
@@ -307,20 +357,17 @@ window.saveDailyReflection = () => {
 window.loadReflectionForDate = (date) => {
     const targetDate = date || state.selectedDate;
     const data = state.reflections[targetDate];
-    const inputTime = document.getElementById('input-time');
-    const inputWrong = document.getElementById('input-wrong');
-    const inputReview = document.getElementById('input-review');
-    const inputHomework = document.getElementById('input-homework');
 
-    if (inputTime) inputTime.value = data ? (data.time || 0) : 0;
-    if (inputWrong) inputWrong.value = data ? (data.wrong || 0) : 0;
-    if (inputReview) inputReview.value = data ? (data.review || 0) : 0;
-    if (inputHomework) inputHomework.value = data ? (data.homework || 0) : 0;
-    
+    for (const item of state.reflectionItems) {
+        const input = document.getElementById(`input-${item.id}`);
+        if (input) input.value = data ? (data[item.id] || 0) : 0;
+    }
+
     window.updateReflection();
 };
 
 export function loadTodayReflection() {
+    window.renderReflectionInputs();
     window.loadReflectionForDate(state.selectedDate);
 }
 

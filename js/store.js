@@ -55,6 +55,12 @@ export let state = {
     },
     timetables: _timetables,
     activeTimetableId: loadActiveTimetableId(_timetables),
+    reflectionItems: JSON.parse(localStorage.getItem('switme_reflection_items')) || [
+        { id: 'time', name: '시간 관리', emoji: '⏰' },
+        { id: 'wrong', name: '오답 정리', emoji: '📝' },
+        { id: 'review', name: '복습 진행', emoji: '🔄' },
+        { id: 'homework', name: '숙제 완수', emoji: '📚' }
+    ],
     reflections: JSON.parse(localStorage.getItem('switme_reflections')) || {},
     analysisResults: JSON.parse(localStorage.getItem('switme_analysis')) || [],
     selectedDate: new Date().toISOString().split('T')[0] // YYYY-MM-DD
@@ -76,6 +82,7 @@ function flushSave() {
     localStorage.setItem('switme_timetables', JSON.stringify(state.timetables));
     localStorage.setItem('switme_active_timetable_id', state.activeTimetableId);
     localStorage.setItem('switme_subjects', JSON.stringify(state.subjects));
+    localStorage.setItem('switme_reflection_items', JSON.stringify(state.reflectionItems));
     localStorage.setItem('switme_reflections', JSON.stringify(state.reflections));
     localStorage.setItem('switme_analysis', JSON.stringify(state.analysisResults));
 }
@@ -97,6 +104,30 @@ export function getActiveTimetable() {
 
 export function getActiveHistory() {
     return getActiveTimetable().history;
+}
+
+/**
+ * 기록 전용 history 반환.
+ * 활성 타임테이블이 record면 그대로, plan이면 별도 record 타임테이블을 찾거나 자동 생성.
+ * @returns {{ history: Array, wasRedirected: boolean }}
+ */
+export function getRecordHistory() {
+    const active = getActiveTimetable();
+    if (active.type === 'record') {
+        return { history: active.history, wasRedirected: false };
+    }
+    let recordTt = state.timetables.find(t => t.type === 'record');
+    if (!recordTt) {
+        recordTt = {
+            id: 'tt_' + Date.now(),
+            name: '기록',
+            type: 'record',
+            history: [],
+            plans: []
+        };
+        state.timetables.push(recordTt);
+    }
+    return { history: recordTt.history, wasRedirected: true };
 }
 
 export function getActivePlans() {

@@ -633,7 +633,11 @@ function syncModeBar() {
     const btns = getModeButtons();
 
     for (const device of [btns.pc, btns.mobile]) {
-        if (device.record) device.record.classList.toggle('tt-mode-btn--active', mode === 'record');
+        if (device.record) {
+            device.record.classList.toggle('tt-mode-btn--active', mode === 'record');
+            // 기록 모드 전환 시 뱃지 제거
+            if (mode === 'record') device.record.classList.remove('tt-mode-btn--badge');
+        }
         if (device.plan) device.plan.classList.toggle('tt-mode-btn--active', mode === 'plan');
     }
 }

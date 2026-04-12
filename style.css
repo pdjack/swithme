@@ -944,6 +944,12 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     color: #FF2D55;
 }
 
+.r-item-emoji {
+    font-size: 20px;
+    min-width: 28px;
+    text-align: center;
+}
+
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
@@ -2429,6 +2435,46 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     background: #FFFFFF;
     color: #1C1C1E;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.tt-mode-btn--badge {
+    position: relative;
+}
+.tt-mode-btn--badge::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    width: 7px;
+    height: 7px;
+    background: #FF3B30;
+    border-radius: 50%;
+    animation: badge-pulse 1.5s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* ── 세션 기록 토스트 ──────────────────────────────────────── */
+.record-toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(30, 30, 30, 0.92);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 9999;
+    backdrop-filter: blur(8px);
+}
+.record-toast--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* ── 모드 전환 확인 모달 ──────────────────────────────────── */
