@@ -402,11 +402,13 @@ function showPlanDetailModal(plan) {
     modal.classList.add('active');
 
     const deleteBtn = document.getElementById('plan-detail-delete');
+    const cancelBtn = document.getElementById('plan-detail-cancel');
     const editBtn = document.getElementById('plan-detail-edit');
 
     function closeModal() {
         modal.classList.remove('active');
         deleteBtn.removeEventListener('click', onDelete);
+        cancelBtn.removeEventListener('click', closeModal);
         editBtn.removeEventListener('click', onEdit);
     }
 
@@ -425,6 +427,7 @@ function showPlanDetailModal(plan) {
     }
 
     deleteBtn.addEventListener('click', onDelete);
+    cancelBtn.addEventListener('click', closeModal);
     editBtn.addEventListener('click', onEdit);
 }
 

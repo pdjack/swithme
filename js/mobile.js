@@ -4,7 +4,7 @@
  * 기존 store.js의 state를 공유하고, PC 사이드 함수(timer 등)를 재사용합니다.
  */
 
-import { state, saveToLocal, getActiveHistory } from './store.js';
+import { state, saveToLocal, getActiveHistory, getActiveTimetable } from './store.js';
 import { icon } from './icons.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
 import { renderSubjectOptions, getGroupedTaskData } from './tasks.js';
@@ -488,12 +488,21 @@ export function setupMobileUI() {
     const mClearBtn = document.getElementById('m-clear-timetable-btn');
     if (mClearBtn) {
         mClearBtn.addEventListener('click', () => {
-            if (confirm('오늘의 모든 공부 기록(타임테이블)을 삭제하시겠습니까?')) {
-                getActiveHistory().splice(0);
-                state.tasks = state.tasks.map(t => ({ ...t, duration: '0s' }));
-                saveToLocal();
-                renderMobileTasks();
-                renderTimetable();
+            const tt = getActiveTimetable();
+            if (tt.type === 'plan') {
+                if (confirm('현재 타임테이블의 모든 계획을 삭제하시겠습니까?')) {
+                    tt.plans.splice(0);
+                    saveToLocal();
+                    renderTimetable();
+                }
+            } else {
+                if (confirm('오늘의 모든 공부 기록(타임테이블)을 삭제하시겠습니까?')) {
+                    getActiveHistory().splice(0);
+                    state.tasks = state.tasks.map(t => ({ ...t, duration: '0s' }));
+                    saveToLocal();
+                    renderMobileTasks();
+                    renderTimetable();
+                }
             }
         });
     }

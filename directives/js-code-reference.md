@@ -218,6 +218,8 @@ import './analysis.js'; // side effects (window 전역 함수 등록)
 | `startRenameTab(tabEl, nameSpan, id)` | PC 탭 인라인 이름 편집 모드 진입 |
 | `showMobileTabMenu(targetTab, ttId)` | 모바일 탭 롱프레스 컨텍스트 메뉴 표시 (이름 변경/삭제) |
 | `closeMobileTabMenu()` | 모바일 탭 컨텍스트 메뉴 닫기 |
+| `showPlanSlotModal(startSlot, endSlot)` | 빈 슬롯 클릭/드래그 시 계획 추가 모달 표시 |
+| `showPlanDetailModal(plan)` | 기존 계획 블록 클릭 시 상세 모달 표시 (삭제/취소/수정) |
 | `switchTimetable(id)` | 활성 타임테이블 전환 |
 | `addTimetable()` | 새 타임테이블 추가 + 자동 활성화 |
 | `deleteTimetable(id)` | 타임테이블 삭제 (최소 1개 유지), 인접 탭 자동 활성화 |
