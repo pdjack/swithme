@@ -299,8 +299,8 @@ function finishSelection() {
     clearSelectionHighlight(root);
     planSelectState = null;
 
-    // 겹침 검사
-    const plans = getActivePlans();
+    // 겹침 검사 — 선택 날짜의 계획만 대상
+    const plans = getActivePlans().filter(p => !p.date || p.date === state.selectedDate);
     for (const p of plans) {
         if (minSlot <= p.endSlot && maxSlot >= p.startSlot) {
             // 겹치는 계획이 있으면 무시
@@ -312,7 +312,7 @@ function finishSelection() {
 }
 
 function isSlotOccupied(slotIdx) {
-    const plans = getActivePlans();
+    const plans = getActivePlans().filter(p => !p.date || p.date === state.selectedDate);
     return plans.some(p => slotIdx >= p.startSlot && slotIdx <= p.endSlot);
 }
 
@@ -363,6 +363,7 @@ function showPlanSlotModal(startSlot, endSlot) {
 
         const newPlan = {
             id: 'plan_' + Date.now(),
+            date: state.selectedDate,
             startSlot,
             endSlot,
             subject,
@@ -587,14 +588,15 @@ export function renderTimetable() {
     syncModeBar();
 
     if (tt.type === 'plan') {
-        // 계획 모드
+        // 계획 모드 — 선택 날짜의 계획만 표시 (date 없는 기존 데이터는 모든 날짜에 표시)
+        const datePlans = tt.plans.filter(p => !p.date || p.date === state.selectedDate);
         if (pcRoot) {
             pcRoot.classList.remove('timetable-container--plan');
-            buildPlanRows(pcRoot, tt.plans, true);
+            buildPlanRows(pcRoot, datePlans, true);
         }
         if (mRoot) {
             mRoot.classList.remove('m-timetable-container--plan');
-            buildPlanRows(mRoot, tt.plans, false);
+            buildPlanRows(mRoot, datePlans, false);
         }
     } else {
         // 기록 모드
@@ -1031,8 +1033,8 @@ if (clearTimetableBtn) {
     clearTimetableBtn.addEventListener('click', () => {
         const tt = getActiveTimetable();
         if (tt.type === 'plan') {
-            if (confirm('현재 타임테이블의 모든 계획을 삭제하시겠습니까?')) {
-                tt.plans.splice(0);
+            if (confirm('선택한 날짜의 모든 계획을 삭제하시겠습니까?')) {
+                tt.plans = tt.plans.filter(p => p.date && p.date !== state.selectedDate);
                 saveToLocal();
                 renderTimetable();
             }
