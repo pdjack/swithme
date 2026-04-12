@@ -466,7 +466,9 @@ function startResizeMode(plan) {
             function onMove(e) {
                 e.preventDefault();
                 const point = e.touches ? e.touches[0] : e;
+                handle.style.pointerEvents = 'none';
                 const el = document.elementFromPoint(point.clientX, point.clientY);
+                handle.style.pointerEvents = '';
                 if (!el) return;
                 const slotEl = el.closest('.slot[data-slot-idx]');
                 if (!slotEl || !root.contains(slotEl)) return;
