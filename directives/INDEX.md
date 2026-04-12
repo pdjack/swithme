@@ -10,6 +10,7 @@
 | `STRUCTURE.md` | HTML 구조(Desktop/Mobile Shell), 데이터 흐름, PC↔모바일 ID 매핑 |
 | `style-reference.md` | CSS 변수, 셀렉터, 반응형 미디어 쿼리, 애니메이션 |
 | `icon-reference.md` | 인라인 SVG 아이콘 명세, 용도별 매핑, 추가 규칙 |
+| `ui-ux-guide.md` | PC↔모바일 UI/UX 일관성 원칙, 네이밍·이벤트·동기화 규칙, 불일치 목록 |
 
 ## 기능 플랜
 
