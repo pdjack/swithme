@@ -291,16 +291,19 @@ window.renderMobileReflectionInputs = () => {
             <div class="r-score-wrap"><span id="m-score-achievement">0</span><small>/20</small></div>
         </div>
         <hr class="r-divider">
-        ${items.map(item => `
+        ${items.map((item, i) => {
+            const max = window.getReflectionItemMax(i);
+            return `
             <div class="reflect-item user">
                 <span class="r-label">${item.emoji} ${item.name}</span>
                 <div class="r-score-wrap">
-                    <input type="number" id="m-input-${item.id}" min="0" max="20" value="0"
+                    <input type="number" id="m-input-${item.id}" min="0" max="${max}" value="0"
+                        data-max="${max}"
                         oninput="validateScore(this); syncMobileReflection()" class="r-score-input">
-                    <small>/20</small>
+                    <small>/${max}</small>
                 </div>
-            </div>
-        `).join('')}
+            </div>`;
+        }).join('')}
     `;
 };
 

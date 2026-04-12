@@ -108,6 +108,7 @@ function renderReflectionItemManager() {
 window.renderReflectionItemManager = renderReflectionItemManager;
 
 window.addReflectionItem = () => {
+    if (state.reflectionItems.length >= 4) return alert('회고 항목은 최대 4개까지 추가할 수 있습니다.');
     const name = prompt('새 회고 항목 이름을 입력하세요:');
     if (!name || !name.trim()) return;
     const emoji = prompt('이모지를 입력하세요 (예: ⏰, 💪, 📖):', '📌') || '📌';

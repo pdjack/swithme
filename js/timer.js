@@ -296,6 +296,14 @@ document.addEventListener('visibilitychange', () => {
 
 // --- Daily Reflection Logic ---
 
+window.getReflectionItemMax = (index) => {
+    const count = state.reflectionItems.length;
+    if (count === 0) return 0;
+    const baseMax = Math.floor(80 / count);
+    const remainder = 80 - baseMax * count;
+    return index < remainder ? baseMax + 1 : baseMax;
+};
+
 window.renderReflectionInputs = () => {
     const container = document.getElementById('reflection-items-container');
     if (!container) return;
@@ -307,16 +315,19 @@ window.renderReflectionInputs = () => {
             <div class="r-score-wrap"><span id="score-achievement">0</span><small>/20</small></div>
         </div>
         <hr class="r-divider">
-        ${items.map(item => `
+        ${items.map((item, i) => {
+            const max = window.getReflectionItemMax(i);
+            return `
             <div class="reflect-item user">
                 <span class="r-label">${item.emoji} ${item.name}</span>
                 <div class="r-score-wrap">
-                    <input type="number" id="input-${item.id}" min="0" max="20" value="0"
+                    <input type="number" id="input-${item.id}" min="0" max="${max}" value="0"
+                        data-max="${max}"
                         oninput="validateScore(this); updateReflection()" class="r-score-input">
-                    <small>/20</small>
+                    <small>/${max}</small>
                 </div>
-            </div>
-        `).join('')}
+            </div>`;
+        }).join('')}
     `;
 };
 
@@ -373,8 +384,9 @@ export function loadTodayReflection() {
 
 window.validateScore = (input) => {
     let val = parseInt(input.value);
+    const max = parseInt(input.dataset.max) || 20;
     if (isNaN(val)) val = 0;
-    if (val > 20) val = 20;
+    if (val > max) val = max;
     if (val < 0) val = 0;
     input.value = val;
 };
