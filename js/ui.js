@@ -36,6 +36,7 @@ export function switchTab(tab) {
     } else if (tab === 'settings') {
         if (settingsView) settingsView.style.display = 'grid';
         renderSubjectManager();
+        renderReflectionItemManager();
     } else if (tab === 'analyze') {
         if (analyzeView) analyzeView.style.display = 'grid';
         // Reset analysis content if needed
@@ -88,6 +89,46 @@ window.deleteSubject = (id) => {
     state.subjects = state.subjects.filter(s => s.id !== id);
     saveToLocal();
     scheduleRender(renderSubjectManager, renderSubjectOptions, window.renderMobileSubjectManager, renderTasks, renderTimetable);
+};
+
+// --- Reflection Item Manager ---
+const reflectionItemManagerList = document.getElementById('reflection-item-manager-list');
+
+function renderReflectionItemManager() {
+    if (!reflectionItemManagerList) return;
+    reflectionItemManagerList.innerHTML = state.reflectionItems.map(item => `
+        <div class="subject-row">
+            <span class="r-item-emoji">${item.emoji}</span>
+            <input type="text" value="${item.name}" onchange="updateReflectionItemName('${item.id}', this.value)" placeholder="항목 이름">
+            <button onclick="deleteReflectionItem('${item.id}')" class="ghost-btn delete-btn" title="Delete">${icon('trash-2')}</button>
+        </div>
+    `).join('');
+}
+
+window.renderReflectionItemManager = renderReflectionItemManager;
+
+window.addReflectionItem = () => {
+    const name = prompt('새 회고 항목 이름을 입력하세요:');
+    if (!name || !name.trim()) return;
+    const emoji = prompt('이모지를 입력하세요 (예: ⏰, 💪, 📖):', '📌') || '📌';
+    const id = 'ri_' + Date.now();
+    state.reflectionItems.push({ id, name: name.trim(), emoji });
+    saveToLocal();
+    scheduleRender(renderReflectionItemManager, window.renderReflectionInputs, window.renderMobileReflectionItemManager);
+};
+
+window.updateReflectionItemName = (id, name) => {
+    state.reflectionItems = state.reflectionItems.map(item => item.id === id ? { ...item, name } : item);
+    saveToLocal();
+    scheduleRender(renderReflectionItemManager, window.renderReflectionInputs, window.renderMobileReflectionItemManager);
+};
+
+window.deleteReflectionItem = (id) => {
+    if (state.reflectionItems.length <= 1) return alert('최소 하나의 회고 항목은 있어야 합니다.');
+    if (!confirm('이 회고 항목을 삭제하시겠습니까?')) return;
+    state.reflectionItems = state.reflectionItems.filter(item => item.id !== id);
+    saveToLocal();
+    scheduleRender(renderReflectionItemManager, window.renderReflectionInputs, window.renderMobileReflectionItemManager);
 };
 
 let currentCalendarDate = new Date();
@@ -245,6 +286,11 @@ export function setupEventListeners() {
             renderSubjectOptions();
             if(window.renderMobileSubjectManager) window.renderMobileSubjectManager();
         };
+    }
+
+    const addReflectionItemBtn = document.getElementById('add-reflection-item-btn');
+    if (addReflectionItemBtn) {
+        addReflectionItemBtn.onclick = () => window.addReflectionItem();
     }
 
     navItems.forEach(li => li.onclick = () => switchTab(li.dataset.tab));

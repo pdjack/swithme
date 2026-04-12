@@ -96,6 +96,7 @@ function switchMobileTab(tab) {
         renderMobileCalendar();
     } else if (tab === 'settings') {
         renderMobileSubjectManager();
+        renderMobileReflectionItemManager();
     } else if (tab === 'analyze') {
         if (window.updateAIAdaptiveFeedback) window.updateAIAdaptiveFeedback();
         // 분석 탭의 analysis-content를 모바일 영역에 복사
@@ -216,6 +217,19 @@ function renderMobileSubjectManager() {
 }
 window.renderMobileSubjectManager = renderMobileSubjectManager;
 
+function renderMobileReflectionItemManager() {
+    const list = document.getElementById('m-reflection-item-manager-list');
+    if (!list) return;
+    list.innerHTML = state.reflectionItems.map(item => `
+        <div class="subject-row">
+            <span class="r-item-emoji">${item.emoji}</span>
+            <input type="text" value="${item.name}" onchange="updateReflectionItemName('${item.id}', this.value)" placeholder="항목 이름">
+            <button onclick="deleteReflectionItem('${item.id}')" class="ghost-btn" title="Delete">${icon('trash-2')}</button>
+        </div>
+    `).join('');
+}
+window.renderMobileReflectionItemManager = renderMobileReflectionItemManager;
+
 // ── 할 일 / 회고 컬럼 탭 전환 ─────────────────────────────────────
 function initColumnTabs() {
     const tabs = document.querySelectorAll('.m-col-tab');
@@ -266,19 +280,40 @@ function updateTabIndicator() {
 window.switchColumnTab = switchColumnTab;
 
 // ── 하루 회고 동기화 (모바일 ↔ 데스크탑 공유 state) ──────────────
+window.renderMobileReflectionInputs = () => {
+    const container = document.getElementById('m-reflection-items-container');
+    if (!container) return;
+
+    const items = state.reflectionItems;
+    container.innerHTML = `
+        <div class="reflect-item auto">
+            <span class="r-label">🎯 목표 달성률</span>
+            <div class="r-score-wrap"><span id="m-score-achievement">0</span><small>/20</small></div>
+        </div>
+        <hr class="r-divider">
+        ${items.map(item => `
+            <div class="reflect-item user">
+                <span class="r-label">${item.emoji} ${item.name}</span>
+                <div class="r-score-wrap">
+                    <input type="number" id="m-input-${item.id}" min="0" max="20" value="0"
+                        oninput="validateScore(this); syncMobileReflection()" class="r-score-input">
+                    <small>/20</small>
+                </div>
+            </div>
+        `).join('')}
+    `;
+};
+
 function syncMobileReflectionInputs() {
+    window.renderMobileReflectionInputs();
+
     const targetDate = state.selectedDate;
     const data = state.reflections[targetDate];
 
-    const setVal = (id, key) => {
-        const el = document.getElementById(id);
-        if (el) el.value = data ? (data[key] || 0) : 0;
-    };
-
-    setVal('m-input-time', 'time');
-    setVal('m-input-wrong', 'wrong');
-    setVal('m-input-review', 'review');
-    setVal('m-input-homework', 'homework');
+    for (const item of state.reflectionItems) {
+        const input = document.getElementById(`m-input-${item.id}`);
+        if (input) input.value = data ? (data[item.id] || 0) : 0;
+    }
 
     window.syncMobileReflection();
 }
@@ -291,12 +326,10 @@ window.syncMobileReflection = () => {
     const el = (id) => document.getElementById(id);
     if (el('m-score-achievement')) el('m-score-achievement').textContent = achievement;
 
-    const time     = parseInt(el('m-input-time')?.value)     || 0;
-    const wrong    = parseInt(el('m-input-wrong')?.value)    || 0;
-    const review   = parseInt(el('m-input-review')?.value)   || 0;
-    const homework = parseInt(el('m-input-homework')?.value) || 0;
-
-    const total = achievement + time + wrong + review + homework;
+    let total = achievement;
+    for (const item of state.reflectionItems) {
+        total += parseInt(el(`m-input-${item.id}`)?.value) || 0;
+    }
     if (el('m-total-reflection-score')) el('m-total-reflection-score').textContent = total;
 };
 
@@ -305,12 +338,12 @@ window.saveMobileReflection = () => {
     const targetDate = state.selectedDate;
     const reflection = {
         achievement: parseInt(el('m-score-achievement')?.textContent) || 0,
-        time:        parseInt(el('m-input-time')?.value)     || 0,
-        wrong:       parseInt(el('m-input-wrong')?.value)    || 0,
-        review:      parseInt(el('m-input-review')?.value)   || 0,
-        homework:    parseInt(el('m-input-homework')?.value) || 0,
-        total:       parseInt(el('m-total-reflection-score')?.textContent) || 0,
     };
+    for (const item of state.reflectionItems) {
+        reflection[item.id] = parseInt(el(`m-input-${item.id}`)?.value) || 0;
+    }
+    reflection.total = parseInt(el('m-total-reflection-score')?.textContent) || 0;
+
     state.reflections[targetDate] = reflection;
     saveToLocal();
     alert(`[${targetDate}] 하루 회고가 저장되었습니다! 총점: ${reflection.total}점`);
@@ -599,6 +632,11 @@ export function setupMobileUI() {
         renderMobileSubjectManager();
         renderSubjectManager();
         renderSubjectOptions();
+    });
+
+    // ── 회고 항목 추가 버튼 (설정 탭) ────────────────────────
+    document.getElementById('m-add-reflection-item-btn')?.addEventListener('click', () => {
+        window.addReflectionItem();
     });
 
     // ── 첫 렌더 ────────────────────────────────────────────────

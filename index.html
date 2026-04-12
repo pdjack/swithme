@@ -64,42 +64,8 @@
                             <h3>Daily Reflection</h3>
                             <div class="total-score-badge" id="total-reflection-score">0</div>
                         </div>
-                        <div class="reflection-grid">
-                            <!-- Auto Calculated -->
-                            <div class="reflect-item auto">
-                                <span class="r-label">🎯 목표 달성률</span>
-                                <div class="r-score-wrap"><span id="score-achievement">0</span><small>/20</small></div>
-                            </div>
-                            <hr class="r-divider">
-                            <!-- Manual Input Items -->
-                            <div class="reflect-item auto">
-                                <span class="r-label">⏰ 시간 관리</span>
-                                <div class="r-score-wrap">
-                                    <input type="number" id="input-time" min="0" max="20" value="0" oninput="validateScore(this); updateReflection()" class="r-score-input">
-                                    <small>/20</small>
-                                </div>
-                            </div>
-                            <div class="reflect-item user">
-                                <span class="r-label">📝 오답 정리</span>
-                                <div class="r-score-wrap">
-                                    <input type="number" id="input-wrong" min="0" max="20" value="0" oninput="validateScore(this); updateReflection()" class="r-score-input">
-                                    <small>/20</small>
-                                </div>
-                            </div>
-                            <div class="reflect-item user">
-                                <span class="r-label">🔄 복습 진행</span>
-                                <div class="r-score-wrap">
-                                    <input type="number" id="input-review" min="0" max="20" value="0" oninput="validateScore(this); updateReflection()" class="r-score-input">
-                                    <small>/20</small>
-                                </div>
-                            </div>
-                            <div class="reflect-item user">
-                                <span class="r-label">📚 숙제 완수</span>
-                                <div class="r-score-wrap">
-                                    <input type="number" id="input-homework" min="0" max="20" value="0" oninput="validateScore(this); updateReflection()" class="r-score-input">
-                                    <small>/20</small>
-                                </div>
-                            </div>
+                        <div id="reflection-items-container" class="reflection-grid">
+                            <!-- JS가 state.reflectionItems 기반으로 동적 생성 -->
                         </div>
                         <button class="btn-save-reflection" onclick="saveDailyReflection()">오늘 하루 저장하기</button>
                     </div>
@@ -183,6 +149,15 @@
                         </div>
                         <div id="subject-manager-list" class="subject-manager-list">
                             <!-- JS will inject subject rows here -->
+                        </div>
+                    </div>
+                    <div class="glass-card full-height" style="margin-top: 20px;">
+                        <div class="card-title">
+                            <h3>Reflection Items</h3>
+                            <button id="add-reflection-item-btn" class="ghost-btn"><i data-lucide="plus"></i> Add Item</button>
+                        </div>
+                        <div id="reflection-item-manager-list" class="subject-manager-list">
+                            <!-- JS가 회고 항목 관리 UI 동적 생성 -->
                         </div>
                     </div>
                 </section>
@@ -340,38 +315,8 @@
                                     <span>총점</span>
                                     <div class="total-score-badge" id="m-total-reflection-score">0</div>
                                 </div>
-                                <div class="reflect-item auto">
-                                    <span class="r-label">🎯 목표 달성률</span>
-                                    <div class="r-score-wrap"><span id="m-score-achievement">0</span><small>/20</small></div>
-                                </div>
-                                <hr class="r-divider">
-                                <div class="reflect-item auto">
-                                    <span class="r-label">⏰ 시간 관리</span>
-                                    <div class="r-score-wrap">
-                                        <input type="number" id="m-input-time" min="0" max="20" value="0" oninput="validateScore(this); syncMobileReflection()" class="r-score-input">
-                                        <small>/20</small>
-                                    </div>
-                                </div>
-                                <div class="reflect-item user">
-                                    <span class="r-label">📝 오답 정리</span>
-                                    <div class="r-score-wrap">
-                                        <input type="number" id="m-input-wrong" min="0" max="20" value="0" oninput="validateScore(this); syncMobileReflection()" class="r-score-input">
-                                        <small>/20</small>
-                                    </div>
-                                </div>
-                                <div class="reflect-item user">
-                                    <span class="r-label">🔄 복습 진행</span>
-                                    <div class="r-score-wrap">
-                                        <input type="number" id="m-input-review" min="0" max="20" value="0" oninput="validateScore(this); syncMobileReflection()" class="r-score-input">
-                                        <small>/20</small>
-                                    </div>
-                                </div>
-                                <div class="reflect-item user">
-                                    <span class="r-label">📚 숙제 완수</span>
-                                    <div class="r-score-wrap">
-                                        <input type="number" id="m-input-homework" min="0" max="20" value="0" oninput="validateScore(this); syncMobileReflection()" class="r-score-input">
-                                        <small>/20</small>
-                                    </div>
+                                <div id="m-reflection-items-container">
+                                    <!-- JS가 state.reflectionItems 기반으로 동적 생성 -->
                                 </div>
                                 <button class="btn-save-reflection" onclick="saveMobileReflection()">오늘 하루 저장하기</button>
                             </div>
@@ -458,6 +403,13 @@
                 </div>
                 <div id="m-subject-manager-list" class="subject-manager-list"></div>
 
+                <div class="m-section-header" style="margin-top: 24px;">
+                    <span>회고 항목 관리</span>
+                    <button class="m-ghost-btn" id="m-add-reflection-item-btn">
+                        <i data-lucide="plus"></i>
+                    </button>
+                </div>
+                <div id="m-reflection-item-manager-list" class="subject-manager-list"></div>
             </div>
         </main>
     </div>
