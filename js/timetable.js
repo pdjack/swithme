@@ -430,6 +430,34 @@ function showPlanDetailModal(plan) {
 
 // ─── 수정 모드 (양끝 핸들 드래그) ──────────────────────────────────
 
+function updateResizeVisual(roots, plan, topHandle, bottomHandle) {
+    const bg = plan.subject
+        ? lightenColor(getSubjectColor(plan.subject), 0.25)
+        : '#C7C7CC';
+
+    roots.forEach(root => {
+        const oldSlots = root.querySelectorAll(`.slot[data-plan-id="${plan.id}"]`);
+        oldSlots.forEach(s => {
+            s.classList.remove('plan-filled', 'plan-filled--resizing');
+            s.style.background = '';
+            delete s.dataset.planId;
+        });
+
+        for (let i = plan.startSlot; i <= plan.endSlot; i++) {
+            const slot = root.querySelector(`.slot[data-slot-idx="${i}"]`);
+            if (!slot) continue;
+            slot.classList.add('plan-filled', 'plan-filled--resizing');
+            slot.dataset.planId = plan.id;
+            slot.style.background = bg;
+        }
+
+        const firstSlot = root.querySelector(`.slot[data-slot-idx="${plan.startSlot}"]`);
+        const lastSlot = root.querySelector(`.slot[data-slot-idx="${plan.endSlot}"]`);
+        if (firstSlot && root.contains(topHandle)) firstSlot.appendChild(topHandle);
+        if (lastSlot && root.contains(bottomHandle)) lastSlot.appendChild(bottomHandle);
+    });
+}
+
 function startResizeMode(plan) {
     const roots = [
         document.getElementById('timetable-root'),
@@ -482,9 +510,7 @@ function startResizeMode(plan) {
                     plan.endSlot = newSlot;
                 }
 
-                saveToLocal();
-                renderTimetable();
-                window.requestAnimationFrame(() => startResizeMode(plan));
+                updateResizeVisual(roots, plan, topHandle, bottomHandle);
             }
 
             function onEnd() {
