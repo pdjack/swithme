@@ -13,11 +13,23 @@ const subjectManagerList = document.getElementById('subject-manager-list');
 
 // 전역에서 접근 가능하도록 노출
 window.switchTab = switchTab;
+window.switchSettingsTab = switchSettingsTab;
 window.updateDashboardDateDisplay = updateDashboardDateDisplay;
 window.renderTasks = renderTasks;
 window.renderTimetable = renderTimetable;
 window.renderSubjectOptions = renderSubjectOptions;
 window.renderSubjectManager = renderSubjectManager;
+
+function switchSettingsTab(tab) {
+    document.querySelectorAll('.settings-tab').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.settingsTab === tab)
+    );
+    document.querySelectorAll('.settings-tab-panel').forEach(panel => {
+        panel.style.display = 'none';
+    });
+    const target = document.getElementById(`settings-tab-${tab}`);
+    if (target) target.style.display = '';
+}
 
 export function switchTab(tab) {
     if (navItems.length === 0) navItems = document.querySelectorAll('#side-nav-list li');
@@ -295,6 +307,10 @@ export function setupEventListeners() {
     }
 
     navItems.forEach(li => li.onclick = () => switchTab(li.dataset.tab));
+
+    document.querySelectorAll('.settings-tab').forEach(btn => {
+        btn.addEventListener('click', () => switchSettingsTab(btn.dataset.settingsTab));
+    });
 
     const btnStart = document.querySelector('.btn-start');
     if (btnStart) {

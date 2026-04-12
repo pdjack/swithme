@@ -891,6 +891,37 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 }
 
 
+/* Settings Tab Bar (PC) */
+.settings-tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.settings-tab {
+    flex: 1;
+    padding: 14px 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    letter-spacing: 0.3px;
+}
+
+.settings-tab:hover {
+    color: var(--text-secondary);
+}
+
+.settings-tab.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--primary);
+}
+
 /* Subject Manager */
 .subject-manager-list {
     display: flex;
@@ -2274,8 +2305,41 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 }
 
 /* ── 설정 탭 ───────────────────────── */
+
+/* 모바일 세팅 탭 바 */
+.m-settings-tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.m-settings-tab {
+    flex: 1;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.m-settings-tab.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--primary);
+}
+
+.m-settings-tab-panel {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 #m-settings-panel .subject-manager-list {
-    max-height: 35vh;
+    max-height: none;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }

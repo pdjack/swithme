@@ -66,6 +66,18 @@ function syncMobileStartBtn(isRunning) {
     }
 }
 
+// ── 세팅 내부 탭 전환 ────────────────────────────────────────────
+function switchMobileSettingsTab(tab) {
+    document.querySelectorAll('.m-settings-tab').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.settingsTab === tab)
+    );
+    document.querySelectorAll('.m-settings-tab-panel').forEach(panel => {
+        panel.style.display = 'none';
+    });
+    const target = document.getElementById(`m-settings-tab-${tab}`);
+    if (target) target.style.display = '';
+}
+
 // ── 탭 전환 ──────────────────────────────────────────────────────
 function switchMobileTab(tab) {
     const panels = {
@@ -432,6 +444,11 @@ export function setupMobileUI() {
     // ── 탭 이벤트 ──────────────────────────────────────────────
     document.querySelectorAll('.m-tab').forEach(btn => {
         btn.addEventListener('click', () => switchMobileTab(btn.dataset.mtab));
+    });
+
+    // ── 세팅 내부 탭 전환 (카테고리 / 회고 항목) ─────────────
+    document.querySelectorAll('.m-settings-tab').forEach(btn => {
+        btn.addEventListener('click', () => switchMobileSettingsTab(btn.dataset.settingsTab));
     });
 
     // ── 할 일 / 회고 컬럼 탭 전환 ───────────────────────────────

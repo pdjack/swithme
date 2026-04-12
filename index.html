@@ -142,7 +142,13 @@
             <!-- Settings View -->
             <div id="settings-canvas" class="dashboard-canvas" style="display: none;">
                 <section class="canvas-col" style="grid-column: span 3;">
-                    <div class="glass-card full-height">
+                    <!-- 세팅 탭 바 -->
+                    <div class="settings-tab-bar">
+                        <button class="settings-tab active" data-settings-tab="category">카테고리</button>
+                        <button class="settings-tab" data-settings-tab="reflection">회고 항목</button>
+                    </div>
+                    <!-- 카테고리 패널 -->
+                    <div id="settings-tab-category" class="settings-tab-panel glass-card full-height">
                         <div class="card-title">
                             <h3>Category Settings</h3>
                             <button id="add-subject-btn" class="ghost-btn"><i data-lucide="plus"></i> Add Category</button>
@@ -151,7 +157,8 @@
                             <!-- JS will inject subject rows here -->
                         </div>
                     </div>
-                    <div class="glass-card full-height" style="margin-top: 20px;">
+                    <!-- 회고 항목 패널 -->
+                    <div id="settings-tab-reflection" class="settings-tab-panel glass-card full-height" style="display: none;">
                         <div class="card-title">
                             <h3>Reflection Items</h3>
                             <button id="add-reflection-item-btn" class="ghost-btn"><i data-lucide="plus"></i> Add Item</button>
@@ -395,21 +402,31 @@
 
             <!-- Settings 탭 -->
             <div id="m-settings-panel" class="m-panel" style="display:none;">
-                <div class="m-section-header">
-                    <span>카테고리 관리</span>
-                    <button class="m-ghost-btn" id="m-add-subject-btn">
-                        <i data-lucide="plus"></i>
-                    </button>
+                <!-- 세팅 탭 바 -->
+                <div class="m-settings-tab-bar">
+                    <button class="m-settings-tab active" data-settings-tab="category">카테고리</button>
+                    <button class="m-settings-tab" data-settings-tab="reflection">회고 항목</button>
                 </div>
-                <div id="m-subject-manager-list" class="subject-manager-list"></div>
-
-                <div class="m-section-header" style="margin-top: 24px;">
-                    <span>회고 항목 관리</span>
-                    <button class="m-ghost-btn" id="m-add-reflection-item-btn">
-                        <i data-lucide="plus"></i>
-                    </button>
+                <!-- 카테고리 패널 -->
+                <div id="m-settings-tab-category" class="m-settings-tab-panel">
+                    <div class="m-section-header">
+                        <span>카테고리 관리</span>
+                        <button class="m-ghost-btn" id="m-add-subject-btn">
+                            <i data-lucide="plus"></i>
+                        </button>
+                    </div>
+                    <div id="m-subject-manager-list" class="subject-manager-list"></div>
                 </div>
-                <div id="m-reflection-item-manager-list" class="subject-manager-list"></div>
+                <!-- 회고 항목 패널 -->
+                <div id="m-settings-tab-reflection" class="m-settings-tab-panel" style="display: none;">
+                    <div class="m-section-header">
+                        <span>회고 항목 관리</span>
+                        <button class="m-ghost-btn" id="m-add-reflection-item-btn">
+                            <i data-lucide="plus"></i>
+                        </button>
+                    </div>
+                    <div id="m-reflection-item-manager-list" class="subject-manager-list"></div>
+                </div>
             </div>
         </main>
     </div>
