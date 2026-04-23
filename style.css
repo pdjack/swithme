@@ -2636,3 +2636,247 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     padding: 4px 0;
 }
 
+/* ====================================================================== */
+/* Analysis Dashboard v2 — 종합점수 · 트렌드 · 인사이트 · 처방전              */
+/* ====================================================================== */
+
+.analysis-period-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.analysis-period-bar .period-label,
+.m-period-bar .period-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+.period-toggle {
+    display: inline-flex;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+}
+.period-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.period-btn:hover {
+    color: var(--text-main);
+}
+.period-btn.active {
+    background: var(--primary);
+    color: #fff;
+}
+
+.analysis-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.analysis-top-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(0, 2.4fr);
+    gap: 20px;
+}
+
+.analysis-score-card,
+.analysis-trend-card {
+    padding: 24px;
+}
+.analysis-score-card .s-header,
+.analysis-trend-card .s-header,
+.m-score-card .s-header,
+.m-trend-card .s-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+}
+.analysis-score-card .s-header i,
+.analysis-trend-card .s-header i,
+.m-score-card .s-header i,
+.m-trend-card .s-header i {
+    width: 14px;
+    height: 14px;
+}
+
+.score-body {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+}
+.score-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+.score-main span {
+    font-family: 'Outfit', sans-serif;
+    font-size: 56px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1;
+}
+.score-main small {
+    font-size: 16px;
+    color: var(--text-dim);
+}
+.score-delta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.score-delta small {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 400;
+}
+.delta-up { color: #34C759; }
+.delta-down { color: #FF2D55; }
+.delta-neutral { color: var(--text-dim); }
+.score-sub {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
+.trend-chart-wrap {
+    width: 100%;
+    height: 220px;
+    position: relative;
+}
+.trend-empty {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    padding: 40px 10px;
+}
+
+.analysis-section .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.analysis-section .section-heading i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+}
+.analysis-section .section-heading h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.insight-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+}
+.insight-card {
+    display: flex;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+}
+.insight-card .insight-icon {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(0, 122, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+.insight-card.tone-up .insight-icon { background: rgba(52, 199, 89, 0.14); color: #34C759; }
+.insight-card.tone-down .insight-icon { background: rgba(255, 45, 85, 0.14); color: #FF2D55; }
+.insight-card.tone-warn .insight-icon { background: rgba(255, 204, 0, 0.14); color: #FFCC00; }
+.insight-card .insight-body .insight-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+.insight-card .insight-body p {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-dim);
+    margin: 0;
+}
+
+.prescription-card {
+    padding: 24px;
+    border: 1px dashed var(--primary);
+    background: rgba(0, 86, 179, 0.08);
+}
+.prescription-card .prescription-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-main);
+    font-weight: 500;
+    margin: 0;
+}
+
+.empty-state.small {
+    padding: 20px 10px;
+    font-size: 13px;
+}
+
+/* ── 모바일 분석 대시보드 ─────────────────────────────────── */
+.m-period-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px 0;
+}
+.m-analysis-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 12px 16px 24px;
+}
+.m-score-card,
+.m-trend-card {
+    padding: 18px;
+}
+.m-score-card .score-main span { font-size: 42px; }
+.m-trend-card .trend-chart-wrap { height: 200px; }
+.m-analysis-section .section-heading h3 { font-size: 15px; }
+.m-analysis-section .insight-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+@media (max-width: 960px) {
+    .analysis-top-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

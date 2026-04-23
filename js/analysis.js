@@ -1,774 +1,412 @@
-import { state, saveToLocal, getActiveHistory } from './store.js';
+import { state } from './store.js';
 import { icon } from './icons.js';
 
 /**
- * 🧠 Analysis Module (Phase 2, 3, 4)
- * handles test rendering, persona calculation, and history.
+ * Analysis Module — v2.0
+ * 단일 대시보드: 종합 점수 / 카테고리별 활동 시간 트렌드 / 인사이트 / 처방전
+ * 데이터 소스:
+ *   - state.reflections[YYYY-MM-DD].total  → 종합 점수
+ *   - state.timetables[].history (모든 타임테이블 통합) → 카테고리별 일별 활동 시간
  */
 
-const analysisQuestions = [
-    {
-        id: 'q1',
-        category: 'environment',
-        text: '공부하는 동안 음악이나 백색소음을 항상 듣고 있나요?',
-        options: [
-            { text: '네, 조용하면 집중이 안 돼요.', score: 0, trait: 'distraction' },
-            { text: '아니오, 최대한 정적을 유지해요.', score: 1, trait: 'focus' }
-        ]
-    },
-    {
-        id: 'q2',
-        category: 'execution',
-        text: '공부를 시작할 때 고민 없이 즉시 행동(3초/5초 법칙)으로 옮기나요?',
-        options: [
-            { text: '매번 망설이다가 늦게 시작해요.', score: 0, trait: 'procrastination' },
-            { text: '기계적으로 즉시 시작합니다.', score: 1, trait: 'action' }
-        ]
-    },
-    {
-        id: 'q3',
-        category: 'method',
-        text: '에빙하우스의 망각곡선을 고려하여 주기적인 복습을 실천하나요?',
-        options: [
-            { text: '복습보다는 진도 나가는 게 급해요.', score: 0, trait: 'forgetting' },
-            { text: '정해진 주기에 맞춰 복습을 수행해요.', score: 1, trait: 'retention' }
-        ]
-    },
-    {
-        id: 'q4',
-        category: 'method',
-        text: '단순히 읽는 공부보다 스스로 퀴즈를 내는 아웃풋(Output) 공부 비중이 높나요?',
-        options: [
-            { text: '아직은 개념서를 읽고 필기하는 게 편해요.', score: 0, trait: 'passive' },
-            { text: '백지에 써보거나 문제를 풀며 확인해요.', score: 1, trait: 'active' }
-        ]
-    },
-    {
-        id: 'q5',
-        category: 'routine',
-        text: '주말과 평일의 기상/취침 시간이 일정하게 유지되나요?',
-        options: [
-            { text: '주말에는 늦잠을 자거나 불규칙해요.', score: 0, trait: 'unstable' },
-            { text: '매일 거의 동일한 시간에 일어나요.', score: 1, trait: 'stable' }
-        ]
-    },
-    {
-        id: 'q6',
-        category: 'nutrition',
-        text: '공부 중이나 쉬는 시간에 당분이 많은 간식을 자주 섭취하나요?',
-        options: [
-            { text: '네, 단 게 없으면 기운이 안 나요.', score: 0, trait: 'sugar_spike' },
-            { text: '뇌 건강을 위해 절제하고 있어요.', score: 1, trait: 'clean_mind' }
-        ]
-    },
-    {
-        id: 'q7',
-        category: 'metacognition',
-        text: '반복해서 틀리는 단원이나 약점 키워드를 별도로 관리하고 있나요?',
-        options: [
-            { text: '딱히 관리하기보다 계속 풀어봐요.', score: 0, trait: 'blind' },
-            { text: '약점 데이터를 기반으로 집중 공략해요.', score: 1, trait: 'meta' }
-        ]
+const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+let activePeriodDays = 7;
+let trendChart = null;
+let mobileTrendChart = null;
+
+// ── 날짜 유틸 ──────────────────────────────────────────
+function toDateKey(d) {
+    return d.toISOString().split('T')[0];
+}
+
+function buildDateRange(days, endDate = new Date()) {
+    const keys = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(endDate);
+        d.setDate(d.getDate() - i);
+        keys.push(toDateKey(d));
     }
-];
+    return keys;
+}
 
-const personas = {
-    'HIGH_POTENTIAL': {
-        name: '완벽한 전략가',
-        description: '공부 루틴과 방법론이 매우 정밀하게 설계되어 있습니다. 현재의 흐름을 유지하되 고난도 문항에 집중하세요.',
-        tip: '망각 곡선 3차 주기(7일 뒤) 복습을 더 강화해보세요.'
-    },
-    'MULTITASKING_TRAP': {
-        name: '멀티태스킹 함정형',
-        description: '음악 청취나 비효율적인 공부 환경으로 인해 뇌의 몰입도가 분산되고 있습니다.',
-        tip: '공부 1시간 전에는 도파민을 자극하는 음악과 스마트폰을 완전히 차단하세요.'
-    },
-    'PASSIVE_STUDENT': {
-        name: '가짜 공부 중독형',
-        description: '개념 정리에만 시간을 쏟으며 실제로는 뇌가 편한 공부만 하고 있을 가능성이 높습니다.',
-        tip: '개념 이해 후 바로 백지에 핵심 내용을 적어보는 아웃풋 연습을 도입하세요.'
-    },
-    'PROCRASTINATOR': {
-        name: '완벽주의 미루기형',
-        description: '계획은 거창하지만 실행의 문턱이 너무 높습니다. 3초 법칙이 절실합니다.',
-        tip: '실행력을 높이기 위해 계획을 더 잘게 쪼개고, 3초 안에 책을 펴는 습관을 들이세요.'
-    },
-    'INCONSISTENT_ROUTINE': {
-        name: '불규칙 엔진형',
-        description: '공부 방법은 좋지만 생활 루틴이 무너져 있어 두뇌의 최적 효율을 내지 못하고 있습니다.',
-        tip: '주말 기상 시간을 평일과 30분 이내로 맞추는 연습부터 시작하세요.'
-    },
-    'UNKNOWN': {
-        name: '성장하는 비기너',
-        description: '아직 자신만의 공부 패턴이 확립되지 않은 상태입니다.',
-        tip: '스윗미의 기본 가이드를 따라 하나씩 습관을 만들어보세요.'
-    }
-};
+// ── 데이터 집계 ────────────────────────────────────────
+/**
+ * 전체 타임테이블 history를 통합하여 일별·카테고리별 활동 시간(초)을 집계.
+ * 반환: { 'YYYY-MM-DD': { subjectId: seconds, ... } }
+ */
+function aggregateActivityByDayAndCategory(dateKeys) {
+    const buckets = {};
+    dateKeys.forEach(k => { buckets[k] = {}; });
 
-window.currentTestState = {
-    answers: {},
-    step: 0
-};
+    const dateKeySet = new Set(dateKeys);
+    state.timetables.forEach(tt => {
+        (tt.history || []).forEach(session => {
+            if (!session.startTime || !session.duration) return;
+            const sessionDate = new Date(session.startTime);
+            if (Number.isNaN(sessionDate.getTime())) return;
+            const key = toDateKey(sessionDate);
+            if (!dateKeySet.has(key)) return;
+            const subId = session.subject || 'OTH';
+            buckets[key][subId] = (buckets[key][subId] || 0) + (Number(session.duration) || 0);
+        });
+    });
+    return buckets;
+}
 
-window.renderAnalysisTest = () => {
-    const container = document.getElementById('analysis-content');
-    if (!container) return;
+function averageReflectionTotal(dateKeys) {
+    let sum = 0;
+    let count = 0;
+    dateKeys.forEach(k => {
+        const r = state.reflections[k];
+        if (r && typeof r.total === 'number') {
+            sum += r.total;
+            count++;
+        }
+    });
+    return { avg: count > 0 ? sum / count : null, count };
+}
 
-    const step = window.currentTestState.step;
+// ── 종합 점수 렌더 ─────────────────────────────────────
+function renderScoreCard(days, scope = 'pc') {
+    const valueEl = document.getElementById(scope === 'mobile' ? 'm-score-value' : 'score-value');
+    const deltaEl = document.getElementById(scope === 'mobile' ? 'm-score-delta' : 'score-delta');
+    const subEl = document.getElementById(scope === 'mobile' ? 'm-score-sub' : 'score-sub');
+    if (!valueEl) return;
 
-    if (step >= analysisQuestions.length) {
-        window.finishAnalysisTest();
+    const today = new Date();
+    const currentKeys = buildDateRange(days, today);
+    const prevEnd = new Date(today);
+    prevEnd.setDate(prevEnd.getDate() - days);
+    const prevKeys = buildDateRange(days, prevEnd);
+
+    const current = averageReflectionTotal(currentKeys);
+    const prev = averageReflectionTotal(prevKeys);
+
+    if (current.avg === null) {
+        valueEl.textContent = '—';
+        deltaEl.innerHTML = '';
+        subEl.textContent = '회고 기록이 아직 없습니다.';
         return;
     }
 
-    const q = analysisQuestions[step];
-    const progress = ((step / analysisQuestions.length) * 100).toFixed(0);
+    valueEl.textContent = current.avg.toFixed(1);
+    subEl.textContent = `최근 ${days}일 중 ${current.count}일 회고 기록`;
 
-    container.innerHTML = `
-        <div class="test-container">
-            <div class="test-progress-bar">
-                <div class="progress-inner" style="width: ${progress}%"></div>
-            </div>
-            <div class="test-header">
-                <span class="q-badge">${q.category.toUpperCase()}</span>
-                <p class="q-count">Question ${step + 1} / ${analysisQuestions.length}</p>
-            </div>
-            <h2 class="q-text">${q.text}</h2>
-            <div class="q-options">
-                ${q.options.map((opt, idx) => `
-                    <button class="opt-btn" onclick="submitAnswer('${q.id}', ${idx})">
-                        ${opt.text}
-                    </button>
-                `).join('')}
-            </div>
-        </div>
-    `;
-};
+    if (prev.avg === null) {
+        deltaEl.innerHTML = '<span class="delta-neutral">이전 기간 비교 불가</span>';
+        return;
+    }
+    const diff = current.avg - prev.avg;
+    const rounded = Math.abs(diff).toFixed(1);
+    if (diff > 0.1) {
+        deltaEl.innerHTML = `<span class="delta-up">▲ +${rounded}</span><small>이전 기간 대비</small>`;
+    } else if (diff < -0.1) {
+        deltaEl.innerHTML = `<span class="delta-down">▼ -${rounded}</span><small>이전 기간 대비</small>`;
+    } else {
+        deltaEl.innerHTML = `<span class="delta-neutral">– 변화 없음</span><small>이전 기간 대비</small>`;
+    }
+}
 
-window.submitAnswer = (qId, optionIdx) => {
-    const q = analysisQuestions.find(x => x.id === qId);
-    window.currentTestState.answers[qId] = q.options[optionIdx];
-    window.currentTestState.step++;
-    window.renderAnalysisTest();
-};
+// ── 트렌드 그래프 렌더 ──────────────────────────────────
+function renderTrendChart(days, scope = 'pc') {
+    const canvasId = scope === 'mobile' ? 'm-category-trend-chart' : 'category-trend-chart';
+    const emptyId = scope === 'mobile' ? 'm-trend-empty' : 'trend-empty';
+    const canvas = document.getElementById(canvasId);
+    const emptyEl = document.getElementById(emptyId);
+    if (!canvas) return;
 
-window.finishAnalysisTest = () => {
-    const answers = Object.values(window.currentTestState.answers);
-    const totalScore = answers.reduce((sum, a) => sum + a.score, 0);
-    
-    // Simple Persona Logic
-    let personaId = 'UNKNOWN';
-    const traitCounts = {};
-    answers.forEach(a => {
-        traitCounts[a.trait] = (traitCounts[a.trait] || 0) + 1;
+    const dateKeys = buildDateRange(days);
+    const buckets = aggregateActivityByDayAndCategory(dateKeys);
+
+    const totalSeconds = Object.values(buckets).reduce((acc, day) => {
+        return acc + Object.values(day).reduce((a, b) => a + b, 0);
+    }, 0);
+
+    if (totalSeconds === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        canvas.style.display = 'none';
+        if (scope === 'mobile' && mobileTrendChart) { mobileTrendChart.destroy(); mobileTrendChart = null; }
+        if (scope !== 'mobile' && trendChart) { trendChart.destroy(); trendChart = null; }
+        return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+    canvas.style.display = '';
+
+    const labels = dateKeys.map(k => k.slice(5));
+    const datasets = state.subjects.map(sub => {
+        const data = dateKeys.map(k => {
+            const sec = buckets[k][sub.id] || 0;
+            return +(sec / 60).toFixed(1); // minutes
+        });
+        return {
+            label: sub.name,
+            data,
+            borderColor: sub.color,
+            backgroundColor: sub.color + '22',
+            borderWidth: 2,
+            pointRadius: 3,
+            tension: 0.3,
+            fill: false
+        };
     });
 
-    if (totalScore >= 6) personaId = 'HIGH_POTENTIAL';
-    else if (traitCounts['distraction'] > 0) personaId = 'MULTITASKING_TRAP';
-    else if (traitCounts['passive'] > 0) personaId = 'PASSIVE_STUDENT';
-    else if (traitCounts['procrastination'] > 0) personaId = 'PROCRASTINATOR';
-    else if (traitCounts['unstable'] > 0) personaId = 'INCONSISTENT_ROUTINE';
+    const existing = scope === 'mobile' ? mobileTrendChart : trendChart;
+    if (existing) existing.destroy();
 
-    const persona = personas[personaId];
-
-    // Build Result Result Object
-    const resultObj = {
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        type: 'Test',
-        score: totalScore,
-        personaName: persona.name,
-        personaDesc: persona.description,
-        personaTip: persona.tip
-    };
-
-    // Save to global state
-    state.analysisResults.push(resultObj);
-    saveToLocal();
-
-    window.renderAnalysisResult(resultObj);
-};
-
-window.renderAnalysisResult = (res) => {
-    const container = document.getElementById('analysis-content');
-    const tipEl = document.getElementById('analysis-quick-tip');
-    
-    if (tipEl) tipEl.textContent = res.personaTip;
-
-    container.innerHTML = `
-        <div class="result-container scale-in">
-            <div class="result-badge">Diagnosis Result</div>
-            <h1 class="persona-title">${res.personaName}</h1>
-            <div class="persona-score-circle">
-                <span>${res.score}</span>
-                <small>/ ${analysisQuestions.length}</small>
-            </div>
-            <p class="persona-desc">${res.personaDesc}</p>
-            <div class="persona-solution-card">
-                <div class="sol-header">
-                    ${icon('zap')}
-                    <span>핵심 처방전</span>
-                </div>
-                <p>${res.personaTip}</p>
-            </div>
-            <button class="btn-start" style="margin-top: 30px;" onclick="switchTab('analyze')">분석 메뉴로 돌아가기</button>
-        </div>
-    `;
-};
-
-window.startAnalysis = (type) => {
-    if (type === 'test') {
-        window.currentTestState = { answers: {}, step: 0 };
-        window.renderAnalysisTest();
-    } else if (type === 'data') {
-        window.renderDataAnalysisFilter();
-    } else if (type === 'history') {
-        window.renderAnalysisHistory();
-    } else if (type === 'ai_integrated') {
-        window.performIntegratedAnalysis();
-    }
-};
-
-window.renderDataAnalysisFilter = () => {
-    const container = document.getElementById('analysis-content');
-    container.innerHTML = `
-        <div class="data-analysis-landing scale-in">
-            <div class="landing-header">
-                ${icon('line-chart')}
-                <h2>학습 데이터 정밀 리포트</h2>
-                <p>기록된 Reflection 데이터를 기반으로 학습 성실도를 분석합니다.</p>
-            </div>
-            <div class="filter-options">
-                <button class="filter-btn" onclick="performDataAnalysis(7)">최근 1주일 분석</button>
-                <button class="filter-btn primary" onclick="performDataAnalysis(30)">최근 1개월 분석</button>
-            </div>
-        </div>
-    `;
-};
-
-window.performDataAnalysis = (days) => {
-    const today = new Date();
-    const reflections = [];
-    
-    for (let i = 0; i < days; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const dateKey = d.toISOString().split('T')[0];
-        if (state.reflections[dateKey]) {
-            reflections.push(state.reflections[dateKey]);
-        }
-    }
-
-    if (reflections.length === 0) {
-        alert('분석할 데이터가 부족합니다. 매일 Reflection을 기록해주세요!');
-        return;
-    }
-
-    // 단일 패스로 5개 메트릭 합산
-    const sums = { achievement: 0, time: 0, wrong: 0, review: 0, homework: 0 };
-    for (const r of reflections) {
-        sums.achievement += Number(r.achievement) || 0;
-        sums.time += Number(r.time) || 0;
-        sums.wrong += Number(r.wrong) || 0;
-        sums.review += Number(r.review) || 0;
-        sums.homework += Number(r.homework) || 0;
-    }
-    const avgAchievement = (sums.achievement / days).toFixed(1);
-    const avgTime = (sums.time / days).toFixed(1);
-    const avgWrong = (sums.wrong / days).toFixed(1);
-    const avgReview = (sums.review / days).toFixed(1);
-    const avgHomework = (sums.homework / days).toFixed(1);
-    const avgTotal = ((sums.achievement + sums.time + sums.wrong + sums.review + sums.homework) / (days * 5)).toFixed(1);
-
-    const resultObj = {
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        type: `Data (${days}d)`,
-        score: avgTotal,
-        metrics: {
-            achievement: avgAchievement,
-            time: avgTime,
-            wrong: avgWrong,
-            review: avgReview,
-            homework: avgHomework
-        }
-    };
-
-    // Save to global state (Data Analysis is also history)
-    state.analysisResults.push({
-        ...resultObj,
-        personaName: `${days}일간의 성실도 리포트`,
-        personaDesc: `${days}일간 축적된 데이터를 바탕으로 산출된 평균 지표입니다.`,
-        personaTip: avgAchievement < 15 ? '목표 달성률이 낮습니다. 계획을 좀 더 세분화해보세요.' : '훌륭한 성실도를 보여주고 계십니다!'
-    });
-    saveToLocal();
-
-    window.renderDataAnalysisResult(resultObj, days);
-};
-
-window.renderDataAnalysisResult = (res, days) => {
-    const container = document.getElementById('analysis-content');
-    
-    const getStatusClass = (val) => val >= 15 ? 'status-good' : (val >= 10 ? 'status-normal' : 'status-bad');
-
-    container.innerHTML = `
-        <div class="data-result-view scale-in">
-            <div class="result-header">
-                <span class="period-badge">TOTAL ${days} DAYS</span>
-                <h1>종합 학습 성과 인덱스</h1>
-            </div>
-
-            <div class="data-table">
-                <div class="table-row header">
-                    <div class="t-col">분석 항목</div>
-                    <div class="t-col">평균 점수</div>
-                    <div class="t-col">상태</div>
-                </div>
-                <div class="table-row">
-                    <div class="t-col">🎯 목표 달성률</div>
-                    <div class="t-col">${res.metrics.achievement} / 20</div>
-                    <div class="t-col active"><span class="dot ${getStatusClass(res.metrics.achievement)}"></span></div>
-                </div>
-                <div class="table-row">
-                    <div class="t-col">⏰ 시간 관리</div>
-                    <div class="t-col">${res.metrics.time} / 20</div>
-                    <div class="t-col active"><span class="dot ${getStatusClass(res.metrics.time)}"></span></div>
-                </div>
-                <div class="table-row">
-                    <div class="t-col">📝 오답 정리</div>
-                    <div class="t-col">${res.metrics.wrong} / 20</div>
-                    <div class="t-col active"><span class="dot ${getStatusClass(res.metrics.wrong)}"></span></div>
-                </div>
-                <div class="table-row">
-                    <div class="t-col">🔄 복습 진행</div>
-                    <div class="t-col">${res.metrics.review} / 20</div>
-                    <div class="t-col active"><span class="dot ${getStatusClass(res.metrics.review)}"></span></div>
-                </div>
-                <div class="table-row">
-                    <div class="t-col">📚 숙제 완수</div>
-                    <div class="t-col">${res.metrics.homework} / 20</div>
-                    <div class="t-col active"><span class="dot ${getStatusClass(res.metrics.homework)}"></span></div>
-                </div>
-            </div>
-
-            <div class="data-footer">
-                <div class="total-avg-card">
-                    <small>종합 평균</small>
-                    <div class="v">${res.score}</div>
-                </div>
-                <button class="btn-start" onclick="switchTab('analyze')">확인 완료</button>
-            </div>
-        </div>
-    `;
-};
-
-window.deleteAnalysisResult = (id, event) => {
-    if (event) event.stopPropagation(); // 카드 클릭 이벤트 전파 방지
-    if (!confirm('이 분석 결과를 삭제하시겠습니까?')) return;
-    
-    state.analysisResults = state.analysisResults.filter(res => res.id !== id);
-    saveToLocal();
-    window.renderAnalysisHistory();
-};
-
-window.renderAnalysisHistory = () => {
-    const container = document.getElementById('analysis-content');
-    if (state.analysisResults.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                ${icon('database')}
-                <p>과거 분석 기록이 없습니다.</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="history-list-view">
-            <div class="history-header">
-                <h3>지난 분석 히스토리</h3>
-                <small>최근 분석된 결과부터 표시됩니다.</small>
-            </div>
-            <div class="history-grid">
-                ${state.analysisResults.slice().reverse().map(res => `
-                    <div class="history-item glass-card" onclick="window.renderAnalysisResult(${JSON.stringify(res).replace(/"/g, '&quot;')})">
-                        <div class="h-top-row">
-                            <div class="h-meta">
-                                <span class="h-date">${res.date}</span>
-                                <span class="h-type">${res.type}</span>
-                            </div>
-                            <button class="h-delete-btn" onclick="window.deleteAnalysisResult(${res.id}, event)" title="삭제">
-                                ${icon('trash-2')}
-                            </button>
-                        </div>
-                        <div class="h-name">${res.personaName}</div>
-                        <div class="h-score-wrap">
-                            <span class="h-score-val">${res.score}</span>
-                            <span class="h-score-unit">점</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
-};
-
-window.performIntegratedAnalysis = () => {
-    const container = document.getElementById('analysis-content');
-    
-    // 1. Find latest Test and Data results
-    const latestTest = state.analysisResults.slice().reverse().find(r => r.type === 'Test');
-    const latestData = state.analysisResults.slice().reverse().find(r => r.type.startsWith('Data'));
-
-    if (!latestTest || !latestData) {
-        container.innerHTML = `
-            <div class="empty-state scale-in">
-                ${icon('alert-circle', 16, 'color: #FF2D55;')}
-                <h2>분석 데이터가 부족합니다</h2>
-                <p>AI가 정확하게 예측하려면 먼저 '성향 테스트'와 '데이터 분석'이 모두 필요합니다.</p>
-                <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
-                    ${!latestTest ? '<button class="btn-start" style="padding: 10px 20px; font-size: 13px;" onclick="startAnalysis(\'test\')">테스트 시작</button>' : ''}
-                    ${!latestData ? '<button class="btn-start" style="padding: 10px 20px; font-size: 13px;" onclick="startAnalysis(\'data\')">데이터 분석</button>' : ''}
-                </div>
-            </div>
-        `;
-        return;
-    }
-
-    // 2. Calculation Logic
-    const scaledData = (latestData.score / 20) * 100; // 0-20 to 0-100
-    const scaledTest = (latestTest.score / 7) * 100; // 0-7 to 0-100
-    const predictedScore = Math.round((scaledData * 0.7) + (scaledTest * 0.3));
-
-    // 3. Insight Generation
-    const lowestMetric = Object.entries(latestData.metrics).reduce((low, [key, val]) => {
-        return Number(val) < Number(low.val) ? { key, val } : low;
-    }, { key: 'achievement', val: 20 });
-
-    const metricNames = {
-        achievement: '목표 달성률',
-        time: '시간 관리',
-        wrong: '오답 정리',
-        review: '복습 진행',
-        homework: '숙제 완수'
-    };
-
-    const AI_PRESC_TEMPLATES = {
-        'HIGH_POTENTIAL': '완벽한 기반을 갖추고 있습니다. 최고점을 위해 취약한 [METRIC]을 15%만 더 강화하세요.',
-        'MULTITASKING_TRAP': '환경 관리가 시급합니다. [METRIC] 점수가 낮은 이유는 도파민 분산 때문일 확률이 높습니다.',
-        'PASSIVE_STUDENT': '가짜 공부의 늪에 빠져있네요. [METRIC]을 높이기 위해 개념서보다는 인출(Output) 공부에 집중하세요.',
-        'PROCRASTINATOR': '미루는 습관이 발목을 잡고 있습니다. [METRIC]을 오전에 우선적으로 처리하여 관성을 깨세요.',
-        'INCONSISTENT_ROUTINE': '엔진은 좋으나 연료 공급이 불규칙합니다. 루틴을 일정하게 유지하면 점수가 급상승할 것입니다.'
-    };
-
-    // Find persona key for template
-    const personaKey = Object.keys(personas).find(k => personas[k].name === latestTest.personaName) || 'UNKNOWN';
-    const prescription = (AI_PRESC_TEMPLATES[personaKey] || '현재 패턴을 유지하며 개선해보세요.').replace('[METRIC]', metricNames[lowestMetric.key]);
-
-    const resultObj = {
-        predictedScore,
-        latestTest,
-        latestData,
-        prescription,
-        personaKey
-    };
-
-    window.renderIntegratedResult(resultObj);
-};
-
-window.renderIntegratedResult = (res) => {
-    const container = document.getElementById('analysis-content');
-    const tipEl = document.getElementById('analysis-quick-tip');
-    
-    if (tipEl) tipEl.textContent = `AI 예측 결과: 다음 시험에서 ${res.predictedScore}점이 예상됩니다.`;
-
-    container.innerHTML = `
-        <div class="integrated-report-view scale-in" style="width: 100%;">
-            <div class="report-header" style="text-align: center;">
-                <div class="ai-badge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 86, 179, 0.15); color: var(--primary); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; border: 1px solid var(--primary); margin-bottom: 20px;">
-                    ${icon('sparkles', 14)} AI INTEGRATED REPORT
-                </div>
-                <h1 style="font-size: 84px; font-weight: 800; color: white; margin: 0;">${res.predictedScore}<small style="font-size: 24px; color: var(--text-dim); margin-left: 8px;">점</small></h1>
-                <p style="color: var(--text-dim); font-size: 15px; margin-top: 10px;">현재 습관을 유지할 시 도달 가능한 미래 성적 예측치</p>
-            </div>
-
-            <div class="report-main-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px;">
-                <!-- Growth Trend Chart (New Phase 4) -->
-                <div class="glass-card chart-report" style="grid-column: span 2; padding: 24px;">
-                    <div class="s-header" style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 20px;">
-                        ${icon('trending-up', 14)} 성취도 추세 및 미래 예측
-                    </div>
-                    <div style="height: 200px; width: 100%;">
-                        <canvas id="predictionChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="glass-card sub-report" style="padding: 24px; background: rgba(255, 255, 255, 0.03);">
-                    <div class="s-header" style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">
-                        ${icon('user', 14)} 나의 공부 성향
-                    </div>
-                    <h3 style="color: var(--primary); font-size: 20px; margin: 15px 0 10px 0;">${res.latestTest.personaName}</h3>
-                    <p style="font-size: 13px; color: var(--text-dim); line-height: 1.6; height: 65px; overflow-y: auto;">${res.latestTest.personaDesc}</p>
-                </div>
-
-                <!-- Learning Heatmap (New Phase 4) -->
-                <div class="glass-card sub-report" style="padding: 24px; background: rgba(255, 255, 255, 0.03);">
-                    <div class="s-header" style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">
-                        ${icon('layout-grid', 14)} 학습 몰입도 히트맵
-                    </div>
-                    <div id="immersion-heatmap" class="heatmap-container" style="margin-top: 20px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
-                        <!-- Heatmap dots injected here -->
-                    </div>
-                    <p style="font-size: 11px; color: var(--text-dim); margin-top: 15px;">색이 진할수록 해당 일의 학습 완성도가 높습니다.</p>
-                </div>
-            </div>
-
-            <div class="prescription-card glass-card" style="margin-top: 30px; border: 1px dashed var(--primary); background: rgba(0, 86, 179, 0.08); padding: 30px;">
-                <div class="p-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
-                    <div style="background: #FFD700; color: #000; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        ${icon('zap', 14, 'fill: currentColor;')}
-                    </div>
-                    <span style="font-size: 14px; font-weight: 800; text-transform: uppercase; color: white; letter-spacing: 1px;">AI 어시스턴트의 실전 처방전</span>
-                </div>
-                <p style="font-size: 17px; line-height: 1.7; color: #FFFFFF; font-weight: 500;">
-                    "${res.prescription}"
-                </p>
-            </div>
-
-            <div style="text-align: center; margin-top: 40px; display: flex; gap: 10px; justify-content: center;">
-                <button class="btn-start" onclick="switchTab('dashboard')" style="background: var(--glass); border: 1px solid var(--border); color: var(--text-dim); padding: 14px 28px; border-radius: 30px; font-size: 14px;">대시보드</button>
-                <button class="btn-start" onclick="window.generateTomorrowPlan()" style="padding: 14px 48px; border-radius: 30px; font-size: 14px; box-shadow: 0 0 20px rgba(0, 122, 255, 0.4);">내일의 AI 추천 계획 생성</button>
-            </div>
-        </div>
-    `;
-
-    // Init Phase 4 Visuals
-    setTimeout(() => {
-        window.initIntegratedCharts(res);
-        window.renderImmersionHeatmap();
-    }, 100);
-};
-
-window.initIntegratedCharts = (res) => {
-    const ctx = document.getElementById('predictionChart');
-    if (!ctx) return;
-
-    // Get last 7 days of reflections
-    const dates = [];
-    const scores = [];
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const key = d.toISOString().split('T')[0];
-        dates.push(key.slice(5)); // MM-DD
-        const score = state.reflections[key] ? (state.reflections[key].total || 50) : 50;
-        scores.push(score);
-    }
-
-    // Add prediction point
-    dates.push('예측');
-    scores.push(res.predictedScore);
-
-    new Chart(ctx, {
+    const chart = new Chart(canvas, {
         type: 'line',
-        data: {
-            labels: dates,
-            datasets: [{
-                label: '학습 성취도 추세',
-                data: scores,
-                borderColor: '#007AFF',
-                backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                borderWidth: 3,
-                pointBackgroundColor: (context) => context.dataIndex === scores.length - 1 ? '#FFD700' : '#007AFF',
-                pointRadius: (context) => context.dataIndex === scores.length - 1 ? 6 : 4,
-                tension: 0.4,
-                fill: true,
-                segment: {
-                    borderDash: (ctx) => ctx.p0DataIndex === scores.length - 2 ? [5, 5] : undefined
-                }
-            }]
-        },
+        data: { labels, datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#E5E5EA', boxWidth: 10, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}분`
+                    }
+                }
+            },
             scales: {
-                y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E8E93' } },
-                x: { grid: { display: false }, ticks: { color: '#8E8E93' } }
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: '분', color: '#8E8E93' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#8E8E93' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#8E8E93', maxRotation: 0, autoSkip: true, maxTicksLimit: days > 14 ? 8 : 7 }
+                }
             }
         }
     });
-};
 
-window.renderImmersionHeatmap = () => {
-    const container = document.getElementById('immersion-heatmap');
-    if (!container) return;
+    if (scope === 'mobile') mobileTrendChart = chart;
+    else trendChart = chart;
+}
 
-    // Last 28 days
-    const today = new Date();
-    let html = '';
-    for (let i = 27; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const key = d.toISOString().split('T')[0];
-        const reflection = state.reflections[key];
-        const immersion = reflection ? (reflection.total / 100) : 0;
-        
-        const opacity = Math.max(0.1, immersion);
-        const color = immersion > 0.8 ? '#007AFF' : (immersion > 0.4 ? 'rgba(0, 122, 255, 0.6)' : 'rgba(0, 122, 255, 0.2)');
-        
-        html += `<div title="${key}: ${Math.round(immersion*100)}%" style="height: 15px; border-radius: 3px; background: ${color}; opacity: ${opacity};"></div>`;
+// ── 인사이트 생성 ──────────────────────────────────────
+function linearTrendSlope(values) {
+    const n = values.length;
+    if (n < 2) return 0;
+    const xs = values.map((_, i) => i);
+    const meanX = xs.reduce((a, b) => a + b, 0) / n;
+    const meanY = values.reduce((a, b) => a + b, 0) / n;
+    let num = 0, den = 0;
+    for (let i = 0; i < n; i++) {
+        num += (xs[i] - meanX) * (values[i] - meanY);
+        den += (xs[i] - meanX) ** 2;
     }
-    container.innerHTML = html;
-};
+    return den === 0 ? 0 : num / den;
+}
 
-window.generateTomorrowPlan = () => {
-    // 1. Data Analysis for Planning
-    const latestTest = state.analysisResults.slice().reverse().find(r => r.type === 'Test');
-    // Find subject with least study time in history (recent 3 days)
-    const recentHistory = getActiveHistory().slice(-20);
-    const subjectTimes = {};
-    state.subjects.forEach(s => subjectTimes[s.id] = 0);
-    recentHistory.forEach(h => {
-        if (subjectTimes[h.subject] !== undefined) subjectTimes[h.subject] += h.duration;
+function buildInsights(days) {
+    const insights = [];
+    const dateKeys = buildDateRange(days);
+    const buckets = aggregateActivityByDayAndCategory(dateKeys);
+
+    // 1. 카테고리별 총 활동 시간 & 추세
+    const categoryTotals = {};
+    const categorySeries = {};
+    state.subjects.forEach(sub => {
+        categoryTotals[sub.id] = 0;
+        categorySeries[sub.id] = [];
+    });
+    dateKeys.forEach(k => {
+        state.subjects.forEach(sub => {
+            const sec = buckets[k][sub.id] || 0;
+            categoryTotals[sub.id] += sec;
+            categorySeries[sub.id].push(sec / 60);
+        });
     });
 
-    const leastStudiedSubjectId = Object.entries(subjectTimes).reduce((min, [id, time]) => {
-        return time < min.time ? { id, time } : min;
-    }, { id: state.subjects[0].id, time: Infinity }).id;
+    const activeCategories = state.subjects.filter(s => categoryTotals[s.id] > 0);
 
-    const leastSubjectName = state.subjects.find(s => s.id === leastStudiedSubjectId).name;
-
-    // 2. Build AI Optimized Tasks
-    const recommendations = [
-        { 
-            subject: leastStudiedSubjectId, 
-            name: `[AI 추천] ${leastSubjectName} 밀린 개념 보충`, 
-            reason: "최근 학습 비중이 가장 낮은 카테고리입니다. 밸런스를 맞춰주세요." 
-        },
-        { 
-            subject: 'OTH', 
-            name: `[AI 추천] 3일 전 학습 내용 인출(Output)`, 
-            reason: "망각 곡선 2차 주기에 해당합니다. 백지에 핵심 내용을 적어보세요." 
+    // Insight: 추세 상승/하락 (기울기 기반, 활동이 있는 카테고리만)
+    if (activeCategories.length > 0) {
+        const slopes = activeCategories.map(s => ({
+            sub: s,
+            slope: linearTrendSlope(categorySeries[s.id])
+        }));
+        const topUp = slopes.filter(x => x.slope > 0.5).sort((a, b) => b.slope - a.slope)[0];
+        const topDown = slopes.filter(x => x.slope < -0.5).sort((a, b) => a.slope - b.slope)[0];
+        if (topUp) {
+            insights.push({
+                icon: 'trending-up',
+                tone: 'up',
+                title: `${topUp.sub.name} 상승세`,
+                body: `최근 ${days}일간 ${topUp.sub.name} 활동 시간이 꾸준히 늘고 있습니다.`
+            });
         }
-    ];
+        if (topDown) {
+            insights.push({
+                icon: 'trending-down',
+                tone: 'down',
+                title: `${topDown.sub.name} 하락세`,
+                body: `${topDown.sub.name} 활동 시간이 점차 줄고 있어요. 계획을 점검해 보세요.`
+            });
+        }
+    }
 
-    // Persona-based Task
-    if (latestTest && latestTest.personaName === '가짜 공부 중독형') {
-        recommendations.push({
-            subject: 'OTH',
-            name: "[AI 추천] 고난도 문제 5개 집중 풀이",
-            reason: "개념 정리보다는 실제 문제 해결을 통한 '진짜 공부'가 필요합니다."
-        });
-    } else {
-        recommendations.push({
-            subject: leastStudiedSubjectId,
-            name: `[AI 추천] ${leastSubjectName} 오답 노트 1회독`,
-            reason: "반복되는 실수를 줄이기 위한 핵심 루틴입니다."
+    // 2. 요일별 평균 종합 점수
+    const dowSums = [0, 0, 0, 0, 0, 0, 0];
+    const dowCounts = [0, 0, 0, 0, 0, 0, 0];
+    dateKeys.forEach(k => {
+        const r = state.reflections[k];
+        if (r && typeof r.total === 'number') {
+            const dow = new Date(k).getDay();
+            dowSums[dow] += r.total;
+            dowCounts[dow]++;
+        }
+    });
+    const dowAvgs = dowSums.map((s, i) => dowCounts[i] > 0 ? s / dowCounts[i] : null);
+    const validDows = dowAvgs
+        .map((v, i) => ({ v, i }))
+        .filter(x => x.v !== null);
+    if (validDows.length >= 3) {
+        const best = validDows.reduce((a, b) => (b.v > a.v ? b : a));
+        const worst = validDows.reduce((a, b) => (b.v < a.v ? b : a));
+        if (best.v - worst.v >= 10) {
+            insights.push({
+                icon: 'calendar-days',
+                tone: 'info',
+                title: `${DAY_LABELS[worst.i]}요일 하락 패턴`,
+                body: `${DAY_LABELS[best.i]}요일 평균 ${best.v.toFixed(0)}점 대비 ${DAY_LABELS[worst.i]}요일은 ${worst.v.toFixed(0)}점으로 낮습니다.`
+            });
+        }
+    }
+
+    // 3. 최약 카테고리 (활동 시간 0이거나 가장 낮음)
+    const zeroCats = state.subjects.filter(s => categoryTotals[s.id] === 0);
+    if (zeroCats.length > 0 && zeroCats.length < state.subjects.length) {
+        insights.push({
+            icon: 'alert-circle',
+            tone: 'warn',
+            title: `미활동 카테고리 ${zeroCats.length}개`,
+            body: `${zeroCats.map(c => c.name).join(', ')} 카테고리는 최근 ${days}일간 활동 기록이 없습니다.`
         });
     }
 
-    window.renderAIPlanModal(recommendations);
-};
-
-window.renderAIPlanModal = (plans) => {
-    const modal = document.createElement('div');
-    modal.className = 'modal active scale-in';
-    modal.id = 'ai-plan-modal';
-    
-    modal.innerHTML = `
-        <div class="modal-content glass-card" style="width: 500px; border: 1px solid var(--primary);">
-            <div style="text-align:center; margin-bottom:20px;">
-                <div style="background: var(--primary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                    ${icon('sparkles', 16, 'color: white;')}
-                </div>
-                <h2 style="margin:0;">AI 내일 학습 추천</h2>
-                <p style="font-size:14px; color:var(--text-dim);">데이터 분석 기반으로 설계된 최적의 플랜입니다.</p>
-            </div>
-
-            <div class="ai-recommendation-list" style="display: flex; flex-direction: column; gap: 12px; margin-bottom:30px;">
-                ${plans.map(p => `
-                    <div class="glass-card" style="padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span class="q-badge" style="background: var(--primary);">${state.subjects.find(s => s.id === p.subject).name}</span>
-                        </div>
-                        <div style="font-weight: 700; color: white; margin-bottom: 4px;">${p.name}</div>
-                        <div style="font-size: 12px; color: var(--text-dim);">${p.reason}</div>
-                    </div>
-                `).join('')}
-            </div>
-
-            <div class="modal-btns">
-                <button class="btn-reset" style="flex:1;" onclick="document.getElementById('ai-plan-modal').remove()">취소</button>
-                <button class="btn-start" style="flex:2;" onclick="window.applyAIPlan(${JSON.stringify(plans).replace(/"/g, '&quot;')})">이 계획으로 내일 시작하기</button>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-};
-
-window.applyAIPlan = (plans) => {
-    // Set to tomorrow's date
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
-    plans.forEach(p => {
-        state.tasks.push({
-            id: Date.now() + Math.random(),
-            subject: p.subject,
-            name: p.name,
-            duration: '0s',
-            completed: false,
-            date: tomorrowStr
+    // 4. 회고 기록률
+    const reflectionCount = dateKeys.filter(k => state.reflections[k]).length;
+    const rate = reflectionCount / days;
+    if (rate < 0.5 && days >= 7) {
+        insights.push({
+            icon: 'book-open',
+            tone: 'warn',
+            title: '회고 기록률 낮음',
+            body: `${days}일 중 ${reflectionCount}일만 회고를 남기셨어요. 꾸준한 회고가 정확한 분석의 기반입니다.`
         });
-    });
+    }
 
-    saveToLocal();
-    alert('내일 계획에 추가되었습니다! 대시보드에서 날짜를 내일로 변경하여 확인하세요.');
-    document.getElementById('ai-plan-modal').remove();
-    window.switchTab('dashboard');
-};
+    return { insights, categoryTotals, dowAvgs, categorySeries };
+}
 
-window.updateAIAdaptiveFeedback = () => {
-    const messageText = document.getElementById('ai-message-text');
-    if (!messageText) return;
-
-    const reflections = Object.values(state.reflections);
-    if (reflections.length < 3) {
-        messageText.textContent = "반갑습니다! 데이터가 조금 더 쌓이면 AI가 당신의 공부 패턴을 정교하게 분석해 드릴게요.";
+function renderInsights(insightData, scope = 'pc') {
+    const listEl = document.getElementById(scope === 'mobile' ? 'm-insight-list' : 'insight-list');
+    if (!listEl) return;
+    const { insights } = insightData;
+    if (insights.length === 0) {
+        listEl.innerHTML = `<div class="empty-state small"><p>데이터가 더 쌓이면 인사이트가 표시됩니다.</p></div>`;
         return;
     }
+    listEl.innerHTML = insights.map(ins => `
+        <div class="insight-card glass-card tone-${ins.tone}">
+            <div class="insight-icon">${icon(ins.icon, 18)}</div>
+            <div class="insight-body">
+                <div class="insight-title">${ins.title}</div>
+                <p>${ins.body}</p>
+            </div>
+        </div>
+    `).join('');
+}
 
-    // Sort by date to get recent trends
-    const sortedDates = Object.keys(state.reflections).sort().reverse();
-    const recent = state.reflections[sortedDates[0]];
-    const past = state.reflections[sortedDates[2]] || recent;
+// ── 처방전 생성 ────────────────────────────────────────
+function buildPrescription(days, insightData) {
+    const { categoryTotals, dowAvgs } = insightData;
+    const dateKeys = buildDateRange(days);
+    const { avg } = averageReflectionTotal(dateKeys);
 
-    let alertMsg = "";
-
-    // 1. Weakness Detection (오답 정리 점수가 낮을 때)
-    if (recent.wrong < 10) {
-        alertMsg = "⚠️ 오답 정리 지수가 낮아지고 있어요. 틀린 문제를 다시 보는 습관이 성적 상승의 핵심입니다!";
-    } 
-    // 2. Forgetting Detection (복습 점수 하락 감지)
-    else if (recent.review < past.review - 5) {
-        alertMsg = "🧠 망각 주의보! 최근 복습 주기가 길어지고 있습니다. 3일 전 배운 내용을 오늘 15분만 훑어보세요.";
-    }
-    // 3. Achievement Consistency
-    else if (recent.achievement >= 18) {
-        alertMsg = "✨ 환상적인 페이스입니다! 현재의 높은 달성률을 주말까지 유지하면 목표 점수 도달 가능성이 매우 높습니다.";
-    }
-    // 4. Time Management Alert
-    else if (recent.time < 10) {
-        alertMsg = "⏰ 시간 관리 경고: 계획 대비 실질 공부 시간이 부족합니다. 몰입 모드를 활용해 밀도를 높여보세요.";
-    }
-    else {
-        alertMsg = "반가워요! 오늘은 어제보다 10% 더 몰입하는 하루를 만들어볼까요? 스윗미가 응원합니다.";
+    // 데이터 부족
+    if (avg === null) {
+        return '회고를 먼저 기록해보세요. 며칠 치 데이터가 쌓이면 맞춤 처방을 제시합니다.';
     }
 
-    messageText.textContent = alertMsg;
-};
+    const activeCategories = state.subjects.filter(s => categoryTotals[s.id] > 0);
+    const minCat = activeCategories.length > 0
+        ? activeCategories.reduce((a, b) => categoryTotals[a.id] < categoryTotals[b.id] ? a : b)
+        : null;
+
+    const validDows = dowAvgs
+        .map((v, i) => ({ v, i }))
+        .filter(x => x.v !== null);
+    const worstDow = validDows.length > 0
+        ? validDows.reduce((a, b) => (b.v < a.v ? b : a))
+        : null;
+
+    const parts = [];
+    if (avg >= 80) {
+        parts.push(`훌륭한 페이스입니다. 평균 ${avg.toFixed(0)}점을 유지하고 있어요.`);
+    } else if (avg >= 60) {
+        parts.push(`평균 ${avg.toFixed(0)}점, 상위 수준의 꾸준함입니다. 한 단계 더 올려볼 여지가 있어요.`);
+    } else {
+        parts.push(`평균 ${avg.toFixed(0)}점. 작은 개선이 큰 차이를 만듭니다.`);
+    }
+
+    if (minCat) {
+        const minMinutes = Math.round(categoryTotals[minCat.id] / 60);
+        parts.push(`그중 '${minCat.name}'이(가) 가장 적은 활동 시간(${minMinutes}분)을 기록했습니다. 이번 주는 이 카테고리에 하루 15~20분을 선(先) 배치해 보세요.`);
+    }
+    if (worstDow) {
+        parts.push(`특히 ${DAY_LABELS[worstDow.i]}요일(평균 ${worstDow.v.toFixed(0)}점)에 집중도가 떨어집니다. 그날만큼은 가벼운 계획으로 시작해 관성을 이어가세요.`);
+    }
+    return parts.join(' ');
+}
+
+function renderPrescription(text, scope = 'pc') {
+    const card = document.getElementById(scope === 'mobile' ? 'm-prescription-card' : 'prescription-card');
+    if (!card) return;
+    card.innerHTML = `<p class="prescription-text">${text}</p>`;
+}
+
+// ── 엔트리 ─────────────────────────────────────────────
+export function renderAnalysisDashboard(days) {
+    if (typeof days === 'number') activePeriodDays = days;
+    const insightData = buildInsights(activePeriodDays);
+    const prescription = buildPrescription(activePeriodDays, insightData);
+
+    renderScoreCard(activePeriodDays, 'pc');
+    renderTrendChart(activePeriodDays, 'pc');
+    renderInsights(insightData, 'pc');
+    renderPrescription(prescription, 'pc');
+
+    renderScoreCard(activePeriodDays, 'mobile');
+    renderTrendChart(activePeriodDays, 'mobile');
+    renderInsights(insightData, 'mobile');
+    renderPrescription(prescription, 'mobile');
+}
+
+export function setupAnalysisPeriodButtons() {
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const days = Number(btn.dataset.period);
+            const scope = btn.dataset.scope === 'mobile' ? 'mobile' : 'pc';
+            document.querySelectorAll(`.period-btn${scope === 'mobile' ? '[data-scope="mobile"]' : ':not([data-scope="mobile"])'}`).forEach(b => {
+                b.classList.toggle('active', b === btn);
+            });
+            // 반대 scope 버튼도 동기화
+            document.querySelectorAll(`.period-btn${scope === 'mobile' ? ':not([data-scope="mobile"])' : '[data-scope="mobile"]'}`).forEach(b => {
+                b.classList.toggle('active', Number(b.dataset.period) === days);
+            });
+            renderAnalysisDashboard(days);
+        });
+    });
+}
+
+window.renderAnalysisDashboard = renderAnalysisDashboard;
+window.setupAnalysisPeriodButtons = setupAnalysisPeriodButtons;

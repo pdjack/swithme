@@ -6,7 +6,7 @@ import { setupMobileUI } from './mobile.js';
 import { watchDeviceLayout } from './device.js';
 import { restoreTimerState } from './store.js';
 import { initStaticIcons } from './icons.js';
-import './analysis.js'; // For side effects (window attachments)
+import { setupAnalysisPeriodButtons } from './analysis.js';
 
 // SW 업데이트 시 자동 리로드
 if ('serviceWorker' in navigator) {
@@ -42,6 +42,7 @@ function init() {
     }
 
     setupMobileUI();
+    setupAnalysisPeriodButtons();
 
     initStaticIcons();
 }
