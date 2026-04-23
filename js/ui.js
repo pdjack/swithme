@@ -1,3 +1,13 @@
+// [이벤트 핸들링 규칙]
+// - 새 기능은 반드시 이벤트 위임 패턴 사용: data-* 속성 + addEventListener
+//   예: <button data-delete-id="3"> → container.addEventListener('click', ...)
+// - 기존 코드 수정 시 해당 컴포넌트를 함께 전환. 건드리지 않는 코드는 유지.
+//
+// [모달 규칙]
+// - 모든 모달에 취소/닫기 버튼 필수
+// - 버튼 순서: 좌(위험 동작) / 중앙(취소) / 우(주요 동작)
+// - 닫힐 때 등록했던 이벤트 리스너를 removeEventListener로 해제
+
 import { state, saveToLocal, scheduleRender } from './store.js';
 import { icon } from './icons.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
@@ -51,12 +61,7 @@ export function switchTab(tab) {
         renderReflectionItemManager();
     } else if (tab === 'analyze') {
         if (analyzeView) analyzeView.style.display = 'grid';
-        // Reset analysis content if needed
-        const content = document.getElementById('analysis-content');
-        if (content && content.innerHTML.trim() === '') {
-             content.innerHTML = '<div class="empty-state">' + icon('brain-circuit') + '<p>분석 항목을 선택하여 시작하세요.</p></div>';
-        }
-        if (window.updateAIAdaptiveFeedback) window.updateAIAdaptiveFeedback();
+        if (window.renderAnalysisDashboard) window.renderAnalysisDashboard();
     }
 }
 

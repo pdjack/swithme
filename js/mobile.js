@@ -2,6 +2,12 @@
  * mobile.js
  * 모바일 전용 UI 이벤트 핸들러 및 렌더링 로직
  * 기존 store.js의 state를 공유하고, PC 사이드 함수(timer 등)를 재사용합니다.
+ *
+ * [네이밍 규칙]
+ * - HTML ID: PC `#xxx` → 모바일 `#m-xxx` (예: #task-list → #m-task-list)
+ * - CSS 클래스: PC `.xxx` → 모바일 `.m-xxx` (예: .task-item → .m-task-item)
+ * - 상태 클래스는 접두어 없이 동일: active, completed, --active
+ * - BEM Modifier: `--` 사용 (예: .tt-tab--active, .m-tt-tab--active)
  */
 
 import { state, saveToLocal, getActiveHistory, getActiveTimetable } from './store.js';
@@ -110,9 +116,7 @@ function switchMobileTab(tab) {
         renderMobileSubjectManager();
         renderMobileReflectionItemManager();
     } else if (tab === 'analyze') {
-        if (window.updateAIAdaptiveFeedback) window.updateAIAdaptiveFeedback();
-        // 분석 탭의 analysis-content를 모바일 영역에 복사
-        syncMobileAnalysisContent();
+        if (window.renderAnalysisDashboard) window.renderAnalysisDashboard();
     }
 
 }
@@ -363,15 +367,6 @@ window.saveMobileReflection = () => {
     saveToLocal();
     alert(`[${targetDate}] 하루 회고가 저장되었습니다! 총점: ${reflection.total}점`);
 };
-
-// ── 분석 결과를 모바일 영역에도 반영 ────────────────────────────
-function syncMobileAnalysisContent() {
-    const src = document.getElementById('analysis-content');
-    const dst = document.getElementById('m-analysis-content');
-    if (src && dst) {
-        dst.innerHTML = src.innerHTML;
-    }
-}
 
 // ── 날짜 표시 업데이트 (모바일 상단) ────────────────────────────
 function updateMobileDateDisplay() {

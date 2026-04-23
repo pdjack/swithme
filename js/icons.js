@@ -9,6 +9,13 @@
  *   icon('trash')           // 기본 16px
  *   icon('sparkles', 14)    // 14px
  *   icon('zap', 14, 'fill: currentColor;')  // 커스텀 스타일
+ *
+ * [아이콘 규칙]
+ * - 동적 HTML(template literal)에서는 반드시 icon() 함수 사용. <i data-lucide> 금지.
+ * - 정적 HTML에서는 <i data-lucide="..."> 사용 → initStaticIcons()가 초기화 시 변환.
+ * - 새 아이콘 추가: SVG_PATHS에 등록. Lucide 기준 <svg> 내부 path/rect/circle만 기입.
+ * - 기존 아이콘과 용도 중복 금지. 동일 용도에는 동일 아이콘 사용.
+ * - SVG 데이터 출처: https://lucide.dev/icons/
  */
 
 const SVG_PATHS = {

@@ -1,4 +1,11 @@
 // --- State Management ---
+//
+// [상태 동기화 규칙]
+// - state 객체가 Single Source of Truth. PC/모바일 모두 직접 읽고 쓴다.
+// - state 변경 후 반드시 saveToLocal() 호출.
+// - state 변경 후 PC/모바일 렌더 함수를 모두 호출하여 양쪽 UI 갱신.
+// - 동기화 우선순위: ① 렌더 함수 직접 호출(권장) ② window 전역 함수(순환참조 회피 시)
+//   ③ MutationObserver(최후 수단, 반드시 스로틀링 적용)
 
 // 기존 switme_history 마이그레이션: switme_timetables가 없고 switme_history가 있으면 첫 번째 탭으로 이전
 function loadTimetables() {
