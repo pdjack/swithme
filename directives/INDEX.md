@@ -2,15 +2,21 @@
 
 작업 수행 시 이 인덱스를 먼저 읽고, 관련 지침 파일을 선택적으로 참조한다.
 
-## 코드 레퍼런스
+## 규칙 문서
 
 | 파일 | 설명 |
 |------|------|
-| `js-code-reference.md` | JS 모듈별 구조, 함수 목록, 모듈 의존성, 데이터 흐름 |
-| `STRUCTURE.md` | HTML 구조(Desktop/Mobile Shell), 데이터 흐름, PC↔모바일 ID 매핑 |
-| `style-reference.md` | CSS 변수, 셀렉터, 반응형 미디어 쿼리, 애니메이션 |
-| `icon-reference.md` | 인라인 SVG 아이콘 명세, 용도별 매핑, 추가 규칙 |
-| `ui-ux-guide.md` | PC↔모바일 UI/UX 일관성 원칙, 네이밍·이벤트·동기화 규칙, 불일치 목록 |
+| `ui-ux-guide.md` | PC↔모바일 UI/UX 일관성 원칙, 네이밍·이벤트·상태·모달·아이콘 규칙, 불일치 목록 |
+
+## 코드 구조 추출 스크립트
+
+사실 정보(ID, 셀렉터, 함수 시그니처 등)는 문서가 아닌 스크립트로 코드에서 직접 추출한다.
+
+| 명령어 | 출력 내용 |
+|--------|----------|
+| `python3 execution/extract-html-structure.py` | HTML 셸 구조, 전체 ID 목록, PC↔모바일 ID 매핑, 공유 컴포넌트 |
+| `python3 execution/extract-css-variables.py` | CSS 변수(:root), 주요 셀렉터, 미디어 쿼리, 애니메이션 |
+| `python3 execution/extract-js-api.py` | export 함수, window 전역, 모듈 의존성, localStorage 키, SVG 아이콘 키 |
 
 ## 기능 플랜
 

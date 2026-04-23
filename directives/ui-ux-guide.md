@@ -1,7 +1,13 @@
 # UI/UX 일관성 가이드
 
 > **문서 성격**: 규칙 문서 — PC와 모바일에서 같은 기능을 구현할 때 지켜야 할 원칙과 규칙을 정의한다.
-> **참고**: 현재 코드의 구조·셀렉터·ID 매핑 등은 `STRUCTURE.md`, `style-reference.md`를 참조한다. 이 문서는 "어떻게 되어 있는가"가 아니라 **"앞으로 어떻게 만들어야 하는가"** 를 정의한다.
+> **참고**: 현재 코드의 구조·셀렉터·ID 매핑 등 **사실 정보**는 `execution/` 추출 스크립트로 확인한다. 이 문서는 "어떻게 되어 있는가"가 아니라 **"앞으로 어떻게 만들어야 하는가"** 를 정의한다.
+>
+> | 스크립트 | 확인 가능한 정보 |
+> |---------|----------------|
+> | `python3 execution/extract-html-structure.py` | HTML 셸 구조, ID 목록, PC↔모바일 ID 매핑 |
+> | `python3 execution/extract-css-variables.py` | CSS 변수, 셀렉터, 미디어 쿼리, 애니메이션 |
+> | `python3 execution/extract-js-api.py` | export 함수, window 전역, 모듈 의존성, localStorage 키, 아이콘 키 |
 
 ---
 
@@ -9,12 +15,13 @@
 
 ### 1-1. 브랜드 아이덴티티
 
-> 브랜드 컬러, CSS 변수, 카드 시스템 등의 상세 스펙은 [`style-reference.md`](style-reference.md)를 참조한다.
+> 현재 CSS 변수 값은 `python3 execution/extract-css-variables.py`로 확인한다.
 
 - **다크 모드 기반**: 모든 화면의 기본 배경은 다크(`--bg`)
 - **글래스모피즘**: 카드·패널에 반투명 유리 질감(`--glass`, `--border`) 적용
 - **타이포그래피**: 본문 `Inter`, 타이머·제목 `Outfit`
-- **새 색상 추가 시**: 반드시 `:root` CSS 변수로 정의하고 `style-reference.md`에 기록
+- **새 색상 추가 시**: 반드시 `:root` CSS 변수로 정의
+- **브랜드 컬러 우선순위**: 검정(`--bg`) → 파랑(`--primary`) → 하양(`--text-main`) → 노랑(`#FFCC00`, 포인트 그래픽용). 새 UI 요소 배색 시 이 순위를 따른다
 
 ### 1-2. PC ↔ 모바일 일관성 기준
 
@@ -133,6 +140,20 @@ container.addEventListener('click', (e) => {
 | 데이터 가공 함수는 한 곳에서 정의 | `getGroupedTaskData()`, `buildSlotMap()` 등 |
 | 렌더 함수는 플랫폼별로 분리 | PC/모바일의 HTML 구조가 다르므로 각각 작성 |
 | 비즈니스 로직은 공유 | 삭제, 토글, 정렬 등의 로직은 한 곳에서 정의하고 양쪽에서 호출 |
+
+---
+
+### 2-7. 아이콘 사용 규칙
+
+> 현재 등록된 아이콘 키 목록은 `python3 execution/extract-js-api.py`의 "SVG 아이콘 키" 섹션으로 확인한다.
+
+| 규칙 | 설명 |
+|------|------|
+| 동적 HTML에서는 `icon()` 함수 사용 | template literal 내에서 `${icon('trash-2')}` 형태. `<i data-lucide>` 사용 금지 |
+| 정적 HTML에서는 `<i data-lucide="...">` 사용 | `initStaticIcons()`가 초기화 시 1회 변환 |
+| 새 아이콘 추가 시 `js/icons.js`의 `SVG_PATHS`에 등록 | Lucide 아이콘 기준, `<svg>` 내부 path/rect/circle만 기입 |
+| 기존 아이콘과 용도 중복 금지 | 동일 용도에는 동일 아이콘 사용 |
+| SVG 데이터 출처 | [Lucide Icons](https://lucide.dev/icons/) 참조 |
 
 ---
 
