@@ -66,7 +66,78 @@ function averageReflectionTotal(dateKeys) {
     return { avg: count > 0 ? sum / count : null, count };
 }
 
+/**
+ * 회고 항목별 평균을 계산.
+ * 반환: [{ id, name, emoji, max, avg, count }, ...]
+ *   - 첫 항목은 '목표 달성률'(achievement, 20점 만점) 고정
+ *   - 이후 state.reflectionItems 순서대로, 각 항목 만점은 getReflectionItemMax(i)로 산출
+ *     (window 미정의 환경 대비 fallback 포함)
+ */
+function averageReflectionByItem(dateKeys) {
+    const items = state.reflectionItems || [];
+    const itemCount = items.length;
+    const getMax = typeof window !== 'undefined' && typeof window.getReflectionItemMax === 'function'
+        ? window.getReflectionItemMax
+        : (i) => {
+            if (itemCount === 0) return 0;
+            const baseMax = Math.floor(80 / itemCount);
+            const remainder = 80 - baseMax * itemCount;
+            return i < remainder ? baseMax + 1 : baseMax;
+        };
+
+    const rows = [
+        { id: 'achievement', name: '목표 달성률', emoji: '🎯', max: 20, sum: 0, count: 0 },
+        ...items.map((it, i) => ({
+            id: it.id,
+            name: it.name,
+            emoji: it.emoji || '•',
+            max: getMax(i),
+            sum: 0,
+            count: 0
+        }))
+    ];
+
+    dateKeys.forEach(k => {
+        const r = state.reflections[k];
+        if (!r) return;
+        rows.forEach(row => {
+            const v = r[row.id];
+            if (typeof v === 'number') {
+                row.sum += v;
+                row.count++;
+            }
+        });
+    });
+
+    return rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        emoji: row.emoji,
+        max: row.max,
+        avg: row.count > 0 ? row.sum / row.count : null,
+        count: row.count
+    }));
+}
+
 // ── 종합 점수 렌더 ─────────────────────────────────────
+function renderItemBreakdown(itemRows, scope) {
+    const breakdownEl = document.getElementById(scope === 'mobile' ? 'm-score-item-breakdown' : 'score-item-breakdown');
+    if (!breakdownEl) return;
+    if (!itemRows || itemRows.length === 0) {
+        breakdownEl.innerHTML = '';
+        return;
+    }
+    breakdownEl.innerHTML = itemRows.map(row => {
+        const avgText = row.avg === null ? '—' : row.avg.toFixed(1);
+        return `
+            <div class="score-item-row">
+                <span class="score-item-label">${row.emoji} ${row.name}</span>
+                <span class="score-item-value">${avgText}<small>/${row.max}</small></span>
+            </div>
+        `;
+    }).join('');
+}
+
 function renderScoreCard(days, scope = 'pc') {
     const valueEl = document.getElementById(scope === 'mobile' ? 'm-score-value' : 'score-value');
     const deltaEl = document.getElementById(scope === 'mobile' ? 'm-score-delta' : 'score-delta');
@@ -81,16 +152,19 @@ function renderScoreCard(days, scope = 'pc') {
 
     const current = averageReflectionTotal(currentKeys);
     const prev = averageReflectionTotal(prevKeys);
+    const itemRows = averageReflectionByItem(currentKeys);
 
     if (current.avg === null) {
         valueEl.textContent = '—';
         deltaEl.innerHTML = '';
         subEl.textContent = '회고 기록이 아직 없습니다.';
+        renderItemBreakdown([], scope);
         return;
     }
 
     valueEl.textContent = current.avg.toFixed(1);
     subEl.textContent = `최근 ${days}일 중 ${current.count}일 회고 기록`;
+    renderItemBreakdown(itemRows, scope);
 
     if (prev.avg === null) {
         deltaEl.innerHTML = '<span class="delta-neutral">이전 기간 비교 불가</span>';
