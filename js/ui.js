@@ -39,6 +39,7 @@ function switchSettingsTab(tab) {
     });
     const target = document.getElementById(`settings-tab-${tab}`);
     if (target) target.style.display = '';
+    if (tab === 'habit' && window.renderHabitEditor) window.renderHabitEditor();
 }
 
 export function switchTab(tab) {
@@ -59,6 +60,7 @@ export function switchTab(tab) {
         if (settingsView) settingsView.style.display = 'grid';
         renderSubjectManager();
         renderReflectionItemManager();
+        if (window.renderHabitEditor) window.renderHabitEditor();
     } else if (tab === 'analyze') {
         if (analyzeView) analyzeView.style.display = 'grid';
         if (window.renderAnalysisDashboard) window.renderAnalysisDashboard();
@@ -243,6 +245,7 @@ export function setupEventListeners() {
         datePicker.value = state.selectedDate;
         datePicker.onchange = (e) => {
             state.selectedDate = e.target.value;
+            if (window.seedHabitsForDate) window.seedHabitsForDate(state.selectedDate);
             updateDashboardDateDisplay();
             renderTasks();
             renderTimetable();

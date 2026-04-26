@@ -32,6 +32,53 @@ function loadActiveTimetableId(timetables) {
 
 const _timetables = loadTimetables();
 
+// 습관 타임테이블 자동 생성 (요일별 7개 + 매일 1개, 총 8개).
+// 사용자에게는 대시보드 탭바에 노출되지 않도록 isHabit 플래그를 부여.
+const HABIT_DAY_KEYS = ['daily', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const HABIT_DAY_LABELS = {
+    daily: '매일', mon: '월', tue: '화', wed: '수', thu: '목', fri: '금', sat: '토', sun: '일'
+};
+HABIT_DAY_KEYS.forEach(key => {
+    const id = `habit_${key}`;
+    if (!_timetables.find(t => t.id === id)) {
+        _timetables.push({
+            id,
+            name: `습관 · ${HABIT_DAY_LABELS[key]}`,
+            type: 'plan',
+            history: [],
+            plans: [],
+            isHabit: true,
+            habitDayKey: key
+        });
+    }
+});
+
+function loadHabits() {
+    const saved = localStorage.getItem('switme_habits');
+    if (saved) {
+        try {
+            return JSON.parse(saved);
+        } catch {
+            // fall through
+        }
+    }
+    const init = {};
+    HABIT_DAY_KEYS.forEach(k => { init[k] = { tasks: [] }; });
+    return init;
+}
+
+function loadHabitSeedLog() {
+    const saved = localStorage.getItem('switme_habit_seed_log');
+    if (saved) {
+        try {
+            return JSON.parse(saved);
+        } catch {
+            // fall through
+        }
+    }
+    return {};
+}
+
 export let state = {
     tasks: JSON.parse(localStorage.getItem('switme_tasks')) || [
         { id: 1, subject: 'ENG', name: '모의고사 1회', duration: '0s', completed: true, date: new Date().toISOString().split('T')[0] },
@@ -70,6 +117,9 @@ export let state = {
     ],
     reflections: JSON.parse(localStorage.getItem('switme_reflections')) || {},
     analysisResults: JSON.parse(localStorage.getItem('switme_analysis')) || [],
+    habits: loadHabits(),
+    habitSeedLog: loadHabitSeedLog(),
+    habitEditorDay: 'daily', // 현재 편집 중인 요일 키 (daily/mon/tue/wed/thu/fri/sat/sun)
     selectedDate: new Date().toISOString().split('T')[0] // YYYY-MM-DD
 };
 
@@ -92,6 +142,8 @@ function flushSave() {
     localStorage.setItem('switme_reflection_items', JSON.stringify(state.reflectionItems));
     localStorage.setItem('switme_reflections', JSON.stringify(state.reflections));
     localStorage.setItem('switme_analysis', JSON.stringify(state.analysisResults));
+    localStorage.setItem('switme_habits', JSON.stringify(state.habits));
+    localStorage.setItem('switme_habit_seed_log', JSON.stringify(state.habitSeedLog));
 }
 
 export function saveToLocal() {
@@ -140,6 +192,19 @@ export function getRecordHistory() {
 export function getActivePlans() {
     return getActiveTimetable().plans;
 }
+
+export function getHabitTimetable(dayKey) {
+    return state.timetables.find(t => t.id === `habit_${dayKey}`);
+}
+
+export function getHabitDayKeyForDate(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const map = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    return map[d.getDay()];
+}
+
+export const HABIT_DAY_KEYS_ORDERED = ['daily', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+export const HABIT_DAY_LABELS_KO = HABIT_DAY_LABELS;
 
 export function getSubjectColor(id) {
     const sub = state.subjects.find(s => s.id === id);

@@ -82,6 +82,7 @@ function switchMobileSettingsTab(tab) {
     });
     const target = document.getElementById(`m-settings-tab-${tab}`);
     if (target) target.style.display = '';
+    if (tab === 'habit' && window.renderHabitEditor) window.renderHabitEditor();
 }
 
 // ── 탭 전환 ──────────────────────────────────────────────────────
@@ -115,6 +116,7 @@ function switchMobileTab(tab) {
     } else if (tab === 'settings') {
         renderMobileSubjectManager();
         renderMobileReflectionItemManager();
+        if (window.renderHabitEditor) window.renderHabitEditor();
     } else if (tab === 'analyze') {
         if (window.renderAnalysisDashboard) window.renderAnalysisDashboard();
     }
@@ -400,6 +402,7 @@ export function setupMobileUI() {
         });
         mDatePicker.addEventListener('change', (e) => {
             state.selectedDate = e.target.value;
+            if (window.seedHabitsForDate) window.seedHabitsForDate(state.selectedDate);
             updateMobileDateDisplay();
             renderMobileTasks();
             renderTimetable();

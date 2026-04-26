@@ -2910,3 +2910,159 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     }
 }
 
+/* ============================================================
+   습관(Habit) 탭 스타일
+   ============================================================ */
+
+/* PC ─────────────────────────────────────────────────── */
+.habit-day-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.habit-day-tab {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.habit-day-tab:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-main);
+}
+.habit-day-tab.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.habit-editor-split {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 16px;
+    margin-top: 16px;
+    flex: 1;
+    min-height: 0;
+}
+.habit-editor-col {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 0;
+}
+.habit-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.habit-col-title {
+    font-weight: 600;
+    color: var(--text-main);
+}
+#habit-task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+.habit-task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.habit-task-bar {
+    width: 4px;
+    height: 24px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.habit-task-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.habit-task-subject {
+    font-size: 11px;
+    color: var(--text-dim);
+}
+.habit-task-name {
+    font-size: 14px;
+    color: var(--text-main);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.habit-task-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.habit-empty {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 30px 0;
+    font-size: 13px;
+}
+#habit-timetable-root {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* 모바일 ─────────────────────────────────────────────── */
+.m-habit-day-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.m-habit-day-tabs::-webkit-scrollbar { display: none; }
+.m-habit-day-tab {
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.m-habit-day-tab.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.m-habit-split-view {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 8px;
+    height: calc(100% - 50px);
+    min-height: 0;
+}
+#m-habit-task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+#m-habit-task-list .habit-task-item {
+    padding: 8px 4px;
+}
+#m-habit-timetable-root {
+    flex: 1;
+    overflow-y: auto;
+}
+

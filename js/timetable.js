@@ -753,7 +753,7 @@ function renderDesktopTabs() {
     if (!list) return;
     list.innerHTML = '';
 
-    state.timetables.forEach(tt => {
+    state.timetables.filter(tt => !tt.isHabit).forEach(tt => {
         const tab = document.createElement('div');
         tab.className = 'tt-tab' + (tt.id === state.activeTimetableId ? ' tt-tab--active' : '');
         tab.dataset.id = tt.id;
@@ -763,8 +763,9 @@ function renderDesktopTabs() {
         nameSpan.textContent = tt.name;
         tab.appendChild(nameSpan);
 
-        // 삭제 버튼 (탭이 2개 이상일 때만)
-        if (state.timetables.length > 1) {
+        // 삭제 버튼 (사용자에게 보이는 탭이 2개 이상일 때만)
+        const visibleCount = state.timetables.filter(t => !t.isHabit).length;
+        if (visibleCount > 1) {
             const closeBtn = document.createElement('button');
             closeBtn.className = 'tt-tab__close';
             closeBtn.innerHTML = '&times;';
@@ -865,7 +866,7 @@ function renderMobileTabs() {
     list.innerHTML = '';
     closeMobileTabMenu();
 
-    state.timetables.forEach(tt => {
+    state.timetables.filter(tt => !tt.isHabit).forEach(tt => {
         const tab = document.createElement('div');
         tab.className = 'm-tt-tab' + (tt.id === state.activeTimetableId ? ' m-tt-tab--active' : '');
         tab.dataset.id = tt.id;

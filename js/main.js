@@ -4,9 +4,10 @@ import { renderTimetable } from './timetable.js';
 import { updateTimerDisplay, startTimer, loadTodayReflection } from './timer.js';
 import { setupMobileUI } from './mobile.js';
 import { watchDeviceLayout } from './device.js';
-import { restoreTimerState } from './store.js';
+import { restoreTimerState, state } from './store.js';
 import { initStaticIcons } from './icons.js';
 import { setupAnalysisPeriodButtons } from './analysis.js';
+import { seedHabitsForDate, setupHabitEditor } from './habits.js';
 
 // SW 업데이트 시 자동 리로드
 if ('serviceWorker' in navigator) {
@@ -43,6 +44,12 @@ function init() {
 
     setupMobileUI();
     setupAnalysisPeriodButtons();
+    setupHabitEditor();
+
+    // 오늘 요일에 맞춘 습관 시드 (이미 시드된 항목은 재시드 안 됨)
+    seedHabitsForDate(state.selectedDate);
+    renderTasks();
+    renderTimetable();
 
     initStaticIcons();
 }
