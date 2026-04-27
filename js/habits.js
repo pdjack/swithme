@@ -25,6 +25,16 @@ const START_HOUR = 6;
 function makeTaskKey(t) { return `${t.subject}::${t.name}`; }
 function makePlanKey(p) { return `${p.startSlot}-${p.endSlot}-${p.subject || ''}-${p.memo || ''}`; }
 
+// 습관 탭에서 저장한 변경을 즉시 대시보드에 반영한다.
+// - 신규 항목은 seed로 오늘자 데이터에 복사된다.
+// - 기존 카드/타임테이블은 그대로 두고 화면만 다시 그린다.
+function syncDashboardAfterHabitChange() {
+    seedHabitsForDate(state.selectedDate);
+    if (typeof window.renderTasks === 'function') window.renderTasks();
+    if (typeof window.renderMobileTasks === 'function') window.renderMobileTasks();
+    if (typeof window.renderTimetable === 'function') window.renderTimetable();
+}
+
 export function seedHabitsForDate(dateKey) {
     if (!state.habitSeedLog) state.habitSeedLog = {};
     const log = state.habitSeedLog[dateKey] || { taskKeys: [], planKeys: [] };
@@ -71,11 +81,11 @@ export function seedHabitsForDate(dateKey) {
     }
 
     // ── 플랜 시드 ─────────────────────────────────────────
-    // 활성 plan 타임테이블이 있으면 그 곳에, 없으면 시드 스킵.
+    // 활성 비-습관 타임테이블에 시드. 모든 타임테이블이 plan/record 두 뷰를 모두 보유하므로 mode 필터는 불필요.
     const activeTt = state.timetables.find(t => t.id === state.activeTimetableId);
-    const target = activeTt && !activeTt.isHabit && activeTt.type === 'plan'
+    const target = activeTt && !activeTt.isHabit
         ? activeTt
-        : state.timetables.find(t => !t.isHabit && t.type === 'plan');
+        : state.timetables.find(t => !t.isHabit);
 
     if (target) {
         const dailyTt = getHabitTimetable('daily');
@@ -222,6 +232,7 @@ function renderHabitTasks() {
                 tasks.splice(idx, 1);
                 saveToLocal();
                 renderHabitTasks();
+                syncDashboardAfterHabitChange();
             });
         });
         root.querySelectorAll('.habit-task-edit').forEach(btn => {
@@ -273,6 +284,7 @@ function openHabitTaskModal(editIdx = null) {
         }
         saveToLocal();
         renderHabitTasks();
+        syncDashboardAfterHabitChange();
         close();
     }
     cancelBtn.addEventListener('click', close);
@@ -393,6 +405,7 @@ function openHabitPlanAdd(startSlot, endSlot) {
         });
         saveToLocal();
         renderHabitPlanGrid();
+        syncDashboardAfterHabitChange();
         close();
     });
     newCancel.addEventListener('click', close);
@@ -435,6 +448,7 @@ function openHabitPlanDetail(plan) {
             if (idx !== -1) tt.plans.splice(idx, 1);
             saveToLocal();
             renderHabitPlanGrid();
+            syncDashboardAfterHabitChange();
         }
         close();
     });
@@ -447,6 +461,7 @@ function openHabitPlanDetail(plan) {
         plan.subject = sub.trim() || null;
         saveToLocal();
         renderHabitPlanGrid();
+        syncDashboardAfterHabitChange();
     });
 }
 
@@ -485,6 +500,7 @@ function clearHabitPlans() {
     tt.plans = [];
     saveToLocal();
     renderHabitPlanGrid();
+    syncDashboardAfterHabitChange();
 }
 
 window.renderHabitEditor = renderHabitEditor;

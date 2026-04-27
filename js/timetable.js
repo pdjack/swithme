@@ -592,8 +592,9 @@ export function renderTimetable() {
     // 모드 바 동기화
     syncModeBar();
 
-    if (tt.type === 'plan') {
-        // 계획 모드 — 선택 날짜의 계획만 표시 (date 없는 기존 데이터는 모든 날짜에 표시)
+    const view = state.timetableView || 'record';
+    if (view === 'plan') {
+        // 계획 뷰 — 선택 날짜의 계획만 표시 (date 없는 기존 데이터는 모든 날짜에 표시)
         const datePlans = tt.plans.filter(p => !p.date || p.date === state.selectedDate);
         if (pcRoot) {
             pcRoot.classList.remove('timetable-container--plan');
@@ -604,7 +605,7 @@ export function renderTimetable() {
             buildPlanRows(mRoot, datePlans, false);
         }
     } else {
-        // 기록 모드
+        // 기록 뷰
         if (pcRoot) pcRoot.classList.remove('timetable-container--plan');
         if (mRoot) mRoot.classList.remove('m-timetable-container--plan');
 
@@ -635,84 +636,25 @@ function getModeButtons() {
 }
 
 function syncModeBar() {
-    const tt = getActiveTimetable();
-    const mode = tt.type || 'record';
+    const view = state.timetableView || 'record';
     const btns = getModeButtons();
 
     for (const device of [btns.pc, btns.mobile]) {
         if (device.record) {
-            device.record.classList.toggle('tt-mode-btn--active', mode === 'record');
-            // 기록 모드 전환 시 뱃지 제거
-            if (mode === 'record') device.record.classList.remove('tt-mode-btn--badge');
+            device.record.classList.toggle('tt-mode-btn--active', view === 'record');
+            if (view === 'record') device.record.classList.remove('tt-mode-btn--badge');
         }
-        if (device.plan) device.plan.classList.toggle('tt-mode-btn--active', mode === 'plan');
+        if (device.plan) device.plan.classList.toggle('tt-mode-btn--active', view === 'plan');
     }
 }
 
-// ─── 모드 전환 로직 ─────────────────────────────────────────────────
+// ─── 뷰 전환 (기록/계획 단순 토글, 데이터 손실 없음) ─────────────────
 
-function switchMode(targetMode) {
-    const tt = getActiveTimetable();
-    if (tt.type === targetMode) return;
-
-    // 기존 데이터가 있는지 확인
-    const hasData = (tt.type === 'record' && tt.history.length > 0) ||
-                    (tt.type === 'plan' && tt.plans.length > 0);
-
-    if (hasData) {
-        showModeConfirmModal(targetMode);
-    } else {
-        tt.type = targetMode;
-        saveToLocal();
-        renderTimetable();
-    }
-}
-
-function showModeConfirmModal(targetMode) {
-    const modal = document.getElementById('tt-mode-confirm-modal');
-    modal.classList.add('active');
-
-    const newTabBtn = document.getElementById('tt-mode-new-tab');
-    const overwriteBtn = document.getElementById('tt-mode-overwrite');
-    const cancelBtn = document.getElementById('tt-mode-cancel');
-
-    function closeModal() {
-        modal.classList.remove('active');
-        newTabBtn.removeEventListener('click', onNewTab);
-        overwriteBtn.removeEventListener('click', onOverwrite);
-        cancelBtn.removeEventListener('click', closeModal);
-    }
-
-    function onNewTab() {
-        // 새 탭 생성 후 해당 모드로 설정
-        const newTt = {
-            id: generateTimetableId(),
-            name: getNextPlanName(),
-            type: targetMode,
-            history: [],
-            plans: []
-        };
-        state.timetables.push(newTt);
-        state.activeTimetableId = newTt.id;
-        saveToLocal();
-        renderTabs();
-        renderTimetable();
-        closeModal();
-    }
-
-    function onOverwrite() {
-        const tt = getActiveTimetable();
-        tt.type = targetMode;
-        tt.history = [];
-        tt.plans = [];
-        saveToLocal();
-        renderTimetable();
-        closeModal();
-    }
-
-    newTabBtn.addEventListener('click', onNewTab);
-    overwriteBtn.addEventListener('click', onOverwrite);
-    cancelBtn.addEventListener('click', closeModal);
+function setTimetableView(view) {
+    if (state.timetableView === view) return;
+    state.timetableView = view;
+    saveToLocal();
+    renderTimetable();
 }
 
 // ─── 탭 관련 유틸 ───────────────────────────────────────────────────
@@ -1025,20 +967,20 @@ if (ttTabBar && typeof window.ResizeObserver !== 'undefined') {
 const mAddBtn = document.getElementById('m-tt-add-btn');
 if (mAddBtn) mAddBtn.addEventListener('click', addTimetable);
 
-// 모드 전환 버튼 (PC)
-document.getElementById('tt-mode-record')?.addEventListener('click', () => switchMode('record'));
-document.getElementById('tt-mode-plan')?.addEventListener('click', () => switchMode('plan'));
+// 뷰 전환 버튼 (PC)
+document.getElementById('tt-mode-record')?.addEventListener('click', () => setTimetableView('record'));
+document.getElementById('tt-mode-plan')?.addEventListener('click', () => setTimetableView('plan'));
 
-// 모드 전환 버튼 (모바일)
-document.getElementById('m-tt-mode-record')?.addEventListener('click', () => switchMode('record'));
-document.getElementById('m-tt-mode-plan')?.addEventListener('click', () => switchMode('plan'));
+// 뷰 전환 버튼 (모바일)
+document.getElementById('m-tt-mode-record')?.addEventListener('click', () => setTimetableView('record'));
+document.getElementById('m-tt-mode-plan')?.addEventListener('click', () => setTimetableView('plan'));
 
-// Clear 버튼 (PC)
+// Clear 버튼 (PC) — 현재 뷰에 해당하는 데이터만 비움
 const clearTimetableBtn = document.getElementById('clear-timetable-btn');
 if (clearTimetableBtn) {
     clearTimetableBtn.addEventListener('click', () => {
         const tt = getActiveTimetable();
-        if (tt.type === 'plan') {
+        if (state.timetableView === 'plan') {
             if (confirm('선택한 날짜의 모든 계획을 삭제하시겠습니까?')) {
                 tt.plans = tt.plans.filter(p => p.date && p.date !== state.selectedDate);
                 saveToLocal();

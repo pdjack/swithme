@@ -540,7 +540,7 @@ export function setupMobileUI() {
     if (mClearBtn) {
         mClearBtn.addEventListener('click', () => {
             const tt = getActiveTimetable();
-            if (tt.type === 'plan') {
+            if (state.timetableView === 'plan') {
                 if (confirm('선택한 날짜의 모든 계획을 삭제하시겠습니까?')) {
                     tt.plans = tt.plans.filter(p => p.date && p.date !== state.selectedDate);
                     saveToLocal();

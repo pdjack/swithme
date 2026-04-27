@@ -120,7 +120,8 @@ export let state = {
     habits: loadHabits(),
     habitSeedLog: loadHabitSeedLog(),
     habitEditorDay: 'daily', // 현재 편집 중인 요일 키 (daily/mon/tue/wed/thu/fri/sat/sun)
-    selectedDate: new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    selectedDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+    timetableView: localStorage.getItem('switme_timetable_view') || 'record' // 'plan' | 'record'
 };
 
 // Ensure all tasks have a date
@@ -144,6 +145,7 @@ function flushSave() {
     localStorage.setItem('switme_analysis', JSON.stringify(state.analysisResults));
     localStorage.setItem('switme_habits', JSON.stringify(state.habits));
     localStorage.setItem('switme_habit_seed_log', JSON.stringify(state.habitSeedLog));
+    localStorage.setItem('switme_timetable_view', state.timetableView);
 }
 
 export function saveToLocal() {

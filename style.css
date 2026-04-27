@@ -2541,20 +2541,6 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     transform: translateX(-50%) translateY(0);
 }
 
-/* ── 모드 전환 확인 모달 ──────────────────────────────────── */
-.tt-mode-confirm-desc {
-    color: #8E8E93;
-    font-size: 14px;
-    margin: 8px 0 20px;
-}
-.tt-mode-confirm-btns {
-    flex-direction: column;
-    gap: 8px;
-}
-.tt-mode-confirm-btns button {
-    width: 100%;
-}
-
 /* ── 계획 슬롯 렌더링 (셀 단위) ──────────────────────────── */
 .slot.plan-filled {
     cursor: pointer;
