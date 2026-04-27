@@ -83,12 +83,42 @@ export function seedHabitsForDate(dateKey) {
         const dailyPlans = dailyTt?.plans || [];
         const dayPlans = dayTt?.plans || [];
 
+        // 요일 우선순위 보장: 요일 플랜과 슬롯이 겹치는 "이전에 시드된 매일 출신 블록"을 제거.
+        // 사용자가 직접 만든 블록(fromHabit !== true)은 절대 건드리지 않는다.
+        const dayOccupiedSlots = new Set();
+        for (const p of dayPlans) {
+            for (let s = p.startSlot; s <= p.endSlot; s++) dayOccupiedSlots.add(s);
+        }
+        if (dayOccupiedSlots.size > 0) {
+            const dailyKeySet = new Set(dailyPlans.map(makePlanKey));
+            const removedDailyKeys = [];
+            target.plans = target.plans.filter(p => {
+                if (!p.fromHabit) return true;
+                if (p.date !== dateKey) return true;
+                let overlap = false;
+                for (let s = p.startSlot; s <= p.endSlot; s++) {
+                    if (dayOccupiedSlots.has(s)) { overlap = true; break; }
+                }
+                if (!overlap) return true;
+                const k = makePlanKey(p);
+                if (dailyKeySet.has(k)) {
+                    removedDailyKeys.push(k);
+                    return false;
+                }
+                return true;
+            });
+            if (removedDailyKeys.length > 0) {
+                log.planKeys = log.planKeys.filter(k => !removedDailyKeys.includes(k));
+            }
+        }
+
         const occupied = new Set();
         for (const p of target.plans) {
             if (p.date && p.date !== dateKey) continue;
             for (let s = p.startSlot; s <= p.endSlot; s++) occupied.add(s);
         }
 
+        // 요일 우선 → 매일 보충. 머지 단계에서 매일이 요일과 충돌하면 미리 제외.
         const seenSlots = new Set();
         const merged = [];
         for (const p of dayPlans) {
@@ -113,18 +143,17 @@ export function seedHabitsForDate(dateKey) {
             for (let s = hp.startSlot; s <= hp.endSlot; s++) {
                 if (occupied.has(s)) { collide = true; break; }
             }
-            if (!collide) {
-                target.plans.push({
-                    id: 'plan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                    startSlot: hp.startSlot,
-                    endSlot: hp.endSlot,
-                    subject: hp.subject,
-                    memo: hp.memo,
-                    date: dateKey,
-                    fromHabit: true
-                });
-                for (let s = hp.startSlot; s <= hp.endSlot; s++) occupied.add(s);
-            }
+            if (collide) continue;
+            target.plans.push({
+                id: 'plan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                startSlot: hp.startSlot,
+                endSlot: hp.endSlot,
+                subject: hp.subject,
+                memo: hp.memo,
+                date: dateKey,
+                fromHabit: true
+            });
+            for (let s = hp.startSlot; s <= hp.endSlot; s++) occupied.add(s);
             log.planKeys.push(key);
         }
     }
