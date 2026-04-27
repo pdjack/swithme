@@ -156,9 +156,12 @@ function lightenColor(hex, amount) {
 
 // ─── 계획 슬롯 선택 (1.5초 누르기 + 범위 확장) ─────────────────────
 
-let planSelectState = null; // { root, startSlot, endSlot, isPc, longPressTimer, active }
+let planSelectState = null; // { root, startSlot, endSlot, isPc, longPressTimer, active, isSlotOccupied, onSelected }
 
-function bindPlanSelection(root, isPc) {
+export function bindPlanSelection(root, isPc, options = {}) {
+    const isSlotOccupied = options.isSlotOccupied || defaultIsSlotOccupied;
+    const onSelected = options.onSelected || defaultOnSelected;
+
     // 이벤트 위임: 개별 슬롯 대신 root에 단일 리스너
     root.addEventListener('mousedown', (e) => {
         const slot = e.target.closest('.slot[data-slot-idx]');
@@ -166,7 +169,7 @@ function bindPlanSelection(root, isPc) {
         e.preventDefault();
         const idx = parseInt(slot.dataset.slotIdx);
         if (isSlotOccupied(idx)) return;
-        startLongPress(root, idx, isPc);
+        startLongPress(root, idx, isPc, undefined, undefined, isSlotOccupied, onSelected);
     });
 
     root.addEventListener('touchstart', (e) => {
@@ -175,7 +178,7 @@ function bindPlanSelection(root, isPc) {
         const idx = parseInt(slot.dataset.slotIdx);
         if (isSlotOccupied(idx)) return;
         const touch = e.touches[0];
-        startLongPress(root, idx, isPc, touch.clientX, touch.clientY);
+        startLongPress(root, idx, isPc, touch.clientX, touch.clientY, isSlotOccupied, onSelected);
     }, { passive: true });
 
     // 마우스 이동 (PC)
@@ -222,7 +225,7 @@ function bindPlanSelection(root, isPc) {
     });
 }
 
-function startLongPress(root, slotIdx, isPc, touchX, touchY) {
+function startLongPress(root, slotIdx, isPc, touchX, touchY, isSlotOccupied, onSelected) {
     cancelLongPress();
 
     const slot = root.querySelector(`.slot[data-slot-idx="${slotIdx}"]`);
@@ -236,6 +239,8 @@ function startLongPress(root, slotIdx, isPc, touchX, touchY) {
         active: false,
         touchStartX: touchX || 0,
         touchStartY: touchY || 0,
+        isSlotOccupied: isSlotOccupied || defaultIsSlotOccupied,
+        onSelected: onSelected || defaultOnSelected,
         longPressTimer: setTimeout(() => {
             if (!planSelectState) return;
             planSelectState.active = true;
@@ -281,14 +286,14 @@ function clearSelectionHighlight(root) {
 function finishSelection() {
     if (!planSelectState) return;
 
-    const { root, startSlot, endSlot, active } = planSelectState;
+    const { root, startSlot, endSlot, active, isSlotOccupied, onSelected } = planSelectState;
 
     // 탭(롱프레스 미완료) → 단일 슬롯 선택
     if (!active) {
         const slotIdx = startSlot;
         cancelLongPress();
         if (isSlotOccupied(slotIdx)) return;
-        showPlanSlotModal(slotIdx, slotIdx);
+        onSelected(slotIdx, slotIdx);
         return;
     }
 
@@ -299,21 +304,21 @@ function finishSelection() {
     clearSelectionHighlight(root);
     planSelectState = null;
 
-    // 겹침 검사 — 선택 날짜의 계획만 대상
-    const plans = getActivePlans().filter(p => !p.date || p.date === state.selectedDate);
-    for (const p of plans) {
-        if (minSlot <= p.endSlot && maxSlot >= p.startSlot) {
-            // 겹치는 계획이 있으면 무시
-            return;
-        }
+    // 겹침 검사 — 범위 내 어떤 슬롯이라도 점유되어 있으면 무시
+    for (let s = minSlot; s <= maxSlot; s++) {
+        if (isSlotOccupied(s)) return;
     }
 
-    showPlanSlotModal(minSlot, maxSlot);
+    onSelected(minSlot, maxSlot);
 }
 
-function isSlotOccupied(slotIdx) {
+function defaultIsSlotOccupied(slotIdx) {
     const plans = getActivePlans().filter(p => !p.date || p.date === state.selectedDate);
     return plans.some(p => slotIdx >= p.startSlot && slotIdx <= p.endSlot);
+}
+
+function defaultOnSelected(startSlot, endSlot) {
+    showPlanSlotModal(startSlot, endSlot);
 }
 
 function getSlotFromPoint(x, y, root) {

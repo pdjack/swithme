@@ -16,6 +16,7 @@ import {
     HABIT_DAY_LABELS_KO
 } from './store.js';
 import { icon } from './icons.js';
+import { bindPlanSelection } from './timetable.js';
 
 const START_HOUR = 6;
 
@@ -306,25 +307,27 @@ function buildHabitGrid(root, plans, isPc) {
             slot.style.background = plan.subject
                 ? lightenColor(getSubjectColor(plan.subject), 0.25)
                 : '#C7C7CC';
+            slot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openHabitPlanDetail(plan);
+            });
         }
     }
 
-    // 클릭 이벤트: 빈 슬롯 → 추가, 채워진 슬롯 → 상세
-    root.addEventListener('click', (e) => {
-        const slot = e.target.closest('.slot[data-slot-idx]');
-        if (!slot) return;
-        if (slot.classList.contains('plan-filled')) {
-            const planId = slot.dataset.planId;
-            const plan = plans.find(p => p.id === planId);
-            if (plan) openHabitPlanDetail(plan);
-        } else {
-            const slotIdx = Number(slot.dataset.slotIdx);
-            openHabitPlanAdd(slotIdx);
+    // 빈 슬롯 → 짧게 누름(단일 칸) 또는 길게 누른 뒤 드래그(범위)로 추가
+    bindPlanSelection(root, isPc, {
+        isSlotOccupied: (slotIdx) => {
+            const tt = getHabitTimetable(state.habitEditorDay);
+            if (!tt) return false;
+            return tt.plans.some(p => slotIdx >= p.startSlot && slotIdx <= p.endSlot);
+        },
+        onSelected: (startSlot, endSlot) => {
+            openHabitPlanAdd(startSlot, endSlot);
         }
-    }, { once: false });
+    });
 }
 
-function openHabitPlanAdd(startSlot) {
+function openHabitPlanAdd(startSlot, endSlot) {
     const modal = document.getElementById('plan-slot-modal');
     const timeLabel = document.getElementById('plan-slot-time-label');
     const subjectSelect = document.getElementById('plan-slot-subject');
@@ -332,8 +335,6 @@ function openHabitPlanAdd(startSlot) {
     const confirmBtn = document.getElementById('plan-slot-confirm');
     const cancelBtn = document.getElementById('plan-slot-cancel');
 
-    // 기본값: 60분 (6슬롯)
-    let endSlot = Math.min(143, startSlot + 5);
     timeLabel.textContent = slotRangeLabel(startSlot, endSlot);
 
     subjectSelect.innerHTML = '<option value="">선택 안 함</option>' +
