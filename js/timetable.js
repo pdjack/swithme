@@ -595,12 +595,9 @@ export function renderTimetable() {
     const pcRoot = document.getElementById('timetable-root');
     const mRoot = document.getElementById('m-timetable-root');
 
-    // 모드 바 동기화
-    syncModeBar();
-
-    const view = tt.view || tt.type || 'record';
-    if (view === 'plan') {
-        // 계획 뷰 — 선택 날짜의 계획만 표시 (date 없는 기존 데이터는 모든 날짜에 표시)
+    const type = tt.type || 'record';
+    if (type === 'plan') {
+        // 계획 탭 — 선택 날짜의 계획만 표시 (date 없는 기존 데이터는 모든 날짜에 표시)
         const datePlans = tt.plans.filter(p => !p.date || p.date === state.selectedDate);
         if (pcRoot) {
             pcRoot.classList.remove('timetable-container--plan');
@@ -611,58 +608,29 @@ export function renderTimetable() {
             buildPlanRows(mRoot, datePlans, false);
         }
     } else {
-        // 기록 뷰
+        // 기록 탭
         if (pcRoot) pcRoot.classList.remove('timetable-container--plan');
         if (mRoot) mRoot.classList.remove('m-timetable-container--plan');
 
-        const slotMap = buildSlotMap(getActiveHistory(), state.selectedDate);
+        const slotMap = buildSlotMap(tt.history || [], state.selectedDate);
         buildRecordRows(pcRoot, slotMap);
         buildRecordRows(mRoot, slotMap);
     }
 }
 
-// ─── 모드 바 동기화 ─────────────────────────────────────────────────
-
-// 모드 버튼 DOM 캐시
-const modeButtons = {
-    pc: { record: null, plan: null },
-    mobile: { record: null, plan: null },
-    cached: false,
-};
-
-function getModeButtons() {
-    if (!modeButtons.cached) {
-        modeButtons.pc.record = document.getElementById('tt-mode-record');
-        modeButtons.pc.plan = document.getElementById('tt-mode-plan');
-        modeButtons.mobile.record = document.getElementById('m-tt-mode-record');
-        modeButtons.mobile.plan = document.getElementById('m-tt-mode-plan');
-        modeButtons.cached = true;
-    }
-    return modeButtons;
-}
-
-function syncModeBar() {
-    const tt = getActiveTimetable();
-    const view = tt.view || tt.type || 'record';
-    const btns = getModeButtons();
-
-    for (const device of [btns.pc, btns.mobile]) {
-        if (device.record) {
-            device.record.classList.toggle('tt-mode-btn--active', view === 'record');
-            if (view === 'record') device.record.classList.remove('tt-mode-btn--badge');
-        }
-        if (device.plan) device.plan.classList.toggle('tt-mode-btn--active', view === 'plan');
-    }
-}
-
-// ─── 뷰 전환 (현재 활성 탭의 기록/계획 토글, 데이터 손실 없음) ───────
-
-function setTimetableView(view) {
-    const tt = getActiveTimetable();
-    const current = tt.view || tt.type || 'record';
-    if (current === view) return;
-    tt.view = view;
+// 탭 종류 전환 (기록 ↔ 플랜). 플랜으로 전환되는 순간 그날의 습관을 새 탭처럼 시드한다.
+// 같은 종류 탭이 1개만 남는 상황은 막는다(기록/플랜 각 1개 이상 보장).
+function setTimetableType(id, type) {
+    const tt = state.timetables.find(t => t.id === id);
+    if (!tt || tt.isHabit || tt.type === type) return;
+    const sameTypeRemaining = state.timetables.filter(t => !t.isHabit && t.type === tt.type && t.id !== id).length;
+    if (sameTypeRemaining === 0) return;
+    tt.type = type;
     saveToLocal();
+    if (type === 'plan' && typeof window.seedHabitsIntoTab === 'function') {
+        window.seedHabitsIntoTab(state.selectedDate, id);
+    }
+    renderTabs();
     renderTimetable();
 }
 
@@ -672,9 +640,10 @@ function generateTimetableId() {
     return 'tt_' + Date.now();
 }
 
-function getNextPlanName() {
-    const count = state.timetables.length + 1;
-    return `플랜 ${count}`;
+function getNextTabName(type) {
+    const label = type === 'plan' ? '플랜' : '기록';
+    const count = state.timetables.filter(t => !t.isHabit && t.type === type).length + 1;
+    return `${label} ${count}`;
 }
 
 // ─── PC: 스크롤 화살표 표시 갱신 ────────────────────────────────────
@@ -742,6 +711,13 @@ function renderDesktopTabs() {
             startRenameTab(tab, nameSpan, tt.id);
         });
 
+        // 우클릭 → 모바일 롱프레스와 동일한 컨텍스트 메뉴
+        tab.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            showTabContextMenu(tab, tt.id);
+        });
+
         list.appendChild(tab);
     });
 
@@ -751,67 +727,109 @@ function renderDesktopTabs() {
     }, 0);
 }
 
-// ─── 모바일 탭 컨텍스트 메뉴 ────────────────────────────────────────
+// ─── 탭 컨텍스트 메뉴 (모바일 롱프레스 / PC 우클릭) ───────────────────
 
-function closeMobileTabMenu() {
+function closeTabMenu() {
     const existing = document.getElementById('m-tt-context-menu');
     if (existing) existing.remove();
 }
 
-function showMobileTabMenu(targetTab, ttId) {
-    closeMobileTabMenu();
+function buildMenuItem(label, { danger = false, disabled = false, onClick } = {}) {
+    const btn = document.createElement('button');
+    btn.className = 'm-tt-context-menu__item' + (danger ? ' m-tt-context-menu__item--danger' : '');
+    btn.textContent = label;
+    if (disabled) btn.disabled = true;
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (disabled) return;
+        closeTabMenu();
+        onClick?.();
+    });
+    return btn;
+}
+
+function placeMenu(menu, anchorRect) {
+    document.body.appendChild(menu);
+    const margin = 8;
+    const rect = menu.getBoundingClientRect();
+    let top = anchorRect.bottom + 4;
+    let left = anchorRect.left;
+    if (left + rect.width > window.innerWidth - margin) {
+        left = Math.max(margin, window.innerWidth - rect.width - margin);
+    }
+    if (top + rect.height > window.innerHeight - margin) {
+        top = Math.max(margin, anchorRect.top - rect.height - 4);
+    }
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+}
+
+function bindMenuDismissal(menu) {
+    setTimeout(() => {
+        function dismissIfOutside(e) {
+            if (menu.contains(e.target)) return;
+            closeTabMenu();
+            document.removeEventListener('touchstart', dismissIfOutside, true);
+            document.removeEventListener('click', dismissIfOutside, true);
+            document.removeEventListener('contextmenu', dismissIfOutside, true);
+        }
+        document.addEventListener('touchstart', dismissIfOutside, { capture: true });
+        document.addEventListener('click', dismissIfOutside, { capture: true });
+        document.addEventListener('contextmenu', dismissIfOutside, { capture: true });
+    }, 0);
+}
+
+function showTabContextMenu(anchorEl, ttId) {
+    closeTabMenu();
+    const tt = state.timetables.find(t => t.id === ttId);
+    if (!tt || tt.isHabit) return;
+
+    const sameTypeRemaining = state.timetables.filter(t => !t.isHabit && t.type === tt.type && t.id !== ttId).length;
+    const canSwitchType = sameTypeRemaining > 0;
+    const switchLabel = tt.type === 'plan' ? '기록으로 전환' : '플랜으로 전환';
+    const targetType = tt.type === 'plan' ? 'record' : 'plan';
 
     const menu = document.createElement('div');
     menu.id = 'm-tt-context-menu';
     menu.className = 'm-tt-context-menu';
 
-    const renameBtn = document.createElement('button');
-    renameBtn.className = 'm-tt-context-menu__item';
-    renameBtn.textContent = '이름 변경';
-    renameBtn.addEventListener('click', () => {
-        closeMobileTabMenu();
-        const tt = state.timetables.find(t => t.id === ttId);
-        if (!tt) return;
-        const newName = prompt('새 이름을 입력하세요', tt.name);
-        if (newName !== null && newName.trim()) {
-            renameTimetable(ttId, newName.trim().slice(0, 12));
+    menu.appendChild(buildMenuItem('이름 변경', {
+        onClick: () => {
+            const newName = prompt('새 이름을 입력하세요', tt.name);
+            if (newName !== null && newName.trim()) {
+                renameTimetable(ttId, newName.trim().slice(0, 12));
+            }
         }
-    });
+    }));
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'm-tt-context-menu__item m-tt-context-menu__item--danger';
-    deleteBtn.textContent = '삭제';
-    if (state.timetables.length <= 1) {
-        deleteBtn.disabled = true;
-    }
-    deleteBtn.addEventListener('click', () => {
-        closeMobileTabMenu();
-        if (confirm('이 타임테이블을 삭제하시겠습니까?')) {
-            deleteTimetable(ttId);
+    menu.appendChild(buildMenuItem(switchLabel, {
+        disabled: !canSwitchType,
+        onClick: () => setTimetableType(ttId, targetType)
+    }));
+
+    menu.appendChild(buildMenuItem('삭제', {
+        danger: true,
+        disabled: !canSwitchType,
+        onClick: () => {
+            if (confirm('이 타임테이블을 삭제하시겠습니까?')) deleteTimetable(ttId);
         }
-    });
+    }));
 
-    menu.appendChild(renameBtn);
-    menu.appendChild(deleteBtn);
+    placeMenu(menu, anchorEl.getBoundingClientRect());
+    bindMenuDismissal(menu);
+}
 
-    // 탭 위치 기준으로 메뉴 배치
-    const rect = targetTab.getBoundingClientRect();
-    menu.style.top = (rect.bottom + 4) + 'px';
-    menu.style.left = Math.max(8, rect.left) + 'px';
+function showAddTabMenu(anchorEl /*, isPc */) {
+    closeTabMenu();
+    const menu = document.createElement('div');
+    menu.id = 'm-tt-context-menu';
+    menu.className = 'm-tt-context-menu';
 
-    document.body.appendChild(menu);
+    menu.appendChild(buildMenuItem('기록 탭 추가', { onClick: () => addTimetable('record') }));
+    menu.appendChild(buildMenuItem('플랜 탭 추가', { onClick: () => addTimetable('plan') }));
 
-    // 메뉴 밖 터치 시 닫기
-    setTimeout(() => {
-        function dismissIfOutside(e) {
-            if (menu.contains(e.target)) return;
-            closeMobileTabMenu();
-            document.removeEventListener('touchstart', dismissIfOutside, true);
-            document.removeEventListener('click', dismissIfOutside, true);
-        }
-        document.addEventListener('touchstart', dismissIfOutside, { capture: true });
-        document.addEventListener('click', dismissIfOutside, { capture: true });
-    }, 0);
+    placeMenu(menu, anchorEl.getBoundingClientRect());
+    bindMenuDismissal(menu);
 }
 
 // ─── 탭 렌더링 (모바일) ─────────────────────────────────────────────
@@ -820,7 +838,7 @@ function renderMobileTabs() {
     const list = document.getElementById('m-tt-tab-list');
     if (!list) return;
     list.innerHTML = '';
-    closeMobileTabMenu();
+    closeTabMenu();
 
     state.timetables.filter(tt => !tt.isHabit).forEach(tt => {
         const tab = document.createElement('div');
@@ -840,7 +858,7 @@ function renderMobileTabs() {
             longPressTimer = setTimeout(() => {
                 didLongPress = true;
                 e.preventDefault();
-                showMobileTabMenu(tab, tt.id);
+                showTabContextMenu(tab, tt.id);
             }, 500);
         }, { passive: false });
 
@@ -903,25 +921,39 @@ function switchTimetable(id) {
     renderTimetable();
 }
 
-function addTimetable() {
-    const newTt = { id: generateTimetableId(), name: getNextPlanName(), type: 'record', view: 'record', history: [], plans: [] };
+// type을 인자로 받아 기록/플랜 탭을 추가. 플랜 탭이면 즉시 그날의 습관을 시드한다.
+function addTimetable(type = 'plan') {
+    const newTt = {
+        id: generateTimetableId(),
+        name: getNextTabName(type),
+        type,
+        history: [],
+        plans: []
+    };
     state.timetables.push(newTt);
     state.activeTimetableId = newTt.id;
     saveToLocal();
+    if (type === 'plan' && typeof window.seedHabitsIntoTab === 'function') {
+        window.seedHabitsIntoTab(state.selectedDate, newTt.id);
+    }
     renderTabs();
     renderTimetable();
 }
 
+// 같은 종류 탭이 1개만 남는 상황은 막는다(기록/플랜 각 1개 이상 보장).
 function deleteTimetable(id) {
-    if (state.timetables.length <= 1) return;
+    const tt = state.timetables.find(t => t.id === id);
+    if (!tt || tt.isHabit) return;
+    const sameTypeRemaining = state.timetables.filter(t => !t.isHabit && t.type === tt.type && t.id !== id).length;
+    if (sameTypeRemaining === 0) return;
 
     const idx = state.timetables.findIndex(t => t.id === id);
     state.timetables.splice(idx, 1);
 
-    // 삭제된 탭이 활성 탭이었으면 인접 탭으로 이동
+    // 삭제된 탭이 활성 탭이었으면 인접 비-습관 탭으로 이동
     if (state.activeTimetableId === id) {
-        const newIdx = Math.max(0, idx - 1);
-        state.activeTimetableId = state.timetables[newIdx].id;
+        const userTabs = state.timetables.filter(t => !t.isHabit);
+        state.activeTimetableId = userTabs[Math.max(0, Math.min(userTabs.length - 1, idx - 1))].id;
     }
 
     saveToLocal();
@@ -938,9 +970,14 @@ function renameTimetable(id, name) {
 
 // ─── 이벤트 바인딩 ───────────────────────────────────────────────────
 
-// PC: + 버튼
+// PC: + 버튼 — 종류 선택 메뉴 표시
 const addBtn = document.getElementById('tt-add-btn');
-if (addBtn) addBtn.addEventListener('click', addTimetable);
+if (addBtn) {
+    addBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        showAddTabMenu(addBtn, true);
+    });
+}
 
 // PC: ◀ 버튼
 const scrollLeftBtn = document.getElementById('tt-scroll-left');
@@ -972,25 +1009,22 @@ if (ttTabBar && typeof window.ResizeObserver !== 'undefined') {
     new window.ResizeObserver(updateScrollArrows).observe(ttTabBar);
 }
 
-// Mobile: + 버튼
+// Mobile: + 버튼 — 종류 선택 메뉴 표시
 const mAddBtn = document.getElementById('m-tt-add-btn');
-if (mAddBtn) mAddBtn.addEventListener('click', addTimetable);
+if (mAddBtn) {
+    mAddBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        showAddTabMenu(mAddBtn, false);
+    });
+}
 
-// 뷰 전환 버튼 (PC)
-document.getElementById('tt-mode-record')?.addEventListener('click', () => setTimetableView('record'));
-document.getElementById('tt-mode-plan')?.addEventListener('click', () => setTimetableView('plan'));
-
-// 뷰 전환 버튼 (모바일)
-document.getElementById('m-tt-mode-record')?.addEventListener('click', () => setTimetableView('record'));
-document.getElementById('m-tt-mode-plan')?.addEventListener('click', () => setTimetableView('plan'));
-
-// Clear 버튼 (PC) — 현재 뷰에 해당하는 데이터만 비움
+// Clear 버튼 (PC) — 활성 탭의 종류에 해당하는 데이터만 비움
 const clearTimetableBtn = document.getElementById('clear-timetable-btn');
 if (clearTimetableBtn) {
     clearTimetableBtn.addEventListener('click', () => {
         const tt = getActiveTimetable();
-        const view = tt.view || tt.type || 'record';
-        if (view === 'plan') {
+        const type = tt.type || 'record';
+        if (type === 'plan') {
             if (confirm('선택한 날짜의 모든 계획을 삭제하시겠습니까?')) {
                 tt.plans = tt.plans.filter(p => p.date && p.date !== state.selectedDate);
                 saveToLocal();

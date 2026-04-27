@@ -7,23 +7,47 @@
 // - 동기화 우선순위: ① 렌더 함수 직접 호출(권장) ② window 전역 함수(순환참조 회피 시)
 //   ③ MutationObserver(최후 수단, 반드시 스로틀링 적용)
 
-// 기존 switme_history 마이그레이션: switme_timetables가 없고 switme_history가 있으면 첫 번째 탭으로 이전
+// 탭 구조 규칙:
+// - 비-습관 탭은 type 필드(record|plan)로 종류가 결정된다. 뷰 토글 없음.
+// - 기록 탭(type='record')은 최소 1개, 플랜 탭(type='plan')도 최소 1개 보장.
+// - 한 탭이 양쪽 데이터(history+plans)를 가질 수 있으나 화면엔 type에 해당하는 데이터만 표시.
 function loadTimetables() {
     const savedTimetables = localStorage.getItem('switme_timetables');
+    let parsed;
     if (savedTimetables) {
-        const parsed = JSON.parse(savedTimetables);
-        // 마이그레이션: type/plans/view 기본값 보강.
-        // view: 탭별 화면 뷰('plan'|'record'). 기존 type을 폴백으로 사용해 첫 표시를 자연스럽게.
-        return parsed.map(tt => ({
-            ...tt,
-            type: tt.type || 'record',
-            plans: tt.plans || [],
-            view: tt.view || tt.type || 'record'
-        }));
+        parsed = JSON.parse(savedTimetables);
+        // 마이그레이션:
+        // - view 필드를 type으로 흡수 (있으면 그게 우선).
+        // - type 누락 시 record 기본.
+        parsed = parsed.map(tt => {
+            const next = { ...tt, plans: tt.plans || [], history: tt.history || [] };
+            if (!tt.isHabit) {
+                next.type = tt.view || tt.type || 'record';
+            } else {
+                next.type = tt.type || 'plan';
+            }
+            delete next.view;
+            return next;
+        });
+    } else {
+        const legacyHistory = localStorage.getItem('switme_history');
+        const history = legacyHistory ? JSON.parse(legacyHistory) : [];
+        parsed = [{ id: 'tt_default_record', name: '기록 1', type: 'record', history, plans: [] }];
     }
-    const legacyHistory = localStorage.getItem('switme_history');
-    const history = legacyHistory ? JSON.parse(legacyHistory) : [];
-    return [{ id: 'tt_default', name: '플랜 1', type: 'record', view: 'record', history, plans: [] }];
+
+    // 비-습관 탭에서 기록/플랜 종류 보장
+    const userTabs = parsed.filter(t => !t.isHabit);
+    const hasRecord = userTabs.some(t => t.type === 'record');
+    const hasPlan = userTabs.some(t => t.type === 'plan');
+    if (!hasRecord) {
+        parsed.unshift({ id: 'tt_default_record', name: '기록 1', type: 'record', history: [], plans: [] });
+    }
+    if (!hasPlan) {
+        const recordIdx = parsed.findIndex(t => !t.isHabit && t.type === 'record');
+        const insertAt = recordIdx >= 0 ? recordIdx + 1 : parsed.length;
+        parsed.splice(insertAt, 0, { id: 'tt_default_plan', name: '플랜 1', type: 'plan', history: [], plans: [] });
+    }
+    return parsed;
 }
 
 function loadActiveTimetableId(timetables) {

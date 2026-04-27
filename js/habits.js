@@ -35,15 +35,115 @@ function syncDashboardAfterHabitChange() {
     if (typeof window.renderTimetable === 'function') window.renderTimetable();
 }
 
+// 시드 로그 형태 마이그레이션:
+//   구버전: { taskKeys: [], planKeys: [] }  → 모든 탭에 단일 키 리스트
+//   신버전: { taskKeys: [], planKeysByTab: { [tabId]: [...] } }  → 탭별 분리
+// 신구 혼용 호환성을 위해 진입 시 1회 변환.
+function migrateSeedLogShape(log, dateKey) {
+    if (log.planKeysByTab) return log;
+    const planKeysByTab = {};
+    for (const tt of state.timetables) {
+        if (tt.isHabit) continue;
+        const keys = [];
+        for (const p of tt.plans) {
+            if (p.fromHabit && p.date === dateKey) {
+                keys.push(makePlanKey(p));
+            }
+        }
+        planKeysByTab[tt.id] = keys;
+    }
+    return { taskKeys: log.taskKeys || [], planKeysByTab };
+}
+
+function seedPlansIntoTab(target, dateKey, dayPlans, dailyPlans, log) {
+    if (!log.planKeysByTab[target.id]) log.planKeysByTab[target.id] = [];
+
+    // 요일 우선순위 보장: 요일 플랜과 슬롯이 겹치는 "이전에 시드된 매일 출신 블록"을 제거.
+    // 사용자가 직접 만든 블록(fromHabit !== true)은 절대 건드리지 않는다.
+    const dayOccupiedSlots = new Set();
+    for (const p of dayPlans) {
+        for (let s = p.startSlot; s <= p.endSlot; s++) dayOccupiedSlots.add(s);
+    }
+    if (dayOccupiedSlots.size > 0) {
+        const dailyKeySet = new Set(dailyPlans.map(makePlanKey));
+        const removedDailyKeys = [];
+        target.plans = target.plans.filter(p => {
+            if (!p.fromHabit) return true;
+            if (p.date !== dateKey) return true;
+            let overlap = false;
+            for (let s = p.startSlot; s <= p.endSlot; s++) {
+                if (dayOccupiedSlots.has(s)) { overlap = true; break; }
+            }
+            if (!overlap) return true;
+            const k = makePlanKey(p);
+            if (dailyKeySet.has(k)) {
+                removedDailyKeys.push(k);
+                return false;
+            }
+            return true;
+        });
+        if (removedDailyKeys.length > 0) {
+            log.planKeysByTab[target.id] = log.planKeysByTab[target.id].filter(k => !removedDailyKeys.includes(k));
+        }
+    }
+
+    const tabLog = log.planKeysByTab[target.id];
+    const occupied = new Set();
+    for (const p of target.plans) {
+        if (p.date && p.date !== dateKey) continue;
+        for (let s = p.startSlot; s <= p.endSlot; s++) occupied.add(s);
+    }
+
+    // 요일 우선 → 매일 보충. 머지 단계에서 매일이 요일과 충돌하면 미리 제외.
+    const seenSlots = new Set();
+    const merged = [];
+    for (const p of dayPlans) {
+        merged.push(p);
+        for (let s = p.startSlot; s <= p.endSlot; s++) seenSlots.add(s);
+    }
+    for (const p of dailyPlans) {
+        let conflict = false;
+        for (let s = p.startSlot; s <= p.endSlot; s++) {
+            if (seenSlots.has(s)) { conflict = true; break; }
+        }
+        if (!conflict) {
+            merged.push(p);
+            for (let s = p.startSlot; s <= p.endSlot; s++) seenSlots.add(s);
+        }
+    }
+
+    for (const hp of merged) {
+        const key = makePlanKey(hp);
+        if (tabLog.includes(key)) continue;
+        let collide = false;
+        for (let s = hp.startSlot; s <= hp.endSlot; s++) {
+            if (occupied.has(s)) { collide = true; break; }
+        }
+        if (collide) continue;
+        target.plans.push({
+            id: 'plan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            startSlot: hp.startSlot,
+            endSlot: hp.endSlot,
+            subject: hp.subject,
+            memo: hp.memo,
+            date: dateKey,
+            fromHabit: true
+        });
+        for (let s = hp.startSlot; s <= hp.endSlot; s++) occupied.add(s);
+        tabLog.push(key);
+    }
+}
+
 export function seedHabitsForDate(dateKey) {
     if (!state.habitSeedLog) state.habitSeedLog = {};
-    const log = state.habitSeedLog[dateKey] || { taskKeys: [], planKeys: [] };
+    let log = state.habitSeedLog[dateKey] || { taskKeys: [], planKeysByTab: {} };
+    log = migrateSeedLogShape(log, dateKey);
 
     const dayKey = getHabitDayKeyForDate(dateKey);
     const dailyHabit = state.habits?.daily || { tasks: [] };
     const dayHabit = state.habits?.[dayKey] || { tasks: [] };
 
-    // ── 할 일 시드 ─────────────────────────────────────────
+    // ── 할 일 시드 (탭과 무관, 단일 리스트) ─────────────────────
     const taskSeenKeys = new Set();
     const mergedTasks = [];
     for (const t of dayHabit.tasks) {
@@ -80,96 +180,31 @@ export function seedHabitsForDate(dateKey) {
         log.taskKeys.push(key);
     }
 
-    // ── 플랜 시드 ─────────────────────────────────────────
-    // 활성 비-습관 타임테이블에 시드. 모든 타임테이블이 plan/record 두 뷰를 모두 보유하므로 mode 필터는 불필요.
-    const activeTt = state.timetables.find(t => t.id === state.activeTimetableId);
-    const target = activeTt && !activeTt.isHabit
-        ? activeTt
-        : state.timetables.find(t => !t.isHabit);
+    // ── 플랜 시드 (모든 비-습관 탭에 동일 적용) ─────────────────
+    const dailyTt = getHabitTimetable('daily');
+    const dayTt = getHabitTimetable(dayKey);
+    const dailyPlans = dailyTt?.plans || [];
+    const dayPlans = dayTt?.plans || [];
 
-    if (target) {
-        const dailyTt = getHabitTimetable('daily');
-        const dayTt = getHabitTimetable(dayKey);
-        const dailyPlans = dailyTt?.plans || [];
-        const dayPlans = dayTt?.plans || [];
-
-        // 요일 우선순위 보장: 요일 플랜과 슬롯이 겹치는 "이전에 시드된 매일 출신 블록"을 제거.
-        // 사용자가 직접 만든 블록(fromHabit !== true)은 절대 건드리지 않는다.
-        const dayOccupiedSlots = new Set();
-        for (const p of dayPlans) {
-            for (let s = p.startSlot; s <= p.endSlot; s++) dayOccupiedSlots.add(s);
-        }
-        if (dayOccupiedSlots.size > 0) {
-            const dailyKeySet = new Set(dailyPlans.map(makePlanKey));
-            const removedDailyKeys = [];
-            target.plans = target.plans.filter(p => {
-                if (!p.fromHabit) return true;
-                if (p.date !== dateKey) return true;
-                let overlap = false;
-                for (let s = p.startSlot; s <= p.endSlot; s++) {
-                    if (dayOccupiedSlots.has(s)) { overlap = true; break; }
-                }
-                if (!overlap) return true;
-                const k = makePlanKey(p);
-                if (dailyKeySet.has(k)) {
-                    removedDailyKeys.push(k);
-                    return false;
-                }
-                return true;
-            });
-            if (removedDailyKeys.length > 0) {
-                log.planKeys = log.planKeys.filter(k => !removedDailyKeys.includes(k));
-            }
-        }
-
-        const occupied = new Set();
-        for (const p of target.plans) {
-            if (p.date && p.date !== dateKey) continue;
-            for (let s = p.startSlot; s <= p.endSlot; s++) occupied.add(s);
-        }
-
-        // 요일 우선 → 매일 보충. 머지 단계에서 매일이 요일과 충돌하면 미리 제외.
-        const seenSlots = new Set();
-        const merged = [];
-        for (const p of dayPlans) {
-            merged.push(p);
-            for (let s = p.startSlot; s <= p.endSlot; s++) seenSlots.add(s);
-        }
-        for (const p of dailyPlans) {
-            let conflict = false;
-            for (let s = p.startSlot; s <= p.endSlot; s++) {
-                if (seenSlots.has(s)) { conflict = true; break; }
-            }
-            if (!conflict) {
-                merged.push(p);
-                for (let s = p.startSlot; s <= p.endSlot; s++) seenSlots.add(s);
-            }
-        }
-
-        for (const hp of merged) {
-            const key = makePlanKey(hp);
-            if (log.planKeys.includes(key)) continue;
-            let collide = false;
-            for (let s = hp.startSlot; s <= hp.endSlot; s++) {
-                if (occupied.has(s)) { collide = true; break; }
-            }
-            if (collide) continue;
-            target.plans.push({
-                id: 'plan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                startSlot: hp.startSlot,
-                endSlot: hp.endSlot,
-                subject: hp.subject,
-                memo: hp.memo,
-                date: dateKey,
-                fromHabit: true
-            });
-            for (let s = hp.startSlot; s <= hp.endSlot; s++) occupied.add(s);
-            log.planKeys.push(key);
-        }
+    for (const target of state.timetables) {
+        if (target.isHabit) continue;
+        seedPlansIntoTab(target, dateKey, dayPlans, dailyPlans, log);
     }
 
     state.habitSeedLog[dateKey] = log;
     saveToLocal();
+}
+
+// 단일 탭에 대해서만 시드를 강제 실행 (새 탭 생성, 종류 전환 시 사용).
+// 그 탭의 planKeysByTab 항목을 비워 재시드 차단을 우회한 뒤 일반 시드를 호출.
+export function seedHabitsIntoTab(dateKey, tabId) {
+    if (!state.habitSeedLog) state.habitSeedLog = {};
+    let log = state.habitSeedLog[dateKey] || { taskKeys: [], planKeysByTab: {} };
+    log = migrateSeedLogShape(log, dateKey);
+    log.planKeysByTab[tabId] = [];
+    state.habitSeedLog[dateKey] = log;
+    saveToLocal();
+    seedHabitsForDate(dateKey);
 }
 
 // ─── 요일 탭 ─────────────────────────────────────────────────────────
@@ -508,3 +543,4 @@ function clearHabitPlans() {
 
 window.renderHabitEditor = renderHabitEditor;
 window.seedHabitsForDate = seedHabitsForDate;
+window.seedHabitsIntoTab = seedHabitsIntoTab;
