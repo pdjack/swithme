@@ -16,7 +16,7 @@ import {
     HABIT_DAY_LABELS_KO
 } from './store.js';
 import { icon } from './icons.js';
-import { bindPlanSelection } from './timetable.js';
+import { bindPlanSelection, startResizeMode } from './timetable.js';
 
 const START_HOUR = 6;
 
@@ -454,14 +454,17 @@ function openHabitPlanDetail(plan) {
     });
     newCancel.addEventListener('click', close);
     newEdit.addEventListener('click', () => {
-        // 간단한 인라인 수정: 카테고리 변경만 허용 (시간 범위는 삭제 후 재추가 권장)
         close();
-        const sub = prompt('카테고리 ID 변경 (취소 시 빈칸):', plan.subject || '');
-        if (sub === null) return;
-        plan.subject = sub.trim() || null;
-        saveToLocal();
-        renderHabitPlanGrid();
-        syncDashboardAfterHabitChange();
+        // 대시보드와 동일한 핸들 드래그 수정 흐름. 활성 디바이스(PC/모바일) 그리드만 대상으로.
+        const pcRoot = document.getElementById('habit-timetable-root');
+        const mRoot = document.getElementById('m-habit-timetable-root');
+        startResizeMode(plan, {
+            roots: [pcRoot, mRoot],
+            onAfterEdit: () => {
+                renderHabitPlanGrid();
+                syncDashboardAfterHabitChange();
+            }
+        });
     });
 }
 

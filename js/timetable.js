@@ -467,29 +467,34 @@ function updateResizeVisual(roots, plan, topHandle, bottomHandle) {
     });
 }
 
-function lockMobileScroll() {
-    const mc = document.getElementById('m-timetable-root');
-    if (mc) {
-        mc.style.overflowY = 'hidden';
-        mc.style.touchAction = 'none';
-    }
+function lockResizeScroll(roots) {
+    roots.forEach(root => {
+        if (!root) return;
+        root.style.overflowY = 'hidden';
+        root.style.touchAction = 'none';
+    });
 }
 
-function unlockMobileScroll() {
-    const mc = document.getElementById('m-timetable-root');
-    if (mc) {
-        mc.style.overflowY = '';
-        mc.style.touchAction = '';
-    }
+function unlockResizeScroll(roots) {
+    roots.forEach(root => {
+        if (!root) return;
+        root.style.overflowY = '';
+        root.style.touchAction = '';
+    });
 }
 
-function startResizeMode(plan) {
-    const roots = [
-        document.getElementById('timetable-root'),
-        document.getElementById('m-timetable-root')
-    ].filter(Boolean);
+export function startResizeMode(plan, options = {}) {
+    const customRoots = options.roots;
+    const onAfterEdit = options.onAfterEdit;
+    const roots = (customRoots && customRoots.length
+        ? customRoots
+        : [
+            document.getElementById('timetable-root'),
+            document.getElementById('m-timetable-root')
+          ]
+    ).filter(Boolean);
 
-    lockMobileScroll();
+    lockResizeScroll(roots);
 
     roots.forEach(root => {
         const planSlots = root.querySelectorAll(`.slot[data-plan-id="${plan.id}"]`);
@@ -553,9 +558,10 @@ function startResizeMode(plan) {
                 document.removeEventListener('mouseup', onEnd);
                 document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('touchend', onEnd);
-                unlockMobileScroll();
+                unlockResizeScroll(roots);
                 saveToLocal();
-                renderTimetable();
+                if (typeof onAfterEdit === 'function') onAfterEdit();
+                else renderTimetable();
             }
 
             handle.addEventListener('mousedown', onStart);
@@ -570,7 +576,7 @@ function startResizeMode(plan) {
             planSlots.forEach(s => s.classList.remove('plan-filled--resizing'));
             topHandle.remove();
             bottomHandle.remove();
-            unlockMobileScroll();
+            unlockResizeScroll(roots);
             document.removeEventListener('mousedown', dismissResize, true);
             document.removeEventListener('touchstart', dismissResize, true);
         }
@@ -592,7 +598,7 @@ export function renderTimetable() {
     // 모드 바 동기화
     syncModeBar();
 
-    const view = state.timetableView || 'record';
+    const view = tt.view || tt.type || 'record';
     if (view === 'plan') {
         // 계획 뷰 — 선택 날짜의 계획만 표시 (date 없는 기존 데이터는 모든 날짜에 표시)
         const datePlans = tt.plans.filter(p => !p.date || p.date === state.selectedDate);
@@ -636,7 +642,8 @@ function getModeButtons() {
 }
 
 function syncModeBar() {
-    const view = state.timetableView || 'record';
+    const tt = getActiveTimetable();
+    const view = tt.view || tt.type || 'record';
     const btns = getModeButtons();
 
     for (const device of [btns.pc, btns.mobile]) {
@@ -648,11 +655,13 @@ function syncModeBar() {
     }
 }
 
-// ─── 뷰 전환 (기록/계획 단순 토글, 데이터 손실 없음) ─────────────────
+// ─── 뷰 전환 (현재 활성 탭의 기록/계획 토글, 데이터 손실 없음) ───────
 
 function setTimetableView(view) {
-    if (state.timetableView === view) return;
-    state.timetableView = view;
+    const tt = getActiveTimetable();
+    const current = tt.view || tt.type || 'record';
+    if (current === view) return;
+    tt.view = view;
     saveToLocal();
     renderTimetable();
 }
@@ -895,7 +904,7 @@ function switchTimetable(id) {
 }
 
 function addTimetable() {
-    const newTt = { id: generateTimetableId(), name: getNextPlanName(), type: 'record', history: [], plans: [] };
+    const newTt = { id: generateTimetableId(), name: getNextPlanName(), type: 'record', view: 'record', history: [], plans: [] };
     state.timetables.push(newTt);
     state.activeTimetableId = newTt.id;
     saveToLocal();
@@ -980,7 +989,8 @@ const clearTimetableBtn = document.getElementById('clear-timetable-btn');
 if (clearTimetableBtn) {
     clearTimetableBtn.addEventListener('click', () => {
         const tt = getActiveTimetable();
-        if (state.timetableView === 'plan') {
+        const view = tt.view || tt.type || 'record';
+        if (view === 'plan') {
             if (confirm('선택한 날짜의 모든 계획을 삭제하시겠습니까?')) {
                 tt.plans = tt.plans.filter(p => p.date && p.date !== state.selectedDate);
                 saveToLocal();

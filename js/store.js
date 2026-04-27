@@ -12,16 +12,18 @@ function loadTimetables() {
     const savedTimetables = localStorage.getItem('switme_timetables');
     if (savedTimetables) {
         const parsed = JSON.parse(savedTimetables);
-        // 마이그레이션: type/plans 필드가 없는 기존 데이터에 기본값 추가
+        // 마이그레이션: type/plans/view 기본값 보강.
+        // view: 탭별 화면 뷰('plan'|'record'). 기존 type을 폴백으로 사용해 첫 표시를 자연스럽게.
         return parsed.map(tt => ({
             ...tt,
             type: tt.type || 'record',
-            plans: tt.plans || []
+            plans: tt.plans || [],
+            view: tt.view || tt.type || 'record'
         }));
     }
     const legacyHistory = localStorage.getItem('switme_history');
     const history = legacyHistory ? JSON.parse(legacyHistory) : [];
-    return [{ id: 'tt_default', name: '플랜 1', type: 'record', history, plans: [] }];
+    return [{ id: 'tt_default', name: '플랜 1', type: 'record', view: 'record', history, plans: [] }];
 }
 
 function loadActiveTimetableId(timetables) {
@@ -45,6 +47,7 @@ HABIT_DAY_KEYS.forEach(key => {
             id,
             name: `습관 · ${HABIT_DAY_LABELS[key]}`,
             type: 'plan',
+            view: 'plan',
             history: [],
             plans: [],
             isHabit: true,
@@ -120,8 +123,7 @@ export let state = {
     habits: loadHabits(),
     habitSeedLog: loadHabitSeedLog(),
     habitEditorDay: 'daily', // 현재 편집 중인 요일 키 (daily/mon/tue/wed/thu/fri/sat/sun)
-    selectedDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-    timetableView: localStorage.getItem('switme_timetable_view') || 'record' // 'plan' | 'record'
+    selectedDate: new Date().toISOString().split('T')[0] // YYYY-MM-DD
 };
 
 // Ensure all tasks have a date
@@ -145,7 +147,6 @@ function flushSave() {
     localStorage.setItem('switme_analysis', JSON.stringify(state.analysisResults));
     localStorage.setItem('switme_habits', JSON.stringify(state.habits));
     localStorage.setItem('switme_habit_seed_log', JSON.stringify(state.habitSeedLog));
-    localStorage.setItem('switme_timetable_view', state.timetableView);
 }
 
 export function saveToLocal() {
