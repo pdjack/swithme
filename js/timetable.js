@@ -768,6 +768,8 @@ function placeMenu(menu, anchorRect) {
 }
 
 function bindMenuDismissal(menu) {
+    // 모바일 롱프레스 직후 발생하는 합성 click(보통 touchend 후 ~300ms)이
+    // dismissIfOutside에 즉시 잡혀 메뉴가 곧바로 닫히는 문제를 막기 위해 등록을 지연한다.
     setTimeout(() => {
         function dismissIfOutside(e) {
             if (menu.contains(e.target)) return;
@@ -779,7 +781,7 @@ function bindMenuDismissal(menu) {
         document.addEventListener('touchstart', dismissIfOutside, { capture: true });
         document.addEventListener('click', dismissIfOutside, { capture: true });
         document.addEventListener('contextmenu', dismissIfOutside, { capture: true });
-    }, 0);
+    }, 400);
 }
 
 function showTabContextMenu(anchorEl, ttId) {

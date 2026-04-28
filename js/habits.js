@@ -26,22 +26,61 @@ function makeTaskKey(t) { return `${t.subject}::${t.name}`; }
 function makePlanKey(p) { return `${p.startSlot}-${p.endSlot}-${p.subject || ''}-${p.memo || ''}`; }
 
 // 습관 탭에서 저장한 변경을 즉시 대시보드에 반영한다.
-// - 모든 비-습관 탭의 현재 날짜 시드 캐시를 리셋해 추가/변경된 항목이 누락 없이 반영되도록 한다.
-// - 사용자가 직접 만든 항목(fromHabit=false)은 건드리지 않는다.
+// - 모든 날짜의 시드 캐시(habitSeedLog)를 비우고 fromHabit 항목을 정리한 뒤
+//   현재 선택일만 즉시 재시드. 다른 날짜는 그 날짜로 이동하는 시점에 자동 재시드된다.
+// - 사용자가 직접 만든 항목(fromHabit=false)과 이미 완료한 fromHabit 태스크(기록 보존)는 보존.
 function syncDashboardAfterHabitChange() {
     const dateKey = state.selectedDate;
-    if (state.habitSeedLog?.[dateKey]?.planKeysByTab) {
-        for (const tt of state.timetables) {
-            if (tt.isHabit) continue;
-            state.habitSeedLog[dateKey].planKeysByTab[tt.id] = [];
-            tt.plans = tt.plans.filter(p => !(p.fromHabit && p.date === dateKey));
+    if (state.habitSeedLog) {
+        for (const dk of Object.keys(state.habitSeedLog)) {
+            const log = state.habitSeedLog[dk];
+            if (!log) continue;
+            log.taskKeys = [];
+            log.planKeysByTab = {};
         }
     }
+    for (const tt of state.timetables) {
+        if (tt.isHabit) continue;
+        tt.plans = tt.plans.filter(p => !p.fromHabit);
+    }
+    state.tasks = state.tasks.filter(t => !t.fromHabit || t.completed);
     saveToLocal();
     seedHabitsForDate(dateKey);
     if (typeof window.renderTasks === 'function') window.renderTasks();
     if (typeof window.renderMobileTasks === 'function') window.renderMobileTasks();
     if (typeof window.renderTimetable === 'function') window.renderTimetable();
+}
+
+// 위험 동작 확인용 인앱 모달. confirm()을 대체해 디자인 통일.
+function showConfirmModal({ title = '확인', message = '', okText = '삭제', cancelText = '취소' } = {}) {
+    return new Promise(resolve => {
+        const modal = document.getElementById('confirm-modal');
+        const titleEl = document.getElementById('confirm-modal-title');
+        const messageEl = document.getElementById('confirm-modal-message');
+        const okBtn = document.getElementById('confirm-modal-ok');
+        const cancelBtn = document.getElementById('confirm-modal-cancel');
+        if (!modal || !titleEl || !messageEl || !okBtn || !cancelBtn) {
+            resolve(window.confirm(message));
+            return;
+        }
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        okBtn.textContent = okText;
+        cancelBtn.textContent = cancelText;
+
+        const newOk = okBtn.cloneNode(true);
+        okBtn.replaceWith(newOk);
+        const newCancel = cancelBtn.cloneNode(true);
+        cancelBtn.replaceWith(newCancel);
+
+        function close(result) {
+            modal.classList.remove('active');
+            resolve(result);
+        }
+        newOk.addEventListener('click', () => close(true));
+        newCancel.addEventListener('click', () => close(false));
+        modal.classList.add('active');
+    });
 }
 
 // 습관 정의 1건이 삭제됐을 때, 모든 날짜에 시드된 동일 항목까지 청소한다.
@@ -305,13 +344,16 @@ function renderHabitTasks() {
             `;
         }).join('');
         root.querySelectorAll('.habit-task-delete').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const idx = Number(btn.dataset.idx);
                 const target = tasks[idx];
                 if (!target) return;
                 const dayLabel = HABIT_DAY_LABELS_KO[state.habitEditorDay];
-                const ok = confirm(`'${target.name}' 습관을 삭제하면 ${dayLabel} 요일에 자동 추가된 같은 할 일도 모든 날짜에서 함께 사라집니다.\n계속할까요?`);
+                const ok = await showConfirmModal({
+                    title: '습관 할 일 삭제',
+                    message: `'${target.name}' 습관을 삭제하면 ${dayLabel} 요일에 자동 추가된 같은 할 일도 모든 날짜에서 함께 사라집니다.\n계속할까요?`
+                });
                 if (!ok) return;
                 tasks.splice(idx, 1);
                 purgeSeededTask(target.subject, target.name);
@@ -526,10 +568,14 @@ function openHabitPlanDetail(plan) {
 
     function close() { modal.classList.remove('active'); }
 
-    newDelete.addEventListener('click', () => {
+    newDelete.addEventListener('click', async () => {
         const dayLabel = HABIT_DAY_LABELS_KO[state.habitEditorDay];
-        const ok = confirm(`이 습관 플랜을 삭제하면 ${dayLabel} 요일에 자동 생성된 같은 시간대 박스도 모든 날짜에서 함께 사라집니다.\n계속할까요?`);
-        if (!ok) { close(); return; }
+        close();
+        const ok = await showConfirmModal({
+            title: '습관 플랜 삭제',
+            message: `이 습관 플랜을 삭제하면 ${dayLabel} 요일에 자동 생성된 같은 시간대 박스도 모든 날짜에서 함께 사라집니다.\n계속할까요?`
+        });
+        if (!ok) return;
         const tt = getHabitTimetable(state.habitEditorDay);
         if (tt) {
             const idx = tt.plans.findIndex(p => p.id === plan.id);
@@ -539,7 +585,6 @@ function openHabitPlanDetail(plan) {
             renderHabitPlanGrid();
             syncDashboardAfterHabitChange();
         }
-        close();
     });
     newCancel.addEventListener('click', close);
     newEdit.addEventListener('click', () => {

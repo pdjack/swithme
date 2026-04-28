@@ -861,6 +861,14 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 .form-group input:focus { border-color: var(--primary); }
 
 .modal-btns { display: flex; gap: 12px; margin-top: 32px; }
+.confirm-modal-message {
+    color: var(--text-dim, #b6b6b6);
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-line;
+    text-align: center;
+    margin: 0;
+}
 
 /* Interactive Task Items */
 .task-item.completed { opacity: 0.4; filter: grayscale(1); }
