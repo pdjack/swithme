@@ -572,6 +572,7 @@ export function startResizeMode(plan, options = {}) {
         bindHandle(bottomHandle, false);
 
         function dismissResize(e) {
+            if (e.target.closest('.plan-resize-handle')) return;
             if (e.target.closest(`.slot[data-plan-id="${plan.id}"]`)) return;
             planSlots.forEach(s => s.classList.remove('plan-filled--resizing'));
             topHandle.remove();
@@ -581,10 +582,12 @@ export function startResizeMode(plan, options = {}) {
             document.removeEventListener('touchstart', dismissResize, true);
         }
 
+        // 수정 모드 진입을 트리거한 클릭/탭이 만들어내는 합성 이벤트가 즉시 dismiss를 발화시키지 않도록
+        // 충분한 지연을 둔다(touchend → 합성 mousedown은 보통 300ms 이내).
         setTimeout(() => {
             document.addEventListener('mousedown', dismissResize, { capture: true });
             document.addEventListener('touchstart', dismissResize, { capture: true });
-        }, 0);
+        }, 400);
     });
 }
 

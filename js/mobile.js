@@ -206,15 +206,19 @@ function renderMobileCalendar() {
         // 날짜 선택 클릭 이벤트 추가
         div.addEventListener('click', () => {
             state.selectedDate = dateKey;
+            saveToLocal();
+            if (window.seedHabitsForDate) window.seedHabitsForDate(dateKey);
             updateMobileDateDisplay();
             switchMobileTab('dashboard'); // 대시보드 탭으로 전환하여 해당 날짜 계획 확인
-            
+
             // 전역 동기화 (PC 쪽도 필요한 경우)
             if (typeof window.updateDashboardDateDisplay === 'function') {
                 window.updateDashboardDateDisplay();
                 if (typeof window.renderTasks === 'function') window.renderTasks();
                 if (typeof window.renderTimetable === 'function') window.renderTimetable();
             }
+            if (window.loadReflectionForDate) window.loadReflectionForDate(dateKey);
+            else if (window.loadTodayReflection) window.loadTodayReflection();
         });
 
         grid.appendChild(div);

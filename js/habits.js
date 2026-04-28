@@ -26,13 +26,57 @@ function makeTaskKey(t) { return `${t.subject}::${t.name}`; }
 function makePlanKey(p) { return `${p.startSlot}-${p.endSlot}-${p.subject || ''}-${p.memo || ''}`; }
 
 // 습관 탭에서 저장한 변경을 즉시 대시보드에 반영한다.
-// - 신규 항목은 seed로 오늘자 데이터에 복사된다.
-// - 기존 카드/타임테이블은 그대로 두고 화면만 다시 그린다.
+// - 모든 비-습관 탭의 현재 날짜 시드 캐시를 리셋해 추가/변경된 항목이 누락 없이 반영되도록 한다.
+// - 사용자가 직접 만든 항목(fromHabit=false)은 건드리지 않는다.
 function syncDashboardAfterHabitChange() {
-    seedHabitsForDate(state.selectedDate);
+    const dateKey = state.selectedDate;
+    if (state.habitSeedLog?.[dateKey]?.planKeysByTab) {
+        for (const tt of state.timetables) {
+            if (tt.isHabit) continue;
+            state.habitSeedLog[dateKey].planKeysByTab[tt.id] = [];
+            tt.plans = tt.plans.filter(p => !(p.fromHabit && p.date === dateKey));
+        }
+    }
+    saveToLocal();
+    seedHabitsForDate(dateKey);
     if (typeof window.renderTasks === 'function') window.renderTasks();
     if (typeof window.renderMobileTasks === 'function') window.renderMobileTasks();
     if (typeof window.renderTimetable === 'function') window.renderTimetable();
+}
+
+// 습관 정의 1건이 삭제됐을 때, 모든 날짜에 시드된 동일 항목까지 청소한다.
+// - 카테고리/이름이 일치하는 fromHabit 태스크를 state.tasks에서 제거.
+// - habitSeedLog의 taskKeys에서도 동일 키를 제거해 재시드를 막지 않는다.
+function purgeSeededTask(subject, name) {
+    state.tasks = state.tasks.filter(t => !(t.fromHabit && t.subject === subject && t.name === name));
+    const key = makeTaskKey({ subject, name });
+    if (state.habitSeedLog) {
+        for (const dk of Object.keys(state.habitSeedLog)) {
+            const log = state.habitSeedLog[dk];
+            if (Array.isArray(log?.taskKeys)) {
+                log.taskKeys = log.taskKeys.filter(k => k !== key);
+            }
+        }
+    }
+}
+
+// 습관 플랜 1건이 삭제됐을 때, 동일 키(slot+subject+memo)로 시드된 모든 박스를 청소한다.
+function purgeSeededPlan(planLike) {
+    const key = makePlanKey(planLike);
+    for (const tt of state.timetables) {
+        if (tt.isHabit) continue;
+        tt.plans = tt.plans.filter(p => !(p.fromHabit && makePlanKey(p) === key));
+    }
+    if (state.habitSeedLog) {
+        for (const dk of Object.keys(state.habitSeedLog)) {
+            const log = state.habitSeedLog[dk];
+            if (log?.planKeysByTab) {
+                for (const tabId of Object.keys(log.planKeysByTab)) {
+                    log.planKeysByTab[tabId] = log.planKeysByTab[tabId].filter(k => k !== key);
+                }
+            }
+        }
+    }
 }
 
 // 시드 로그 형태 마이그레이션:
@@ -264,7 +308,13 @@ function renderHabitTasks() {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const idx = Number(btn.dataset.idx);
+                const target = tasks[idx];
+                if (!target) return;
+                const dayLabel = HABIT_DAY_LABELS_KO[state.habitEditorDay];
+                const ok = confirm(`'${target.name}' 습관을 삭제하면 ${dayLabel} 요일에 자동 추가된 같은 할 일도 모든 날짜에서 함께 사라집니다.\n계속할까요?`);
+                if (!ok) return;
                 tasks.splice(idx, 1);
+                purgeSeededTask(target.subject, target.name);
                 saveToLocal();
                 renderHabitTasks();
                 syncDashboardAfterHabitChange();
@@ -477,10 +527,14 @@ function openHabitPlanDetail(plan) {
     function close() { modal.classList.remove('active'); }
 
     newDelete.addEventListener('click', () => {
+        const dayLabel = HABIT_DAY_LABELS_KO[state.habitEditorDay];
+        const ok = confirm(`이 습관 플랜을 삭제하면 ${dayLabel} 요일에 자동 생성된 같은 시간대 박스도 모든 날짜에서 함께 사라집니다.\n계속할까요?`);
+        if (!ok) { close(); return; }
         const tt = getHabitTimetable(state.habitEditorDay);
         if (tt) {
             const idx = tt.plans.findIndex(p => p.id === plan.id);
             if (idx !== -1) tt.plans.splice(idx, 1);
+            purgeSeededPlan(plan);
             saveToLocal();
             renderHabitPlanGrid();
             syncDashboardAfterHabitChange();

@@ -193,6 +193,16 @@ function renderCalendar() {
         }
 
         div.innerHTML = `<span>${day}</span>${scoreHtml}`;
+        div.addEventListener('click', () => {
+            state.selectedDate = dateKey;
+            saveToLocal();
+            const picker = document.getElementById('date-picker');
+            if (picker) picker.value = dateKey;
+            if (window.seedHabitsForDate) window.seedHabitsForDate(dateKey);
+            switchTab('dashboard');
+            if (window.loadReflectionForDate) window.loadReflectionForDate(dateKey);
+            else if (window.loadTodayReflection) window.loadTodayReflection();
+        });
         grid.appendChild(div);
     }
 }
