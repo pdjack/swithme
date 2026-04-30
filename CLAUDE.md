@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+> **글로벌 규칙 함께 적용:** Claude Code는 `~/.claude/CLAUDE.md`(페르소나·언어 규칙·작업 공정·Plan 운영·문서 탐색·시크릿 보안·신규 규칙 위치 결정 원칙 등 보편 규칙)도 함께 로드한다. 본 파일은 **swithme 고유 규칙만** 담는다. 충돌 시 **이 파일이 글로벌을 덮어쓴다**.
+>
+> **신규 규칙 추가 시:** 글로벌 `~/.claude/CLAUDE.md`의 "신규 규칙·인사이트 추가 시 — 위치 결정 원칙"을 따라 글로벌 vs 프로젝트 위치를 먼저 판단한 뒤 기록한다.
+
 ## 프로젝트 정체성
 
 swithme는 학습·활동 시간을 추적·분석하는 PWA이다.
@@ -21,7 +25,8 @@ swithme는 학습·활동 시간을 추적·분석하는 PWA이다.
 - 새 전역 함수는 `window`에 등록하는 기존 패턴을 따를 것.
 - JS 코드 수정 후 `npm run lint`로 린트 검사를 수행할 것. 새로운 warning/error 추가 금지.
 - 핵심 로직(`js/store.js`, `js/timer.js`) 변경 시 `npm run test:run`으로 기존 테스트 통과 여부를 확인할 것.
-- API 키 및 비밀번호는 절대 코드에 하드코딩하지 않으며 `.env`를 사용할 것.
+
+> 시크릿 보안(`.env` 사용·하드코딩 금지)은 글로벌 `~/.claude/CLAUDE.md` "보안" 섹션 참조.
 
 ---
 
@@ -30,7 +35,7 @@ swithme는 학습·활동 시간을 추적·분석하는 PWA이다.
 | 주제 | 위치 |
 |---|---|
 | 기술 스택 · npm 스크립트 · 코드 컨벤션 | `.claude/rules/tech-stack.md` |
-| 페르소나 · 작업 공정 · Plan 운영 · 짧은 동의 해석 | `.claude/rules/collaboration.md` |
+| 페르소나 · 작업 공정 · Plan 운영 · 짧은 동의 해석 | `~/.claude/CLAUDE.md` (글로벌). swithme 고유 오버라이드만 `.claude/rules/collaboration.md` |
 | 문서 작성 규칙(SRP · ✅/☐ 마커 · 도메인 중립 어휘) | `.claude/rules/doc-conventions.md` |
 | 코드 변경 ↔ 문서 매핑 · 추출 스크립트 사용처 | `.claude/rules/doc-routing.md` |
 | 표준 작업 절차(SOP) · UI/UX 가이드 | `directives/INDEX.md` (먼저 읽기) |
