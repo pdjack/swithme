@@ -32,25 +32,162 @@ export function updateTimerDisplay() {
     }
 }
 
-window.editTimer = () => {
-    if (state.timer.isRunning || state.timer.mode !== 'timer') return;
-    const newTime = prompt('타이머 시간을 설정하세요 (예: 25:00, 10:30)');
-    if (!newTime) return;
-    
-    const parts = newTime.split(':');
-    if (parts.length === 2) {
-        const m = parseInt(parts[0]);
-        const s = parseInt(parts[1]);
-        if (!isNaN(m) && !isNaN(s)) {
-            const total = m * 60 + s;
-            state.timer.seconds = total;
-            state.timer.totalDuration = total;
-            state.timer.mode = 'timer';
-            updateTimerDisplay();
-        }
-    } else {
-        alert('올바른 형식(MM:SS)으로 입력해주세요.');
+const TIMER_SET_LIMITS = { h: 23, m: 59, s: 59 };
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function secondsToHms(total) {
+    const safe = Math.max(0, Math.floor(total || 0));
+    return {
+        h: Math.floor(safe / 3600),
+        m: Math.floor((safe % 3600) / 60),
+        s: safe % 60
+    };
+}
+
+function clampUnit(unit, raw) {
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(n, TIMER_SET_LIMITS[unit]);
+}
+
+function showTimerToast(msg) {
+    let toast = document.getElementById('record-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'record-toast';
+        toast.className = 'record-toast';
+        document.body.appendChild(toast);
     }
+    toast.textContent = msg;
+    toast.classList.add('record-toast--visible');
+    setTimeout(() => toast.classList.remove('record-toast--visible'), 2200);
+}
+
+function openTimerSetModal() {
+    const modal = document.getElementById('timer-set-modal');
+    if (!modal) return;
+
+    const initial = secondsToHms(state.timer.totalDuration || 1500);
+    const draft = { ...initial };
+
+    // 매 오픈마다 이전 리스너 제거: 셀/프리셋 노드 클론으로 교체
+    modal.querySelectorAll('.timer-set-cell, .timer-set-cell-input').forEach(node => {
+        if (node.classList.contains('timer-set-cell-input')) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'timer-set-cell';
+            btn.dataset.unit = node.dataset.unit;
+            btn.setAttribute('aria-label', `${node.dataset.unit} 입력`);
+            node.replaceWith(btn);
+        } else {
+            node.replaceWith(node.cloneNode(true));
+        }
+    });
+    modal.querySelectorAll('.timer-set-preset').forEach(node => {
+        node.replaceWith(node.cloneNode(true));
+    });
+
+    const cells = modal.querySelectorAll('.timer-set-cell');
+    cells.forEach(btn => {
+        btn.textContent = pad2(draft[btn.dataset.unit]);
+    });
+
+    const beginEdit = (btn) => {
+        const unit = btn.dataset.unit;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.inputMode = 'numeric';
+        input.min = '0';
+        input.max = String(TIMER_SET_LIMITS[unit]);
+        input.value = String(draft[unit]);
+        input.className = 'timer-set-cell-input';
+        input.dataset.unit = unit;
+        btn.replaceWith(input);
+        input.focus();
+        input.select();
+
+        const commit = () => {
+            draft[unit] = clampUnit(unit, input.value);
+            const newBtn = document.createElement('button');
+            newBtn.type = 'button';
+            newBtn.className = 'timer-set-cell';
+            newBtn.dataset.unit = unit;
+            newBtn.setAttribute('aria-label', btn.getAttribute('aria-label') || '');
+            newBtn.textContent = pad2(draft[unit]);
+            newBtn.addEventListener('click', () => beginEdit(newBtn));
+            input.replaceWith(newBtn);
+        };
+        input.addEventListener('blur', commit, { once: true });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+            else if (e.key === 'Escape') { e.preventDefault(); input.value = String(draft[unit]); input.blur(); }
+        });
+    };
+
+    cells.forEach(btn => btn.addEventListener('click', () => beginEdit(btn)));
+
+    const presets = modal.querySelectorAll('.timer-set-preset');
+    presets.forEach(p => {
+        p.addEventListener('click', () => {
+            const sec = parseInt(p.dataset.seconds, 10) || 0;
+            const hms = secondsToHms(sec);
+            draft.h = hms.h; draft.m = hms.m; draft.s = hms.s;
+            // 편집 중인 input이 있을 수 있으므로 모든 cell 재구성
+            modal.querySelectorAll('.timer-set-cell-input').forEach(inp => inp.blur());
+            modal.querySelectorAll('.timer-set-cell').forEach(btn => {
+                btn.textContent = pad2(draft[btn.dataset.unit]);
+            });
+        });
+    });
+
+    const close = () => {
+        modal.classList.remove('active');
+        modal.removeEventListener('click', backdropHandler);
+        document.removeEventListener('keydown', escHandler);
+    };
+
+    const apply = () => {
+        // input이 열려 있으면 먼저 커밋
+        const openInput = modal.querySelector('.timer-set-cell-input');
+        if (openInput) openInput.blur();
+        const total = draft.h * 3600 + draft.m * 60 + draft.s;
+        if (total <= 0) { showTimerToast('1초 이상으로 설정해주세요'); return; }
+        state.timer.mode = 'timer';
+        state.timer.seconds = total;
+        state.timer.totalDuration = total;
+        saveToLocal();
+        updateTimerDisplay();
+        close();
+    };
+
+    const backdropHandler = (e) => { if (e.target === modal) close(); };
+    const escHandler = (e) => {
+        if (e.key === 'Escape') close();
+    };
+
+    const cancelBtn = document.getElementById('timer-set-cancel');
+    const confirmBtn = document.getElementById('timer-set-confirm');
+    // 이전 리스너 제거를 위해 노드 클론 후 교체
+    const newCancel = cancelBtn.cloneNode(true);
+    cancelBtn.replaceWith(newCancel);
+    const newConfirm = confirmBtn.cloneNode(true);
+    confirmBtn.replaceWith(newConfirm);
+    newCancel.addEventListener('click', close);
+    newConfirm.addEventListener('click', apply);
+    modal.addEventListener('click', backdropHandler);
+    document.addEventListener('keydown', escHandler);
+
+    modal.classList.add('active');
+}
+
+window.editTimer = () => {
+    if (state.timer.isRunning) return;
+    if (state.timer.mode !== 'timer') {
+        showTimerToast('스톱워치는 0부터 시작합니다');
+        return;
+    }
+    openTimerSetModal();
 };
 
 function showNoTaskPanel() {

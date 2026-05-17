@@ -670,6 +670,38 @@
         </div>
     </div>
 
+    <!-- 타이머 시간 설정 모달 (시·분·초 셀 입력 + 프리셋 + 설정 버튼) -->
+    <div id="timer-set-modal" class="modal">
+        <div class="modal-content glass-card timer-set-modal-content">
+            <h2>타이머 설정</h2>
+            <div class="timer-set-cells">
+                <div class="timer-set-cell-group">
+                    <label class="timer-set-cell-label">시간</label>
+                    <button type="button" class="timer-set-cell" data-unit="h" aria-label="시간 입력">00</button>
+                </div>
+                <span class="timer-set-colon">:</span>
+                <div class="timer-set-cell-group">
+                    <label class="timer-set-cell-label">분</label>
+                    <button type="button" class="timer-set-cell" data-unit="m" aria-label="분 입력">25</button>
+                </div>
+                <span class="timer-set-colon">:</span>
+                <div class="timer-set-cell-group">
+                    <label class="timer-set-cell-label">초</label>
+                    <button type="button" class="timer-set-cell" data-unit="s" aria-label="초 입력">00</button>
+                </div>
+            </div>
+            <div class="timer-set-presets">
+                <button type="button" class="timer-set-preset" data-seconds="600">00:10:00</button>
+                <button type="button" class="timer-set-preset" data-seconds="900">00:15:00</button>
+                <button type="button" class="timer-set-preset" data-seconds="1800">00:30:00</button>
+            </div>
+            <div class="modal-btns timer-set-btns">
+                <button type="button" id="timer-set-cancel" class="btn-reset">취소</button>
+                <button type="button" id="timer-set-confirm" class="btn-start">설정</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 공용 확인 모달 (위험 동작 확인용) -->
     <div id="confirm-modal" class="modal">
         <div class="modal-content glass-card">

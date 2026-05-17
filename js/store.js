@@ -123,8 +123,14 @@ export let state = {
     ],
     timer: {
         mode: 'timer',
-        seconds: 1500, // Default 25m
-        totalDuration: 1500, // Total time for progress ring
+        seconds: (() => {
+            const saved = parseInt(localStorage.getItem('switme_timer_last_duration'), 10);
+            return Number.isFinite(saved) && saved > 0 ? saved : 1500;
+        })(),
+        totalDuration: (() => {
+            const saved = parseInt(localStorage.getItem('switme_timer_last_duration'), 10);
+            return Number.isFinite(saved) && saved > 0 ? saved : 1500;
+        })(),
         sessionStartSeconds: 1500, // Time at start of current session
         stopwatchSeconds: 0,
         isRunning: false,
@@ -191,6 +197,9 @@ function flushSave() {
     localStorage.setItem('switme_analysis', JSON.stringify(state.analysisResults));
     localStorage.setItem('switme_habits', JSON.stringify(state.habits));
     localStorage.setItem('switme_habit_seed_log', JSON.stringify(state.habitSeedLog));
+    if (Number.isFinite(state.timer.totalDuration) && state.timer.totalDuration > 0) {
+        localStorage.setItem('switme_timer_last_duration', String(state.timer.totalDuration));
+    }
 }
 
 export function saveToLocal() {

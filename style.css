@@ -2397,6 +2397,94 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     }
 }
 
+/* ── 타이머 시간 설정 모달 ────────── */
+.timer-set-modal-content { width: 360px; }
+.timer-set-cells {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 28px;
+}
+.timer-set-cell-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.timer-set-cell-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.timer-set-cell {
+    width: 84px;
+    padding: 14px 0;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-size: 32px;
+    font-weight: 600;
+    color: white;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.timer-set-cell:hover { border-color: var(--primary); }
+.timer-set-cell.editing {
+    border-color: var(--primary);
+    background: rgba(0, 86, 179, 0.12);
+}
+.timer-set-cell-input {
+    width: 84px;
+    padding: 14px 0;
+    background: rgba(0, 86, 179, 0.12);
+    border: 1px solid var(--primary);
+    border-radius: 14px;
+    font-size: 32px;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+    -moz-appearance: textfield;
+}
+.timer-set-cell-input::-webkit-outer-spin-button,
+.timer-set-cell-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.timer-set-colon {
+    font-size: 28px;
+    color: var(--text-dim);
+    padding-bottom: 14px;
+    font-weight: 500;
+}
+.timer-set-presets {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.timer-set-preset {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    color: white;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.timer-set-preset:hover { border-color: var(--primary); background: rgba(0, 86, 179, 0.1); }
+.timer-set-btns { justify-content: space-between; }
+.timer-set-btns .btn-reset,
+.timer-set-btns .btn-start { flex: 1; }
+
+@media (max-width: 640px) {
+    .timer-set-modal-content { width: 92vw; max-width: 360px; padding: 24px; }
+    .timer-set-cell, .timer-set-cell-input { width: 72px; font-size: 28px; }
+    .timer-set-preset { width: 72px; height: 72px; font-size: 12px; }
+}
+
 /* ── 할 일 미선택 알림 패널 ────────── */
 .no-task-panel {
     position: fixed;
