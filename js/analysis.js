@@ -605,6 +605,17 @@ export function renderAnalysisDashboard(arg) {
     renderPrescription(prescription, 'mobile');
 
     refreshSnapshotUiState();
+    updateTrendViewHint();
+}
+
+function updateTrendViewHint() {
+    const text = trendViewMode === 'percent'
+        ? '비율 모드: 그날 활동한 시간 중 각 카테고리가 차지한 비중(%)을 보여줍니다. 한 카테고리에 시간이 몰려도 다른 카테고리 추세를 비교하기 좋습니다.'
+        : '시간 모드: 카테고리별 실제 활동 시간(분)을 그대로 보여줍니다.';
+    ['trend-view-hint', 'm-trend-view-hint'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    });
 }
 
 function setupTrendViewToggles() {
@@ -617,8 +628,10 @@ function setupTrendViewToggles() {
             });
             renderTrendChart('pc');
             renderTrendChart('mobile');
+            updateTrendViewHint();
         });
     });
+    updateTrendViewHint();
 }
 
 function setActiveButtons(scope, matcher) {

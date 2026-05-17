@@ -2752,6 +2752,12 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     background: var(--primary);
     color: #fff;
 }
+.trend-view-hint {
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.4;
+}
 
 .category-toggle-list {
     display: flex;

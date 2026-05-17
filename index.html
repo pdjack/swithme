@@ -258,13 +258,14 @@
                                 <div class="s-header trend-header">
                                     <span class="trend-title"><i data-lucide="trending-up"></i><span>카테고리별 활동 시간 트렌드</span></span>
                                     <div class="trend-view-toggle" role="tablist" data-scope="pc">
-                                        <button class="view-mode-btn active" data-view="minutes" role="tab">분</button>
-                                        <button class="view-mode-btn" data-view="percent" role="tab">%</button>
+                                        <button class="view-mode-btn active" data-view="minutes" role="tab" title="실제 활동 시간(분)을 그대로 표시">시간 (분)</button>
+                                        <button class="view-mode-btn" data-view="percent" role="tab" title="그날 전체 활동 중 카테고리 점유율(%)을 표시">비율 (%)</button>
                                     </div>
                                 </div>
                                 <div class="trend-chart-wrap">
                                     <canvas id="category-trend-chart"></canvas>
                                 </div>
+                                <p id="trend-view-hint" class="trend-view-hint"></p>
                                 <div id="category-toggle-list" class="category-toggle-list"></div>
                                 <p id="trend-empty" class="trend-empty" style="display:none;">활동 기록이 아직 없습니다. 타이머를 돌려 데이터를 쌓아보세요.</p>
                             </div>
@@ -493,13 +494,14 @@
                         <div class="s-header trend-header">
                             <span class="trend-title"><i data-lucide="trending-up"></i><span>카테고리별 활동 시간</span></span>
                             <div class="trend-view-toggle" role="tablist" data-scope="mobile">
-                                <button class="view-mode-btn active" data-view="minutes" role="tab">분</button>
-                                <button class="view-mode-btn" data-view="percent" role="tab">%</button>
+                                <button class="view-mode-btn active" data-view="minutes" role="tab" title="실제 활동 시간(분)을 그대로 표시">시간</button>
+                                <button class="view-mode-btn" data-view="percent" role="tab" title="그날 전체 활동 중 카테고리 점유율(%)을 표시">비율</button>
                             </div>
                         </div>
                         <div class="trend-chart-wrap">
                             <canvas id="m-category-trend-chart"></canvas>
                         </div>
+                        <p id="m-trend-view-hint" class="trend-view-hint"></p>
                         <div id="m-category-toggle-list" class="category-toggle-list"></div>
                         <p id="m-trend-empty" class="trend-empty" style="display:none;">활동 기록이 아직 없습니다.</p>
                     </div>
