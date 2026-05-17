@@ -6,7 +6,7 @@ import { setupMobileUI } from './mobile.js';
 import { watchDeviceLayout } from './device.js';
 import { restoreTimerState, state } from './store.js';
 import { initStaticIcons } from './icons.js';
-import { setupAnalysisPeriodButtons } from './analysis.js';
+import { setupAnalysisPeriodButtons, setupSnapshotControls } from './analysis.js';
 import { seedHabitsForDate, setupHabitEditor } from './habits.js';
 
 // SW 업데이트 시 자동 리로드
@@ -44,6 +44,7 @@ function init() {
 
     setupMobileUI();
     setupAnalysisPeriodButtons();
+    setupSnapshotControls();
     setupHabitEditor();
 
     // 오늘 요일에 맞춘 습관 시드 (이미 시드된 항목은 재시드 안 됨)

@@ -1,4 +1,4 @@
-import { state } from './store.js';
+import { state, saveToLocal } from './store.js';
 import { icon } from './icons.js';
 
 /**
@@ -10,9 +10,40 @@ import { icon } from './icons.js';
  */
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-let activePeriodDays = 7;
+// activePeriod: { mode: 'preset', days } | { mode: 'custom', startKey, endKey }
+let activePeriod = { mode: 'preset', days: 7 };
 let trendChart = null;
 let mobileTrendChart = null;
+// 트렌드 차트 보기 모드: 'minutes' | 'percent'
+let trendViewMode = 'minutes';
+// 차트에서 숨길 카테고리 id 집합 (PC/모바일 공통)
+const hiddenCategories = new Set();
+// 활성 스냅샷 (null이면 라이브 모드). 동결된 분석 결과를 보여줄 때 사용.
+let activeSnapshot = null;
+
+function isSnapshotMode() {
+    return activeSnapshot !== null;
+}
+
+function getActiveSubjects() {
+    return isSnapshotMode() ? activeSnapshot.subjects : state.subjects;
+}
+
+function getChartData() {
+    if (isSnapshotMode()) {
+        return {
+            dateKeys: activeSnapshot.dateKeys,
+            buckets: activeSnapshot.buckets,
+            subjects: activeSnapshot.subjects
+        };
+    }
+    const dateKeys = currentDateKeys();
+    return {
+        dateKeys,
+        buckets: aggregateActivityByDayAndCategory(dateKeys),
+        subjects: state.subjects
+    };
+}
 
 // ── 날짜 유틸 ──────────────────────────────────────────
 function toDateKey(d) {
@@ -27,6 +58,36 @@ function buildDateRange(days, endDate = new Date()) {
         keys.push(toDateKey(d));
     }
     return keys;
+}
+
+function buildDateRangeBetween(startKey, endKey) {
+    const start = new Date(startKey);
+    const end = new Date(endKey);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return [];
+    const keys = [];
+    const cur = new Date(start);
+    while (cur <= end) {
+        keys.push(toDateKey(cur));
+        cur.setDate(cur.getDate() + 1);
+    }
+    return keys;
+}
+
+function currentDateKeys() {
+    if (activePeriod.mode === 'custom') {
+        return buildDateRangeBetween(activePeriod.startKey, activePeriod.endKey);
+    }
+    return buildDateRange(activePeriod.days);
+}
+
+function previousDateKeys() {
+    const cur = currentDateKeys();
+    if (cur.length === 0) return [];
+    const days = cur.length;
+    const firstDate = new Date(cur[0]);
+    const prevEnd = new Date(firstDate);
+    prevEnd.setDate(prevEnd.getDate() - 1);
+    return buildDateRange(days, prevEnd);
 }
 
 // ── 데이터 집계 ────────────────────────────────────────
@@ -53,17 +114,20 @@ function aggregateActivityByDayAndCategory(dateKeys) {
     return buckets;
 }
 
+// 회고가 없는 날은 0점으로 계산. 분모는 기간 전체 일수.
+// recordedCount = 실제 회고 기록이 있던 날 수 (표시·인사이트용)
 function averageReflectionTotal(dateKeys) {
+    if (dateKeys.length === 0) return { avg: null, count: 0, recordedCount: 0 };
     let sum = 0;
-    let count = 0;
+    let recordedCount = 0;
     dateKeys.forEach(k => {
         const r = state.reflections[k];
         if (r && typeof r.total === 'number') {
             sum += r.total;
-            count++;
+            recordedCount++;
         }
     });
-    return { avg: count > 0 ? sum / count : null, count };
+    return { avg: sum / dateKeys.length, count: dateKeys.length, recordedCount };
 }
 
 /**
@@ -97,15 +161,13 @@ function averageReflectionByItem(dateKeys) {
         }))
     ];
 
+    // 회고 없는 날 = 각 항목 0점으로 처리. 분모는 기간 전체 일수.
+    const totalDays = dateKeys.length;
     dateKeys.forEach(k => {
-        const r = state.reflections[k];
-        if (!r) return;
+        const r = state.reflections[k] || {};
         rows.forEach(row => {
             const v = r[row.id];
-            if (typeof v === 'number') {
-                row.sum += v;
-                row.count++;
-            }
+            row.sum += typeof v === 'number' ? v : 0;
         });
     });
 
@@ -114,8 +176,8 @@ function averageReflectionByItem(dateKeys) {
         name: row.name,
         emoji: row.emoji,
         max: row.max,
-        avg: row.count > 0 ? row.sum / row.count : null,
-        count: row.count
+        avg: totalDays > 0 ? row.sum / totalDays : null,
+        count: totalDays
     }));
 }
 
@@ -138,32 +200,38 @@ function renderItemBreakdown(itemRows, scope) {
     }).join('');
 }
 
-function renderScoreCard(days, scope = 'pc') {
+function renderScoreCard(scope = 'pc') {
     const valueEl = document.getElementById(scope === 'mobile' ? 'm-score-value' : 'score-value');
     const deltaEl = document.getElementById(scope === 'mobile' ? 'm-score-delta' : 'score-delta');
     const subEl = document.getElementById(scope === 'mobile' ? 'm-score-sub' : 'score-sub');
     if (!valueEl) return;
 
-    const today = new Date();
-    const currentKeys = buildDateRange(days, today);
-    const prevEnd = new Date(today);
-    prevEnd.setDate(prevEnd.getDate() - days);
-    const prevKeys = buildDateRange(days, prevEnd);
-
-    const current = averageReflectionTotal(currentKeys);
-    const prev = averageReflectionTotal(prevKeys);
-    const itemRows = averageReflectionByItem(currentKeys);
+    let current, prev, itemRows, days;
+    if (isSnapshotMode()) {
+        const s = activeSnapshot.score;
+        current = { avg: s.avg, count: s.days, recordedCount: s.recordedCount };
+        prev = { avg: s.prevAvg, count: s.days, recordedCount: 0 };
+        itemRows = s.itemRows;
+        days = s.days;
+    } else {
+        const currentKeys = currentDateKeys();
+        const prevKeys = previousDateKeys();
+        days = currentKeys.length;
+        current = averageReflectionTotal(currentKeys);
+        prev = averageReflectionTotal(prevKeys);
+        itemRows = averageReflectionByItem(currentKeys);
+    }
 
     if (current.avg === null) {
         valueEl.textContent = '—';
         deltaEl.innerHTML = '';
-        subEl.textContent = '회고 기록이 아직 없습니다.';
+        subEl.textContent = '기간이 비어 있습니다.';
         renderItemBreakdown([], scope);
         return;
     }
 
     valueEl.textContent = current.avg.toFixed(1);
-    subEl.textContent = `최근 ${days}일 중 ${current.count}일 회고 기록`;
+    subEl.textContent = `${days}일 중 ${current.recordedCount}일 회고 기록 (미기록 0점 처리)`;
     renderItemBreakdown(itemRows, scope);
 
     if (prev.avg === null) {
@@ -182,15 +250,50 @@ function renderScoreCard(days, scope = 'pc') {
 }
 
 // ── 트렌드 그래프 렌더 ──────────────────────────────────
-function renderTrendChart(days, scope = 'pc') {
+function renderCategoryToggleList(scope) {
+    const listEl = document.getElementById(scope === 'mobile' ? 'm-category-toggle-list' : 'category-toggle-list');
+    if (!listEl) return;
+    const subjects = getActiveSubjects();
+    if (!subjects || subjects.length === 0) {
+        listEl.innerHTML = '';
+        return;
+    }
+    listEl.innerHTML = subjects.map(sub => {
+        const isHidden = hiddenCategories.has(sub.id);
+        return `
+            <button type="button"
+                    class="category-toggle-chip${isHidden ? ' hidden' : ''}"
+                    data-cat-id="${sub.id}"
+                    style="--swatch: ${sub.color};"
+                    aria-pressed="${!isHidden}">
+                <span class="chip-swatch"></span>
+                <span class="chip-name">${sub.name}</span>
+            </button>
+        `;
+    }).join('');
+    listEl.querySelectorAll('.category-toggle-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const id = chip.dataset.catId;
+            if (hiddenCategories.has(id)) hiddenCategories.delete(id);
+            else hiddenCategories.add(id);
+            // 양쪽 scope 차트·칩 모두 다시 그림
+            renderTrendChart('pc');
+            renderTrendChart('mobile');
+            renderCategoryToggleList('pc');
+            renderCategoryToggleList('mobile');
+        });
+    });
+}
+
+function renderTrendChart(scope = 'pc') {
     const canvasId = scope === 'mobile' ? 'm-category-trend-chart' : 'category-trend-chart';
     const emptyId = scope === 'mobile' ? 'm-trend-empty' : 'trend-empty';
     const canvas = document.getElementById(canvasId);
     const emptyEl = document.getElementById(emptyId);
     if (!canvas) return;
 
-    const dateKeys = buildDateRange(days);
-    const buckets = aggregateActivityByDayAndCategory(dateKeys);
+    const { dateKeys, buckets, subjects } = getChartData();
+    const days = dateKeys.length;
 
     const totalSeconds = Object.values(buckets).reduce((acc, day) => {
         return acc + Object.values(day).reduce((a, b) => a + b, 0);
@@ -207,10 +310,22 @@ function renderTrendChart(days, scope = 'pc') {
     canvas.style.display = '';
 
     const labels = dateKeys.map(k => k.slice(5));
-    const datasets = state.subjects.map(sub => {
-        const data = dateKeys.map(k => {
+    const isPercent = trendViewMode === 'percent';
+
+    // 비율 모드용: 날짜별 총합(초)
+    const dayTotals = dateKeys.map(k => {
+        return Object.values(buckets[k] || {}).reduce((a, b) => a + b, 0);
+    });
+
+    const visibleSubjects = subjects.filter(s => !hiddenCategories.has(s.id));
+    const datasets = visibleSubjects.map(sub => {
+        const data = dateKeys.map((k, i) => {
             const sec = buckets[k][sub.id] || 0;
-            return +(sec / 60).toFixed(1); // minutes
+            if (isPercent) {
+                const total = dayTotals[i];
+                return total > 0 ? +((sec / total) * 100).toFixed(1) : 0;
+            }
+            return +(sec / 60).toFixed(1);
         });
         return {
             label: sub.name,
@@ -227,6 +342,9 @@ function renderTrendChart(days, scope = 'pc') {
     const existing = scope === 'mobile' ? mobileTrendChart : trendChart;
     if (existing) existing.destroy();
 
+    const yTitle = isPercent ? '%' : '분';
+    const unitSuffix = isPercent ? '%' : '분';
+
     const chart = new Chart(canvas, {
         type: 'line',
         data: { labels, datasets },
@@ -241,14 +359,15 @@ function renderTrendChart(days, scope = 'pc') {
                 },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}분`
+                        label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}${unitSuffix}`
                     }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    title: { display: true, text: '분', color: '#8E8E93' },
+                    max: isPercent ? 100 : undefined,
+                    title: { display: true, text: yTitle, color: '#8E8E93' },
                     grid: { color: 'rgba(255,255,255,0.05)' },
                     ticks: { color: '#8E8E93' }
                 },
@@ -279,9 +398,10 @@ function linearTrendSlope(values) {
     return den === 0 ? 0 : num / den;
 }
 
-function buildInsights(days) {
+function buildInsights() {
     const insights = [];
-    const dateKeys = buildDateRange(days);
+    const dateKeys = currentDateKeys();
+    const days = dateKeys.length;
     const buckets = aggregateActivityByDayAndCategory(dateKeys);
 
     // 1. 카테고리별 총 활동 시간 & 추세
@@ -327,16 +447,15 @@ function buildInsights(days) {
         }
     }
 
-    // 2. 요일별 평균 종합 점수
+    // 2. 요일별 평균 종합 점수 (회고 없는 날 = 0점 처리)
     const dowSums = [0, 0, 0, 0, 0, 0, 0];
     const dowCounts = [0, 0, 0, 0, 0, 0, 0];
     dateKeys.forEach(k => {
+        const dow = new Date(k).getDay();
         const r = state.reflections[k];
-        if (r && typeof r.total === 'number') {
-            const dow = new Date(k).getDay();
-            dowSums[dow] += r.total;
-            dowCounts[dow]++;
-        }
+        const val = (r && typeof r.total === 'number') ? r.total : 0;
+        dowSums[dow] += val;
+        dowCounts[dow]++;
     });
     const dowAvgs = dowSums.map((s, i) => dowCounts[i] > 0 ? s / dowCounts[i] : null);
     const validDows = dowAvgs
@@ -401,13 +520,16 @@ function renderInsights(insightData, scope = 'pc') {
 }
 
 // ── 처방전 생성 ────────────────────────────────────────
-function buildPrescription(days, insightData) {
+function buildPrescription(insightData) {
     const { categoryTotals, dowAvgs } = insightData;
-    const dateKeys = buildDateRange(days);
-    const { avg } = averageReflectionTotal(dateKeys);
+    const dateKeys = currentDateKeys();
+    const { avg, recordedCount } = averageReflectionTotal(dateKeys);
 
     // 데이터 부족
     if (avg === null) {
+        return '기간이 비어 있습니다. 기간을 선택해 보세요.';
+    }
+    if (recordedCount === 0) {
         return '회고를 먼저 기록해보세요. 며칠 치 데이터가 쌓이면 맞춤 처방을 제시합니다.';
     }
 
@@ -449,38 +571,404 @@ function renderPrescription(text, scope = 'pc') {
 }
 
 // ── 엔트리 ─────────────────────────────────────────────
-export function renderAnalysisDashboard(days) {
-    if (typeof days === 'number') activePeriodDays = days;
-    const insightData = buildInsights(activePeriodDays);
-    const prescription = buildPrescription(activePeriodDays, insightData);
+export function renderAnalysisDashboard(arg) {
+    // 하위 호환: 숫자(일수) 인자 또는 {mode, days|startKey, endKey} 객체 허용
+    if (typeof arg === 'number') {
+        activePeriod = { mode: 'preset', days: arg };
+    } else if (arg && typeof arg === 'object') {
+        if (arg.mode === 'custom' && arg.startKey && arg.endKey) {
+            activePeriod = { mode: 'custom', startKey: arg.startKey, endKey: arg.endKey };
+        } else if (arg.mode === 'preset' && typeof arg.days === 'number') {
+            activePeriod = { mode: 'preset', days: arg.days };
+        }
+    }
 
-    renderScoreCard(activePeriodDays, 'pc');
-    renderTrendChart(activePeriodDays, 'pc');
+    let insightData, prescription;
+    if (isSnapshotMode()) {
+        insightData = { insights: activeSnapshot.insights };
+        prescription = activeSnapshot.prescription;
+    } else {
+        insightData = buildInsights();
+        prescription = buildPrescription(insightData);
+    }
+
+    renderScoreCard('pc');
+    renderTrendChart('pc');
+    renderCategoryToggleList('pc');
     renderInsights(insightData, 'pc');
     renderPrescription(prescription, 'pc');
 
-    renderScoreCard(activePeriodDays, 'mobile');
-    renderTrendChart(activePeriodDays, 'mobile');
+    renderScoreCard('mobile');
+    renderTrendChart('mobile');
+    renderCategoryToggleList('mobile');
     renderInsights(insightData, 'mobile');
     renderPrescription(prescription, 'mobile');
+
+    refreshSnapshotUiState();
+}
+
+function setupTrendViewToggles() {
+    document.querySelectorAll('.view-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mode = btn.dataset.view === 'percent' ? 'percent' : 'minutes';
+            trendViewMode = mode;
+            document.querySelectorAll('.view-mode-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.view === mode);
+            });
+            renderTrendChart('pc');
+            renderTrendChart('mobile');
+        });
+    });
+}
+
+function setActiveButtons(scope, matcher) {
+    const sel = scope === 'mobile' ? '.period-btn[data-scope="mobile"]' : '.period-btn:not([data-scope="mobile"])';
+    document.querySelectorAll(sel).forEach(b => {
+        b.classList.toggle('active', matcher(b));
+    });
+}
+
+function syncCustomRangeVisibility(activeIsCustom) {
+    const pc = document.getElementById('period-custom-range');
+    const mo = document.getElementById('m-period-custom-range');
+    if (pc) pc.style.display = activeIsCustom ? '' : 'none';
+    if (mo) mo.style.display = activeIsCustom ? '' : 'none';
+}
+
+function defaultCustomRange() {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 6);
+    return { startKey: toDateKey(start), endKey: toDateKey(end) };
 }
 
 export function setupAnalysisPeriodButtons() {
     document.querySelectorAll('.period-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const days = Number(btn.dataset.period);
-            const scope = btn.dataset.scope === 'mobile' ? 'mobile' : 'pc';
-            document.querySelectorAll(`.period-btn${scope === 'mobile' ? '[data-scope="mobile"]' : ':not([data-scope="mobile"])'}`).forEach(b => {
-                b.classList.toggle('active', b === btn);
-            });
-            // 반대 scope 버튼도 동기화
-            document.querySelectorAll(`.period-btn${scope === 'mobile' ? ':not([data-scope="mobile"])' : '[data-scope="mobile"]'}`).forEach(b => {
-                b.classList.toggle('active', Number(b.dataset.period) === days);
-            });
+            const raw = btn.dataset.period;
+
+            if (raw === 'custom') {
+                // 양쪽 scope 모두 '직접 선택' 활성화
+                setActiveButtons('pc', b => b.dataset.period === 'custom');
+                setActiveButtons('mobile', b => b.dataset.period === 'custom');
+                syncCustomRangeVisibility(true);
+
+                // 기존 값 유지 or 기본값 채움
+                const startPc = document.getElementById('period-custom-start');
+                const endPc = document.getElementById('period-custom-end');
+                const startMo = document.getElementById('m-period-custom-start');
+                const endMo = document.getElementById('m-period-custom-end');
+                let range;
+                if (activePeriod.mode === 'custom') {
+                    range = { startKey: activePeriod.startKey, endKey: activePeriod.endKey };
+                } else {
+                    range = defaultCustomRange();
+                }
+                [startPc, startMo].forEach(el => { if (el && !el.value) el.value = range.startKey; });
+                [endPc, endMo].forEach(el => { if (el && !el.value) el.value = range.endKey; });
+                return;
+            }
+
+            const days = Number(raw);
+            setActiveButtons('pc', b => Number(b.dataset.period) === days);
+            setActiveButtons('mobile', b => Number(b.dataset.period) === days);
+            syncCustomRangeVisibility(false);
             renderAnalysisDashboard(days);
+        });
+    });
+
+    const applyCustom = (startId, endId, mirrorStartId, mirrorEndId) => {
+        const startEl = document.getElementById(startId);
+        const endEl = document.getElementById(endId);
+        if (!startEl || !endEl) return;
+        const startKey = startEl.value;
+        const endKey = endEl.value;
+        if (!startKey || !endKey) return;
+        if (new Date(startKey) > new Date(endKey)) return;
+        // 반대 scope 입력값도 동기화
+        const ms = document.getElementById(mirrorStartId);
+        const me = document.getElementById(mirrorEndId);
+        if (ms) ms.value = startKey;
+        if (me) me.value = endKey;
+        renderAnalysisDashboard({ mode: 'custom', startKey, endKey });
+    };
+
+    const pcApply = document.getElementById('period-custom-apply');
+    if (pcApply) {
+        pcApply.addEventListener('click', () =>
+            applyCustom('period-custom-start', 'period-custom-end', 'm-period-custom-start', 'm-period-custom-end')
+        );
+    }
+    const moApply = document.getElementById('m-period-custom-apply');
+    if (moApply) {
+        moApply.addEventListener('click', () =>
+            applyCustom('m-period-custom-start', 'm-period-custom-end', 'period-custom-start', 'period-custom-end')
+        );
+    }
+
+    setupTrendViewToggles();
+}
+
+// ── 스냅샷 ─────────────────────────────────────────────
+function formatPeriodLabel(period, dateKeys) {
+    if (dateKeys.length === 0) return '';
+    const start = dateKeys[0];
+    const end = dateKeys[dateKeys.length - 1];
+    const compact = (k) => k.slice(5).replace('-', '/');
+    if (period.mode === 'preset') {
+        return `최근 ${period.days}일 (${compact(start)} ~ ${compact(end)})`;
+    }
+    return `${compact(start)} ~ ${compact(end)} (${dateKeys.length}일)`;
+}
+
+function buildSnapshotPayload(name, memo) {
+    if (isSnapshotMode()) return null; // 스냅샷 보는 중엔 새 스냅샷 못 만듦
+    const dateKeys = currentDateKeys();
+    if (dateKeys.length === 0) return null;
+    const buckets = aggregateActivityByDayAndCategory(dateKeys);
+    const prevKeys = previousDateKeys();
+    const current = averageReflectionTotal(dateKeys);
+    const prev = averageReflectionTotal(prevKeys);
+    const itemRows = averageReflectionByItem(dateKeys);
+    const insightData = buildInsights();
+    const prescription = buildPrescription(insightData);
+
+    return {
+        id: `snap-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: name.trim() || `분석 ${new Date().toLocaleDateString('ko-KR')}`,
+        memo: (memo || '').trim(),
+        createdAt: new Date().toISOString(),
+        period: { ...activePeriod },
+        periodLabel: formatPeriodLabel(activePeriod, dateKeys),
+        startKey: dateKeys[0],
+        endKey: dateKeys[dateKeys.length - 1],
+        dateKeys,
+        subjects: state.subjects.map(s => ({ id: s.id, name: s.name, color: s.color })),
+        buckets,
+        score: {
+            avg: current.avg,
+            prevAvg: prev.avg,
+            recordedCount: current.recordedCount,
+            days: dateKeys.length,
+            itemRows
+        },
+        insights: insightData.insights,
+        prescription
+    };
+}
+
+function saveSnapshot(payload) {
+    if (!Array.isArray(state.analysisResults)) state.analysisResults = [];
+    state.analysisResults.unshift(payload);
+    saveToLocal();
+    updateSnapshotCountBadge();
+}
+
+function deleteSnapshot(id) {
+    if (!Array.isArray(state.analysisResults)) return;
+    state.analysisResults = state.analysisResults.filter(s => s.id !== id);
+    saveToLocal();
+    updateSnapshotCountBadge();
+    if (activeSnapshot && activeSnapshot.id === id) {
+        exitSnapshotMode();
+    }
+    renderSnapshotList();
+}
+
+function loadSnapshot(id) {
+    const snap = (state.analysisResults || []).find(s => s.id === id);
+    if (!snap) return;
+    activeSnapshot = snap;
+    hiddenCategories.clear();
+    renderAnalysisDashboard();
+}
+
+function exitSnapshotMode() {
+    activeSnapshot = null;
+    hiddenCategories.clear();
+    renderAnalysisDashboard();
+}
+
+function refreshSnapshotUiState() {
+    const inSnapshot = isSnapshotMode();
+    // 배너
+    ['', 'm-'].forEach(prefix => {
+        const banner = document.getElementById(`${prefix}snapshot-mode-banner`);
+        const nameEl = document.getElementById(`${prefix}snapshot-mode-name`);
+        const metaEl = document.getElementById(`${prefix}snapshot-mode-meta`);
+        if (banner) banner.style.display = inSnapshot ? '' : 'none';
+        if (inSnapshot) {
+            if (nameEl) nameEl.textContent = activeSnapshot.name;
+            if (metaEl) {
+                const memoTxt = activeSnapshot.memo ? ` · ${activeSnapshot.memo}` : '';
+                metaEl.textContent = `${activeSnapshot.periodLabel}${memoTxt}`;
+            }
+        }
+    });
+    // 기간/저장 버튼 비활성화
+    const disableTargets = [
+        '.period-btn',
+        '.period-date-input',
+        '#period-custom-apply',
+        '#m-period-custom-apply',
+        '#save-snapshot-btn',
+        '#m-save-snapshot-btn'
+    ];
+    disableTargets.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+            el.disabled = inSnapshot;
+            el.classList.toggle('snapshot-locked', inSnapshot);
         });
     });
 }
 
+function updateSnapshotCountBadge() {
+    const n = (state.analysisResults || []).length;
+    ['snapshot-count-badge', 'm-snapshot-count-badge'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (n > 0) {
+            el.textContent = n;
+            el.style.display = '';
+        } else {
+            el.style.display = 'none';
+        }
+    });
+}
+
+function renderSnapshotList() {
+    const body = document.getElementById('snapshot-list-body');
+    if (!body) return;
+    const snaps = state.analysisResults || [];
+    if (snaps.length === 0) {
+        body.innerHTML = `<div class="snapshot-list-empty">저장된 분석이 없습니다. 분석 화면에서 "이 분석 저장"을 눌러 보관하세요.</div>`;
+        return;
+    }
+    body.innerHTML = snaps.map(s => {
+        const created = new Date(s.createdAt);
+        const createdTxt = created.toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' });
+        const memoHtml = s.memo ? `<div class="snap-memo">${escapeHtml(s.memo)}</div>` : '';
+        return `
+            <div class="snapshot-card" data-snap-id="${s.id}">
+                <button class="snap-delete" type="button" data-snap-del="${s.id}">삭제</button>
+                <div class="snap-name">${escapeHtml(s.name)}</div>
+                <div class="snap-period">${escapeHtml(s.periodLabel)}</div>
+                ${memoHtml}
+                <div class="snap-meta">저장: ${createdTxt}</div>
+            </div>
+        `;
+    }).join('');
+
+    body.querySelectorAll('.snapshot-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.snap-delete')) return;
+            const id = card.dataset.snapId;
+            closeSnapshotListModal();
+            loadSnapshot(id);
+        });
+    });
+    body.querySelectorAll('.snap-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.snapDel;
+            const snap = (state.analysisResults || []).find(s => s.id === id);
+            if (!snap) return;
+            if (window.confirm(`"${snap.name}" 스냅샷을 삭제할까요?`)) {
+                deleteSnapshot(id);
+            }
+        });
+    });
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function openSnapshotSaveModal() {
+    if (isSnapshotMode()) return;
+    const dateKeys = currentDateKeys();
+    if (dateKeys.length === 0) return;
+    const modal = document.getElementById('snapshot-save-modal');
+    const nameEl = document.getElementById('snapshot-save-name');
+    const memoEl = document.getElementById('snapshot-save-memo');
+    const periodEl = document.getElementById('snapshot-save-period');
+    if (nameEl) nameEl.value = '';
+    if (memoEl) memoEl.value = '';
+    if (periodEl) periodEl.textContent = `기간: ${formatPeriodLabel(activePeriod, dateKeys)}`;
+    if (modal) modal.classList.add('active');
+    setTimeout(() => nameEl && nameEl.focus(), 50);
+}
+
+function closeSnapshotSaveModal() {
+    const modal = document.getElementById('snapshot-save-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+function openSnapshotListModal() {
+    renderSnapshotList();
+    const modal = document.getElementById('snapshot-list-modal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeSnapshotListModal() {
+    const modal = document.getElementById('snapshot-list-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+export function setupSnapshotControls() {
+    // 저장 버튼
+    ['save-snapshot-btn', 'm-save-snapshot-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', openSnapshotSaveModal);
+    });
+    // 목록 버튼
+    ['open-snapshots-btn', 'm-open-snapshots-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', openSnapshotListModal);
+    });
+    // 저장 모달
+    const saveCancel = document.getElementById('snapshot-save-cancel');
+    if (saveCancel) saveCancel.addEventListener('click', closeSnapshotSaveModal);
+    const saveConfirm = document.getElementById('snapshot-save-confirm');
+    if (saveConfirm) {
+        saveConfirm.addEventListener('click', () => {
+            const nameEl = document.getElementById('snapshot-save-name');
+            const memoEl = document.getElementById('snapshot-save-memo');
+            const payload = buildSnapshotPayload(nameEl ? nameEl.value : '', memoEl ? memoEl.value : '');
+            if (!payload) {
+                closeSnapshotSaveModal();
+                return;
+            }
+            saveSnapshot(payload);
+            closeSnapshotSaveModal();
+        });
+    }
+    // 목록 모달 닫기
+    const listClose = document.getElementById('snapshot-list-close');
+    if (listClose) listClose.addEventListener('click', closeSnapshotListModal);
+    // 배경 클릭 시 닫기
+    ['snapshot-save-modal', 'snapshot-list-modal'].forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+        }
+    });
+    // 스냅샷 모드 종료 버튼
+    ['exit-snapshot-btn', 'm-exit-snapshot-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', exitSnapshotMode);
+    });
+
+    updateSnapshotCountBadge();
+}
+
 window.renderAnalysisDashboard = renderAnalysisDashboard;
 window.setupAnalysisPeriodButtons = setupAnalysisPeriodButtons;
+window.setupSnapshotControls = setupSnapshotControls;

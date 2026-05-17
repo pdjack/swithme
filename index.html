@@ -192,12 +192,44 @@
             <!-- Analysis View -->
             <div id="analyze-canvas" class="dashboard-canvas" style="display: none;">
                 <section class="canvas-col" style="grid-column: span 3;">
+                    <!-- 스냅샷 액션 바 -->
+                    <div class="analysis-actions-bar">
+                        <h2 class="analysis-title">분석</h2>
+                        <div class="analysis-actions">
+                            <button id="save-snapshot-btn" class="snapshot-action-btn" type="button">
+                                <i data-lucide="bookmark-plus"></i><span>이 분석 저장</span>
+                            </button>
+                            <button id="open-snapshots-btn" class="snapshot-action-btn" type="button">
+                                <i data-lucide="folder"></i><span>저장됨</span>
+                                <span id="snapshot-count-badge" class="snapshot-count-badge" style="display:none;">0</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- 스냅샷 모드 배너 -->
+                    <div id="snapshot-mode-banner" class="snapshot-mode-banner" style="display:none;">
+                        <span class="banner-icon"><i data-lucide="lock"></i></span>
+                        <div class="banner-text">
+                            <strong>저장된 분석 보는 중</strong>
+                            <span id="snapshot-mode-name"></span>
+                            <small id="snapshot-mode-meta"></small>
+                        </div>
+                        <button id="exit-snapshot-btn" class="banner-exit-btn" type="button">현재로 돌아가기</button>
+                    </div>
                     <!-- 기간 선택 -->
                     <div class="analysis-period-bar">
                         <span class="period-label">기간</span>
                         <div class="period-toggle" role="tablist">
                             <button class="period-btn active" data-period="7" role="tab">최근 7일</button>
+                            <button class="period-btn" data-period="14" role="tab">최근 14일</button>
                             <button class="period-btn" data-period="30" role="tab">최근 30일</button>
+                            <button class="period-btn" data-period="90" role="tab">최근 90일</button>
+                            <button class="period-btn period-custom-btn" data-period="custom" role="tab">직접 선택</button>
+                        </div>
+                        <div class="period-custom-range" id="period-custom-range" style="display:none;">
+                            <input type="date" id="period-custom-start" class="period-date-input">
+                            <span class="period-range-sep">~</span>
+                            <input type="date" id="period-custom-end" class="period-date-input">
+                            <button type="button" class="period-apply-btn" id="period-custom-apply">적용</button>
                         </div>
                     </div>
 
@@ -223,13 +255,17 @@
 
                             <!-- 카테고리별 활동 시간 트렌드 -->
                             <div class="glass-card analysis-trend-card">
-                                <div class="s-header">
-                                    <i data-lucide="trending-up"></i>
-                                    <span>카테고리별 활동 시간 트렌드</span>
+                                <div class="s-header trend-header">
+                                    <span class="trend-title"><i data-lucide="trending-up"></i><span>카테고리별 활동 시간 트렌드</span></span>
+                                    <div class="trend-view-toggle" role="tablist" data-scope="pc">
+                                        <button class="view-mode-btn active" data-view="minutes" role="tab">분</button>
+                                        <button class="view-mode-btn" data-view="percent" role="tab">%</button>
+                                    </div>
                                 </div>
                                 <div class="trend-chart-wrap">
                                     <canvas id="category-trend-chart"></canvas>
                                 </div>
+                                <div id="category-toggle-list" class="category-toggle-list"></div>
                                 <p id="trend-empty" class="trend-empty" style="display:none;">활동 기록이 아직 없습니다. 타이머를 돌려 데이터를 쌓아보세요.</p>
                             </div>
                         </div>
@@ -398,11 +434,41 @@
 
             <!-- Analyze 탭 -->
             <div id="m-analyze-panel" class="m-panel" style="display:none;">
+                <div class="analysis-actions-bar m-actions-bar">
+                    <h2 class="analysis-title">분석</h2>
+                    <div class="analysis-actions">
+                        <button id="m-save-snapshot-btn" class="snapshot-action-btn" type="button">
+                            <i data-lucide="bookmark-plus"></i>
+                        </button>
+                        <button id="m-open-snapshots-btn" class="snapshot-action-btn" type="button">
+                            <i data-lucide="folder"></i>
+                            <span id="m-snapshot-count-badge" class="snapshot-count-badge" style="display:none;">0</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="m-snapshot-mode-banner" class="snapshot-mode-banner" style="display:none;">
+                    <span class="banner-icon"><i data-lucide="lock"></i></span>
+                    <div class="banner-text">
+                        <strong>저장된 분석 보는 중</strong>
+                        <span id="m-snapshot-mode-name"></span>
+                        <small id="m-snapshot-mode-meta"></small>
+                    </div>
+                    <button id="m-exit-snapshot-btn" class="banner-exit-btn" type="button">돌아가기</button>
+                </div>
                 <div class="m-period-bar">
                     <span class="period-label">기간</span>
                     <div class="period-toggle" role="tablist">
                         <button class="period-btn active" data-period="7" data-scope="mobile" role="tab">7일</button>
+                        <button class="period-btn" data-period="14" data-scope="mobile" role="tab">14일</button>
                         <button class="period-btn" data-period="30" data-scope="mobile" role="tab">30일</button>
+                        <button class="period-btn" data-period="90" data-scope="mobile" role="tab">90일</button>
+                        <button class="period-btn period-custom-btn" data-period="custom" data-scope="mobile" role="tab">직접</button>
+                    </div>
+                    <div class="period-custom-range" id="m-period-custom-range" style="display:none;">
+                        <input type="date" id="m-period-custom-start" class="period-date-input">
+                        <span class="period-range-sep">~</span>
+                        <input type="date" id="m-period-custom-end" class="period-date-input">
+                        <button type="button" class="period-apply-btn" id="m-period-custom-apply">적용</button>
                     </div>
                 </div>
 
@@ -424,13 +490,17 @@
                     </div>
 
                     <div class="m-trend-card glass-card">
-                        <div class="s-header">
-                            <i data-lucide="trending-up"></i>
-                            <span>카테고리별 활동 시간</span>
+                        <div class="s-header trend-header">
+                            <span class="trend-title"><i data-lucide="trending-up"></i><span>카테고리별 활동 시간</span></span>
+                            <div class="trend-view-toggle" role="tablist" data-scope="mobile">
+                                <button class="view-mode-btn active" data-view="minutes" role="tab">분</button>
+                                <button class="view-mode-btn" data-view="percent" role="tab">%</button>
+                            </div>
                         </div>
                         <div class="trend-chart-wrap">
                             <canvas id="m-category-trend-chart"></canvas>
                         </div>
+                        <div id="m-category-toggle-list" class="category-toggle-list"></div>
                         <p id="m-trend-empty" class="trend-empty" style="display:none;">활동 기록이 아직 없습니다.</p>
                     </div>
 
@@ -609,6 +679,37 @@
                 <button id="confirm-modal-cancel" class="btn-reset">취소</button>
                 <button id="confirm-modal-ok" class="btn-start">삭제</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 분석 스냅샷 저장 모달 -->
+    <div id="snapshot-save-modal" class="modal">
+        <div class="modal-content glass-card">
+            <h2>분석 저장</h2>
+            <div class="form-group">
+                <label>이름</label>
+                <input type="text" id="snapshot-save-name" placeholder="예: 1학기 중간 전 30일" maxlength="60">
+            </div>
+            <div class="form-group">
+                <label>메모 (선택)</label>
+                <input type="text" id="snapshot-save-memo" placeholder="이 분석에 대한 짧은 메모" maxlength="120">
+            </div>
+            <p id="snapshot-save-period" class="snapshot-save-period"></p>
+            <div class="modal-btns">
+                <button id="snapshot-save-cancel" class="btn-reset">취소</button>
+                <button id="snapshot-save-confirm" class="btn-start">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 분석 스냅샷 목록 모달 -->
+    <div id="snapshot-list-modal" class="modal">
+        <div class="modal-content glass-card snapshot-list-content">
+            <div class="snapshot-list-header">
+                <h2>저장된 분석</h2>
+                <button id="snapshot-list-close" class="btn-reset" type="button">✕</button>
+            </div>
+            <div id="snapshot-list-body" class="snapshot-list-body"></div>
         </div>
     </div>
 
