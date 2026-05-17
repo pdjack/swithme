@@ -1,15 +1,15 @@
 ---
 name: commit
-description: 변경 사항을 분석하고 커밋 메시지를 생성하여 Git 커밋을 수행한다
+description: 변경 사항을 분석하고 커밋 메시지를 생성하여 Git 커밋 + 푸시(+ 필요 시 머지)까지 수행한다
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Bash(git *)
 argument-hint: "[커밋 메시지 힌트 (선택)]"
 ---
 
-# Git Commit
+# Git Commit + Push
 
-변경 사항을 분석하고, 적절한 커밋 메시지를 생성하여 커밋한다.
+변경 사항을 분석하고 커밋한 뒤, 원격으로 푸시한다. 작업 브랜치가 main이 아니면 main으로 머지 후 푸시한다.
 
 ## 프로세스
 
@@ -18,6 +18,15 @@ argument-hint: "[커밋 메시지 힌트 (선택)]"
 3. `git log --oneline -5`로 최근 커밋 스타일 확인
 4. 변경 내용을 분석하여 커밋 메시지 작성
 5. 관련 파일을 staging하고 커밋 실행
+6. **현재 브랜치 확인** (`git rev-parse --abbrev-ref HEAD`)
+   - **main 브랜치**: 곧바로 `git push origin main` 실행
+   - **다른 브랜치**:
+     a. 해당 브랜치 푸시 (`git push -u origin <branch>`)
+     b. `git checkout main && git pull --ff-only origin main`
+     c. `git merge --no-ff <branch>` (충돌 발생 시 즉시 중단하고 사용자에게 알림)
+     d. `git push origin main`
+     e. 원래 브랜치로 복귀 (`git checkout <branch>`)
+7. 푸시 결과(커밋 해시 범위)를 사용자에게 보고
 
 ## 커밋 메시지 컨벤션
 
@@ -39,3 +48,7 @@ argument-hint: "[커밋 메시지 힌트 (선택)]"
 - 커밋 메시지 끝에 Co-Authored-By 라인 추가:
   `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
 - HEREDOC 방식으로 커밋 메시지 전달
+- **푸시 단계는 사용자 확인 없이 자동 진행** (이 skill 호출 자체가 푸시 동의로 간주)
+- `--force` / `--no-verify`는 절대 사용하지 않음
+- 머지 충돌이 발생하면 푸시를 중단하고 사용자에게 상황을 알린 뒤 멈춤
+- 작업 브랜치가 main이면 머지 단계를 생략 (푸시만 실행)

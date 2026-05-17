@@ -143,7 +143,27 @@ export let state = {
         { id: 'homework', name: '숙제 완수', emoji: '📚' }
     ],
     reflections: JSON.parse(localStorage.getItem('switme_reflections')) || {},
-    analysisResults: JSON.parse(localStorage.getItem('switme_analysis')) || [],
+    analysisResults: (() => {
+        const raw = JSON.parse(localStorage.getItem('switme_analysis')) || [];
+        const isValidString = (v) => typeof v === 'string' && v.length > 0 && v !== 'undefined' && v !== 'null';
+        // 신규 분석 스냅샷 스키마(필수 필드 보유)만 유지. 이전 버전/잘못된/유령 항목 제거.
+        const cleaned = raw.filter(s =>
+            s && typeof s === 'object'
+            && isValidString(s.id)
+            && isValidString(s.name)
+            && isValidString(s.periodLabel)
+            && isValidString(s.createdAt)
+            && Array.isArray(s.dateKeys) && s.dateKeys.length > 0
+            && Array.isArray(s.subjects)
+            && s.buckets && typeof s.buckets === 'object'
+            && s.score && typeof s.score === 'object'
+        );
+        // 정리된 결과가 원본과 다르면 localStorage를 즉시 갱신해 잔재 제거
+        if (cleaned.length !== raw.length) {
+            try { localStorage.setItem('switme_analysis', JSON.stringify(cleaned)); } catch { /* noop */ }
+        }
+        return cleaned;
+    })(),
     habits: loadHabits(),
     habitSeedLog: loadHabitSeedLog(),
     habitEditorDay: 'daily', // 현재 편집 중인 요일 키 (daily/mon/tue/wed/thu/fri/sat/sun)

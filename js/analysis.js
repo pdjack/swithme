@@ -840,6 +840,9 @@ function renderSnapshotList() {
     const body = document.getElementById('snapshot-list-body');
     if (!body) return;
     const snaps = state.analysisResults || [];
+    // 전체 삭제 버튼 표시/숨김
+    const clearBtn = document.getElementById('snapshot-clear-all');
+    if (clearBtn) clearBtn.style.display = snaps.length > 0 ? '' : 'none';
     if (snaps.length === 0) {
         body.innerHTML = `<div class="snapshot-list-empty">저장된 분석이 없습니다. 분석 화면에서 "이 분석 저장"을 눌러 보관하세요.</div>`;
         return;
@@ -951,6 +954,19 @@ export function setupSnapshotControls() {
     // 목록 모달 닫기
     const listClose = document.getElementById('snapshot-list-close');
     if (listClose) listClose.addEventListener('click', closeSnapshotListModal);
+    // 전체 삭제 — 잔재 항목을 한 번에 비울 수 있는 escape hatch
+    const clearAll = document.getElementById('snapshot-clear-all');
+    if (clearAll) {
+        clearAll.addEventListener('click', () => {
+            if (!window.confirm('저장된 분석을 모두 삭제할까요? 되돌릴 수 없습니다.')) return;
+            state.analysisResults = [];
+            try { localStorage.setItem('switme_analysis', JSON.stringify([])); } catch { /* noop */ }
+            saveToLocal();
+            updateSnapshotCountBadge();
+            if (isSnapshotMode()) exitSnapshotMode();
+            renderSnapshotList();
+        });
+    }
     // 배경 클릭 시 닫기
     ['snapshot-save-modal', 'snapshot-list-modal'].forEach(id => {
         const modal = document.getElementById(id);
