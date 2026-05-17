@@ -407,15 +407,19 @@ function showPlanDetailModal(plan) {
     memoEl.textContent = plan.memo || '(메모 없음)';
     modal.classList.add('active');
 
-    const deleteBtn = document.getElementById('plan-detail-delete');
-    const cancelBtn = document.getElementById('plan-detail-cancel');
-    const editBtn = document.getElementById('plan-detail-edit');
+    const oldDelete = document.getElementById('plan-detail-delete');
+    const oldCancel = document.getElementById('plan-detail-cancel');
+    const oldEdit = document.getElementById('plan-detail-edit');
+
+    const deleteBtn = oldDelete.cloneNode(true);
+    oldDelete.replaceWith(deleteBtn);
+    const cancelBtn = oldCancel.cloneNode(true);
+    oldCancel.replaceWith(cancelBtn);
+    const editBtn = oldEdit.cloneNode(true);
+    oldEdit.replaceWith(editBtn);
 
     function closeModal() {
         modal.classList.remove('active');
-        deleteBtn.removeEventListener('click', onDelete);
-        cancelBtn.removeEventListener('click', closeModal);
-        editBtn.removeEventListener('click', onEdit);
     }
 
     function onDelete() {
