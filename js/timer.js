@@ -319,9 +319,10 @@ export function stopTimer() {
 export function resetTimer() {
     clearInterval(state.timer.interval);
     state.timer.isRunning = false;
-    state.timer.seconds = 1500;
-    state.timer.totalDuration = 1500;
-    state.timer.sessionStartSeconds = 1500;
+    const lastDuration = state.timer.totalDuration || 1500;
+    state.timer.seconds = lastDuration;
+    state.timer.totalDuration = lastDuration;
+    state.timer.sessionStartSeconds = lastDuration;
     state.timer.stopwatchSeconds = 0;
     state.timer.sessionStartTime = null;
     state.timer.wallStartTimestamp = null;
