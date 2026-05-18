@@ -229,8 +229,9 @@ function renderMobileCalendar() {
 function renderMobileSubjectManager() {
     const list = document.getElementById('m-subject-manager-list');
     if (!list) return;
-    list.innerHTML = state.subjects.map((s) => `
-        <div class="subject-row">
+    list.innerHTML = state.subjects.map((s, idx) => `
+        <div class="subject-row" data-subject-idx="${idx}">
+            <div class="drag-handle m-drag-handle" data-drag-idx="${idx}">${icon('grip-vertical')}</div>
             <input type="text" value="${s.name}" onchange="updateSubjectName('${s.id}', this.value)" placeholder="Name">
             <input type="color" value="${s.color}" onchange="updateSubjectColor('${s.id}', this.value)">
             <button onclick="deleteSubject('${s.id}')" class="ghost-btn" title="Delete">${icon('trash-2')}</button>
@@ -238,6 +239,100 @@ function renderMobileSubjectManager() {
     `).join('');
 }
 window.renderMobileSubjectManager = renderMobileSubjectManager;
+
+// ── 모바일 카테고리 순서 조정 (터치 드래그) ─────────────────────
+let mSubjectDragState = null;
+
+function findSubjectIdxAtY(clientY) {
+    const list = document.getElementById('m-subject-manager-list');
+    if (!list) return -1;
+    const rows = [...list.querySelectorAll('.subject-row')];
+    for (let i = 0; i < rows.length; i++) {
+        const rect = rows[i].getBoundingClientRect();
+        if (clientY >= rect.top && clientY <= rect.bottom) return i;
+    }
+    if (rows.length && clientY < rows[0].getBoundingClientRect().top) return 0;
+    if (rows.length && clientY > rows[rows.length - 1].getBoundingClientRect().bottom) return rows.length - 1;
+    return -1;
+}
+
+function applyDraggingClass(idx) {
+    const list = document.getElementById('m-subject-manager-list');
+    if (!list) return;
+    list.querySelectorAll('.subject-row.dragging').forEach(r => r.classList.remove('dragging'));
+    const target = list.querySelector(`.subject-row[data-subject-idx="${idx}"]`);
+    if (target) target.classList.add('dragging');
+}
+
+function onMSubjectTouchMove(e) {
+    if (!mSubjectDragState) return;
+    const touch = e.touches[0];
+    if (!mSubjectDragState.started) {
+        if (Math.abs(touch.clientY - mSubjectDragState.startY) > 8) {
+            clearTimeout(mSubjectDragState.longPressTimer);
+            cleanupMSubjectDrag();
+        }
+        return;
+    }
+    e.preventDefault();
+    const targetIdx = findSubjectIdxAtY(touch.clientY);
+    if (targetIdx < 0 || targetIdx === mSubjectDragState.idx) return;
+    const moved = state.subjects.splice(mSubjectDragState.idx, 1)[0];
+    state.subjects.splice(targetIdx, 0, moved);
+    mSubjectDragState.idx = targetIdx;
+    mSubjectDragState.changed = true;
+    renderMobileSubjectManager();
+    applyDraggingClass(targetIdx);
+}
+
+function onMSubjectTouchEnd() {
+    if (!mSubjectDragState) return;
+    clearTimeout(mSubjectDragState.longPressTimer);
+    const { started, changed } = mSubjectDragState;
+    cleanupMSubjectDrag();
+    if (started && changed) {
+        saveToLocal();
+        renderMobileSubjectManager();
+        if (window.renderSubjectManager) window.renderSubjectManager();
+        if (window.renderSubjectOptions) window.renderSubjectOptions();
+        if (window.renderTasks) window.renderTasks();
+    } else {
+        const list = document.getElementById('m-subject-manager-list');
+        if (list) list.querySelectorAll('.subject-row.dragging').forEach(r => r.classList.remove('dragging'));
+    }
+}
+
+function cleanupMSubjectDrag() {
+    document.removeEventListener('touchmove', onMSubjectTouchMove, { passive: false });
+    document.removeEventListener('touchend', onMSubjectTouchEnd);
+    document.removeEventListener('touchcancel', onMSubjectTouchEnd);
+    mSubjectDragState = null;
+}
+
+document.addEventListener('touchstart', (e) => {
+    const handle = e.target.closest('.m-drag-handle');
+    if (!handle) return;
+    const list = document.getElementById('m-subject-manager-list');
+    if (!list || !list.contains(handle)) return;
+    const idx = parseInt(handle.dataset.dragIdx, 10);
+    if (Number.isNaN(idx)) return;
+    const touch = e.touches[0];
+    mSubjectDragState = {
+        idx,
+        started: false,
+        changed: false,
+        startY: touch.clientY,
+        longPressTimer: setTimeout(() => {
+            if (!mSubjectDragState) return;
+            mSubjectDragState.started = true;
+            applyDraggingClass(mSubjectDragState.idx);
+            if (navigator.vibrate) navigator.vibrate(30);
+        }, 300),
+    };
+    document.addEventListener('touchmove', onMSubjectTouchMove, { passive: false });
+    document.addEventListener('touchend', onMSubjectTouchEnd);
+    document.addEventListener('touchcancel', onMSubjectTouchEnd);
+}, { passive: true });
 
 function renderMobileReflectionItemManager() {
     const list = document.getElementById('m-reflection-item-manager-list');
