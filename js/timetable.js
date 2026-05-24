@@ -146,10 +146,14 @@ function renderPlanSlots(root, plan) {
             const SLOTS_PER_ROW = 6;
             const startInRow = plan.startSlot % SLOTS_PER_ROW;
             const remainingInRow = SLOTS_PER_ROW - startInRow;
-            const memoEl = document.createElement('span');
+            const startRow = Math.floor(plan.startSlot / SLOTS_PER_ROW);
+            const endRow = Math.floor(plan.endSlot / SLOTS_PER_ROW);
+            const rowSpan = endRow - startRow + 1;
+            const memoEl = document.createElement('div');
             memoEl.className = 'plan-block__memo';
             memoEl.textContent = plan.memo;
             memoEl.style.width = `calc(${remainingInRow * 100}% + ${remainingInRow - 1}px)`;
+            memoEl.style.height = `calc(${rowSpan * 100}% + ${rowSpan - 1}px)`;
             firstSlot.appendChild(memoEl);
         }
     }
