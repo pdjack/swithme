@@ -149,6 +149,7 @@ export let state = {
         { id: 'homework', name: '숙제 완수', emoji: '📚' }
     ],
     reflections: JSON.parse(localStorage.getItem('switme_reflections')) || {},
+    calendarMemos: JSON.parse(localStorage.getItem('switme_calendar_memos')) || {},
     analysisResults: (() => {
         const raw = JSON.parse(localStorage.getItem('switme_analysis')) || [];
         const isValidString = (v) => typeof v === 'string' && v.length > 0 && v !== 'undefined' && v !== 'null';
@@ -194,6 +195,7 @@ function flushSave() {
     localStorage.setItem('switme_subjects', JSON.stringify(state.subjects));
     localStorage.setItem('switme_reflection_items', JSON.stringify(state.reflectionItems));
     localStorage.setItem('switme_reflections', JSON.stringify(state.reflections));
+    localStorage.setItem('switme_calendar_memos', JSON.stringify(state.calendarMemos));
     localStorage.setItem('switme_analysis', JSON.stringify(state.analysisResults));
     localStorage.setItem('switme_habits', JSON.stringify(state.habits));
     localStorage.setItem('switme_habit_seed_log', JSON.stringify(state.habitSeedLog));
