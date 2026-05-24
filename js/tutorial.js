@@ -13,6 +13,7 @@ const MAIN_STEPS = [
         body: '오른쪽 + 버튼을 눌러 오늘 할 일을 추가하세요. 카테고리·이름만 적으면 끝.',
         mobile: '#m-open-task-btn',
         desktop: '#open-task-modal',
+        tab: 'dashboard',
     },
     {
         id: 'timer-start',
@@ -20,6 +21,7 @@ const MAIN_STEPS = [
         body: '할 일을 선택하고 START 버튼을 누르면 시간이 기록됩니다. 25분 집중 → 짧은 휴식이 기본.',
         mobile: '#m-btn-start',
         desktop: '.timer-btns .btn-start',
+        tab: 'dashboard',
     },
     {
         id: 'timetable',
@@ -27,6 +29,7 @@ const MAIN_STEPS = [
         body: '하루를 10분 단위 격자로 시각화. 기록 탭은 실제 활동, 플랜 탭은 계획. 격자를 탭하여 직접 입력도 가능합니다.',
         mobile: '#m-timetable-root',
         desktop: '#timetable-root',
+        tab: 'dashboard',
     },
     {
         id: 'reflection',
@@ -34,8 +37,41 @@ const MAIN_STEPS = [
         body: '하루를 마무리하며 항목별로 점검하고 메모를 남겨보세요. 시간관리·오답정리·복습·숙제 등.',
         mobile: '#m-reflection-items-container',
         desktop: '#reflection-items-container',
+        tab: 'dashboard',
+        before: () => {
+            if (isMobile() && window.switchMobileColumnTab) {
+                window.switchMobileColumnTab('reflection');
+            }
+        },
+    },
+    {
+        id: 'analyze',
+        title: '분석 탭',
+        body: '누적된 데이터로 카테고리별 시간·총점·트렌드를 확인. 기간 토글로 7/14/30/90일 비교 가능. 스냅샷으로 저장도 됩니다.',
+        mobile: '#m-analyze-panel',
+        desktop: '#analyze-canvas',
+        tab: 'analyze',
+    },
+    {
+        id: 'settings',
+        title: '설정 탭',
+        body: '카테고리·회고 항목·습관을 관리. 습관 탭에선 요일별 반복 계획을 미리 등록하면 자동 시드됩니다.',
+        mobile: '#m-settings-panel',
+        desktop: '#settings-canvas',
+        tab: 'settings',
+    },
+    {
+        id: 'date',
+        title: '날짜 변경',
+        body: '날짜 라벨을 탭하면 캘린더가 열립니다. 다른 날짜를 선택하면 그 날의 할 일·타임테이블·회고가 표시됩니다.',
+        mobile: '#m-display-date',
+        desktop: '#display-date',
+        tab: 'dashboard',
     },
 ];
+
+const FIRST_LAUNCH_MAX = 4; // 첫 진입 시엔 메인 4스텝만. 나머지 3은 컨텍스트로 처리.
+let maxStepsForRun = FIRST_LAUNCH_MAX;
 
 const CONTEXT_STEPS = {
     analyze: {
@@ -115,19 +151,31 @@ function getTargetRect(step) {
     return rect;
 }
 
+function applyStepTab(step) {
+    if (!step.tab) return;
+    if (isMobile() && window.switchMobileTab) {
+        window.switchMobileTab(step.tab);
+    } else if (window.switchTab) {
+        window.switchTab(step.tab);
+    }
+}
+
 function renderCurrentStep() {
     const step = MAIN_STEPS[currentStepIndex];
     if (!step) return;
 
+    applyStepTab(step);
+    if (typeof step.before === 'function') step.before();
+
     const bubble = overlayEl.querySelector('.tutorial-bubble');
     overlayEl.querySelector('.tutorial-step-label').textContent =
-        `STEP ${currentStepIndex + 1} / ${MAIN_STEPS.length}`;
+        `STEP ${currentStepIndex + 1} / ${maxStepsForRun}`;
     overlayEl.querySelector('.tutorial-title').textContent = step.title;
     overlayEl.querySelector('.tutorial-body').textContent = step.body;
 
     // 점 표시
     const dotsEl = overlayEl.querySelector('.tutorial-dots');
-    dotsEl.innerHTML = MAIN_STEPS.map((_, i) =>
+    dotsEl.innerHTML = Array.from({ length: maxStepsForRun }, (_, i) =>
         `<span class="tutorial-dot${i === currentStepIndex ? ' on' : ''}"></span>`).join('');
 
     // 이전 버튼 표시 여부
@@ -136,28 +184,27 @@ function renderCurrentStep() {
 
     // 마지막 스텝이면 다음 → 완료
     const nextBtn = overlayEl.querySelector('.tutorial-next');
-    nextBtn.textContent = currentStepIndex === MAIN_STEPS.length - 1 ? '완료' : '다음 →';
+    nextBtn.textContent = currentStepIndex === maxStepsForRun - 1 ? '완료' : '다음 →';
 
-    // 타겟 위치 계산
-    const rect = getTargetRect(step);
-    const hole = overlayEl.querySelector('.tutorial-hole');
-    if (rect) {
-        const padding = 8;
-        hole.setAttribute('x', Math.max(0, rect.left - padding));
-        hole.setAttribute('y', Math.max(0, rect.top - padding));
-        hole.setAttribute('width', rect.width + padding * 2);
-        hole.setAttribute('height', rect.height + padding * 2);
-
-        // 풍선 위치: 타겟 아래 또는 위
-        positionBubble(bubble, rect);
-    } else {
-        // 타겟 없으면 중앙
-        hole.setAttribute('width', 0);
-        hole.setAttribute('height', 0);
-        bubble.style.top = '50%';
-        bubble.style.left = '50%';
-        bubble.style.transform = 'translate(-50%, -50%)';
-    }
+    // 탭 전환 직후 DOM 안정화 대기
+    requestAnimationFrame(() => {
+        const rect = getTargetRect(step);
+        const hole = overlayEl.querySelector('.tutorial-hole');
+        if (rect) {
+            const padding = 8;
+            hole.setAttribute('x', Math.max(0, rect.left - padding));
+            hole.setAttribute('y', Math.max(0, rect.top - padding));
+            hole.setAttribute('width', rect.width + padding * 2);
+            hole.setAttribute('height', rect.height + padding * 2);
+            positionBubble(bubble, rect);
+        } else {
+            hole.setAttribute('width', 0);
+            hole.setAttribute('height', 0);
+            bubble.style.top = '50%';
+            bubble.style.left = '50%';
+            bubble.style.transform = 'translate(-50%, -50%)';
+        }
+    });
 }
 
 function positionBubble(bubble, targetRect) {
@@ -201,7 +248,7 @@ function positionBubble(bubble, targetRect) {
 }
 
 function nextStep() {
-    if (currentStepIndex < MAIN_STEPS.length - 1) {
+    if (currentStepIndex < maxStepsForRun - 1) {
         currentStepIndex += 1;
         renderCurrentStep();
     } else {
@@ -220,11 +267,16 @@ function endTutorial() {
     if (!overlayEl) return;
     overlayEl.classList.remove('active');
     localStorage.setItem(FLAG_MAIN_DONE, '1');
+    // 풀 워크스루(다시보기)에서 컨텍스트 스텝까지 모두 봤으면 본 것으로 처리
+    if (maxStepsForRun === MAIN_STEPS.length) {
+        Object.keys(CONTEXT_STEPS).forEach(k => localStorage.setItem(FLAG_SEEN_PREFIX + k, '1'));
+    }
 }
 
-export function startMainTutorial() {
+export function startMainTutorial(opts = {}) {
     ensureOverlay();
     currentStepIndex = 0;
+    maxStepsForRun = opts.full ? MAIN_STEPS.length : FIRST_LAUNCH_MAX;
     overlayEl.classList.add('active', 'tutorial-mode-main');
     overlayEl.classList.remove('tutorial-mode-context');
     // 다음 프레임에서 렌더(레이아웃 stabilize)
@@ -299,13 +351,13 @@ export function maybeShowContextTutorial(key) {
 export function resetTutorial() {
     localStorage.removeItem(FLAG_MAIN_DONE);
     Object.keys(CONTEXT_STEPS).forEach(k => localStorage.removeItem(FLAG_SEEN_PREFIX + k));
-    // 대시보드 탭으로 이동 후 튜토리얼 시작
+    // 대시보드 탭으로 이동 후 풀 워크스루(7스텝) 시작
     if (isMobile() && window.switchMobileTab) {
         window.switchMobileTab('dashboard');
     } else if (window.switchTab) {
         window.switchTab('dashboard');
     }
-    setTimeout(startMainTutorial, 200);
+    setTimeout(() => startMainTutorial({ full: true }), 200);
 }
 
 export function maybeStartTutorialOnLaunch() {

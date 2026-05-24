@@ -373,6 +373,7 @@ function initColumnTabs() {
     updateTabIndicator();
 }
 
+window.switchMobileColumnTab = switchColumnTab;
 function switchColumnTab(tabName) {
     const taskList = document.getElementById('m-task-list');
     const reflectionContent = document.getElementById('m-reflection-content');
