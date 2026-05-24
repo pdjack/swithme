@@ -2682,7 +2682,7 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     position: absolute;
     top: 0;
     left: 0;
-    padding: 2px 4px;
+    padding: 0 4px;
     box-sizing: border-box;
     text-align: center;
     font-size: 14px;
@@ -2697,12 +2697,12 @@ body.m-subject-dragging .subject-row { touch-action: none; }
 }
 .plan-block__memo--multi {
     white-space: normal;
-    text-overflow: clip;
     word-break: break-all;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: var(--memo-lines, 2);
-    line-clamp: var(--memo-lines, 2);
+    text-align: left;
+    text-overflow: ellipsis;
 }
 
 /* ── 계획 슬롯 선택 하이라이트 ────────────────────────────── */

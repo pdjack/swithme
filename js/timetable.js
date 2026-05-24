@@ -409,6 +409,16 @@ function showPlanSlotModal(startSlot, endSlot) {
 
 function showPlanDetailModal(plan) {
     const modal = document.getElementById('plan-detail-modal');
+    const viewDetail = modal.querySelector('[data-view="detail"]');
+    const viewChoice = modal.querySelector('[data-view="edit-choice"]');
+    const viewMemo = modal.querySelector('[data-view="memo-edit"]');
+
+    function showView(name) {
+        viewDetail.hidden = name !== 'detail';
+        viewChoice.hidden = name !== 'edit-choice';
+        viewMemo.hidden = name !== 'memo-edit';
+    }
+
     const timeLabel = document.getElementById('plan-detail-time-label');
     const subjectEl = document.getElementById('plan-detail-subject');
     const memoEl = document.getElementById('plan-detail-memo');
@@ -425,18 +435,25 @@ function showPlanDetailModal(plan) {
     }
 
     memoEl.textContent = plan.memo || '(메모 없음)';
+    showView('detail');
     modal.classList.add('active');
 
-    const oldDelete = document.getElementById('plan-detail-delete');
-    const oldCancel = document.getElementById('plan-detail-cancel');
-    const oldEdit = document.getElementById('plan-detail-edit');
+    function replaceBtn(id) {
+        const old = document.getElementById(id);
+        const clone = old.cloneNode(true);
+        old.replaceWith(clone);
+        return clone;
+    }
 
-    const deleteBtn = oldDelete.cloneNode(true);
-    oldDelete.replaceWith(deleteBtn);
-    const cancelBtn = oldCancel.cloneNode(true);
-    oldCancel.replaceWith(cancelBtn);
-    const editBtn = oldEdit.cloneNode(true);
-    oldEdit.replaceWith(editBtn);
+    const deleteBtn = replaceBtn('plan-detail-delete');
+    const cancelBtn = replaceBtn('plan-detail-cancel');
+    const editBtn = replaceBtn('plan-detail-edit');
+    const editMemoBtn = replaceBtn('plan-detail-edit-memo');
+    const editTimeBtn = replaceBtn('plan-detail-edit-time');
+    const editCancelBtn = replaceBtn('plan-detail-edit-cancel');
+    const memoCancelBtn = replaceBtn('plan-detail-memo-cancel');
+    const memoSaveBtn = replaceBtn('plan-detail-memo-save');
+    const memoInput = document.getElementById('plan-detail-memo-input');
 
     function closeModal() {
         modal.classList.remove('active');
@@ -452,13 +469,39 @@ function showPlanDetailModal(plan) {
     }
 
     function onEdit() {
+        showView('edit-choice');
+    }
+
+    function onEditMemo() {
+        memoInput.value = plan.memo || '';
+        showView('memo-edit');
+        memoInput.focus();
+    }
+
+    function onEditTime() {
         closeModal();
         startResizeMode(plan);
+    }
+
+    function onMemoSave() {
+        plan.memo = memoInput.value.trim();
+        saveToLocal();
+        renderTimetable();
+        closeModal();
+    }
+
+    function backToDetail() {
+        showView('detail');
     }
 
     deleteBtn.addEventListener('click', onDelete);
     cancelBtn.addEventListener('click', closeModal);
     editBtn.addEventListener('click', onEdit);
+    editMemoBtn.addEventListener('click', onEditMemo);
+    editTimeBtn.addEventListener('click', onEditTime);
+    editCancelBtn.addEventListener('click', backToDetail);
+    memoCancelBtn.addEventListener('click', backToDetail);
+    memoSaveBtn.addEventListener('click', onMemoSave);
 }
 
 // ─── 수정 모드 (양끝 핸들 드래그) ──────────────────────────────────

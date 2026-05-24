@@ -619,13 +619,34 @@
     <!-- 계획 슬롯 상세/수정/삭제 팝업 -->
     <div id="plan-detail-modal" class="modal">
         <div class="modal-content glass-card">
-            <h2 id="plan-detail-time-label">09:00 ~ 10:30</h2>
-            <p id="plan-detail-subject" class="plan-detail-subject"></p>
-            <p id="plan-detail-memo" class="plan-detail-memo"></p>
-            <div class="modal-btns">
-                <button id="plan-detail-delete" class="btn-reset" style="color: #FF3B30;">삭제</button>
-                <button id="plan-detail-cancel" class="btn-reset">취소</button>
-                <button id="plan-detail-edit" class="btn-start">수정</button>
+            <div data-view="detail">
+                <h2 id="plan-detail-time-label">09:00 ~ 10:30</h2>
+                <p id="plan-detail-subject" class="plan-detail-subject"></p>
+                <p id="plan-detail-memo" class="plan-detail-memo"></p>
+                <div class="modal-btns">
+                    <button id="plan-detail-delete" class="btn-reset" style="color: #FF3B30;">삭제</button>
+                    <button id="plan-detail-cancel" class="btn-reset">취소</button>
+                    <button id="plan-detail-edit" class="btn-start">수정</button>
+                </div>
+            </div>
+            <div data-view="edit-choice" hidden>
+                <h2>무엇을 수정할까요?</h2>
+                <div class="modal-btns">
+                    <button id="plan-detail-edit-cancel" class="btn-reset">취소</button>
+                    <button id="plan-detail-edit-time" class="btn-start">시간 변경</button>
+                    <button id="plan-detail-edit-memo" class="btn-start">메모 수정</button>
+                </div>
+            </div>
+            <div data-view="memo-edit" hidden>
+                <h2>메모 수정</h2>
+                <div class="form-group">
+                    <label>메모</label>
+                    <input type="text" id="plan-detail-memo-input" placeholder="메모를 입력하세요">
+                </div>
+                <div class="modal-btns">
+                    <button id="plan-detail-memo-cancel" class="btn-reset">취소</button>
+                    <button id="plan-detail-memo-save" class="btn-start">저장</button>
+                </div>
             </div>
         </div>
     </div>
