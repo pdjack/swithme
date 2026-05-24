@@ -139,6 +139,20 @@ function renderPlanSlots(root, plan) {
             showPlanDetailModal(plan);
         });
     }
+
+    if (plan.memo) {
+        const firstSlot = root.querySelector(`.slot[data-slot-idx="${plan.startSlot}"]`);
+        if (firstSlot) {
+            const SLOTS_PER_ROW = 6;
+            const startInRow = plan.startSlot % SLOTS_PER_ROW;
+            const remainingInRow = SLOTS_PER_ROW - startInRow;
+            const memoEl = document.createElement('span');
+            memoEl.className = 'plan-block__memo';
+            memoEl.textContent = plan.memo;
+            memoEl.style.width = `calc(${remainingInRow * 100}% + ${remainingInRow - 1}px)`;
+            firstSlot.appendChild(memoEl);
+        }
+    }
 }
 
 const lightenCache = new Map();
