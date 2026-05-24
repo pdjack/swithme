@@ -952,6 +952,22 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 .subject-row.dragging { opacity: 0.5; border: 2px dashed var(--primary); }
 .drag-handle { cursor: grab; color: var(--text-dim); padding-right: 8px; }
 .drag-handle:active { cursor: grabbing; }
+.m-drag-handle {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    padding: 12px 10px;
+    margin: -12px 0 -12px -10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.m-drag-handle svg, .m-drag-handle * { pointer-events: none; }
+body.m-subject-dragging {
+    overflow: hidden;
+    touch-action: none;
+}
+body.m-subject-dragging .subject-row { touch-action: none; }
 .subject-row input[type="text"] {
     background: transparent;
     border: none;
