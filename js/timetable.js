@@ -151,6 +151,7 @@ function renderPlanSlots(root, plan) {
             const firstRowCells = firstRowEndSlot - plan.startSlot + 1;
             const memoEl = document.createElement('div');
             memoEl.className = 'plan-block__memo';
+            if (rowSpan > 1) memoEl.classList.add('plan-block__memo--multi');
             memoEl.textContent = plan.memo;
             memoEl.style.width = `calc(${firstRowCells * 100}% + ${firstRowCells - 1}px)`;
             memoEl.style.height = `calc(${rowSpan * 100}% + ${rowSpan - 1}px)`;
