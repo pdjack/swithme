@@ -3661,7 +3661,13 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     padding: 16px 18px;
     box-shadow: 0 10px 40px rgba(0, 86, 179, 0.35), 0 0 0 1px rgba(0, 86, 179, 0.2);
     color: var(--text-main);
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.tutorial-overlay.active .tutorial-bubble {
     pointer-events: auto;
+    visibility: visible;
 }
 
 .tutorial-step-label {
