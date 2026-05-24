@@ -3401,6 +3401,46 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     font-size: 13px;
 }
 
+/* ── 회고 메모 목록 ─────────────────────────────────────── */
+.reflection-memo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.reflection-memo-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+}
+.reflection-memo-date {
+    flex: 0 0 auto;
+    min-width: 78px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub, #8E8E93);
+    letter-spacing: 0.2px;
+}
+.reflection-memo-text {
+    flex: 1 1 auto;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-main);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.m-analysis-section .reflection-memo-item {
+    padding: 12px 14px;
+    gap: 10px;
+}
+.m-analysis-section .reflection-memo-date {
+    min-width: 68px;
+    font-size: 12px;
+}
+.m-analysis-section .reflection-memo-text {
+    font-size: 13px;
+}
+
 /* ── 모바일 분석 대시보드 ─────────────────────────────────── */
 .m-period-bar {
     display: flex;

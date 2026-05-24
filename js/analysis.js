@@ -570,6 +570,46 @@ function renderPrescription(text, scope = 'pc') {
     card.innerHTML = `<p class="prescription-text">${text}</p>`;
 }
 
+// ── 회고 메모 렌더 ─────────────────────────────────────
+const DOW_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+
+function collectReflectionMemos(dateKeys) {
+    const out = [];
+    dateKeys.forEach(k => {
+        const r = state.reflections[k];
+        const memo = r && typeof r.memo === 'string' ? r.memo.trim() : '';
+        if (memo) out.push({ date: k, memo });
+    });
+    // 최신 날짜부터
+    out.sort((a, b) => (a.date < b.date ? 1 : -1));
+    return out;
+}
+
+function formatMemoDate(key) {
+    const d = new Date(key);
+    if (Number.isNaN(d.getTime())) return key;
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${m}/${day} (${DOW_LABELS[d.getDay()]})`;
+}
+
+function renderReflectionMemos(scope = 'pc') {
+    const listEl = document.getElementById(scope === 'mobile' ? 'm-reflection-memo-list' : 'reflection-memo-list');
+    if (!listEl) return;
+    const dateKeys = isSnapshotMode() ? activeSnapshot.dateKeys : currentDateKeys();
+    const memos = collectReflectionMemos(dateKeys);
+    if (memos.length === 0) {
+        listEl.innerHTML = `<div class="empty-state small"><p>이 기간에 작성된 회고 메모가 없습니다.</p></div>`;
+        return;
+    }
+    listEl.innerHTML = memos.map(m => `
+        <div class="reflection-memo-item glass-card">
+            <div class="reflection-memo-date">${formatMemoDate(m.date)}</div>
+            <div class="reflection-memo-text">${escapeHtml(m.memo)}</div>
+        </div>
+    `).join('');
+}
+
 // ── 엔트리 ─────────────────────────────────────────────
 export function renderAnalysisDashboard(arg) {
     // 하위 호환: 숫자(일수) 인자 또는 {mode, days|startKey, endKey} 객체 허용
@@ -597,12 +637,14 @@ export function renderAnalysisDashboard(arg) {
     renderCategoryToggleList('pc');
     renderInsights(insightData, 'pc');
     renderPrescription(prescription, 'pc');
+    renderReflectionMemos('pc');
 
     renderScoreCard('mobile');
     renderTrendChart('mobile');
     renderCategoryToggleList('mobile');
     renderInsights(insightData, 'mobile');
     renderPrescription(prescription, 'mobile');
+    renderReflectionMemos('mobile');
 
     refreshSnapshotUiState();
     updateTrendViewHint();
