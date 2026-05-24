@@ -86,6 +86,7 @@ function switchMobileSettingsTab(tab) {
 }
 
 // ── 탭 전환 ──────────────────────────────────────────────────────
+window.switchMobileTab = switchMobileTab;
 function switchMobileTab(tab) {
     const panels = {
         dashboard: 'm-dashboard-panel',

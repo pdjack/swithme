@@ -299,7 +299,13 @@ export function maybeShowContextTutorial(key) {
 export function resetTutorial() {
     localStorage.removeItem(FLAG_MAIN_DONE);
     Object.keys(CONTEXT_STEPS).forEach(k => localStorage.removeItem(FLAG_SEEN_PREFIX + k));
-    startMainTutorial();
+    // 대시보드 탭으로 이동 후 튜토리얼 시작
+    if (isMobile() && window.switchMobileTab) {
+        window.switchMobileTab('dashboard');
+    } else if (window.switchTab) {
+        window.switchTab('dashboard');
+    }
+    setTimeout(startMainTutorial, 200);
 }
 
 export function maybeStartTutorialOnLaunch() {
