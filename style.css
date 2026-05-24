@@ -3654,11 +3654,13 @@ body.m-subject-dragging .subject-row { touch-action: none; }
 
 .tutorial-bubble {
     position: absolute;
-    width: 360px;
+    width: 440px;
+    max-height: 78vh;
+    overflow-y: auto;
     background: var(--card);
     border: 1px solid var(--primary);
     border-radius: 14px;
-    padding: 16px 18px;
+    padding: 18px 20px;
     box-shadow: 0 10px 40px rgba(0, 86, 179, 0.35), 0 0 0 1px rgba(0, 86, 179, 0.2);
     color: var(--text-main);
     pointer-events: none;
@@ -3685,6 +3687,38 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     font-weight: 700;
     margin-bottom: 8px;
     letter-spacing: -0.2px;
+}
+
+.tutorial-body .tut-intro {
+    font-size: 13px;
+    color: #ddd;
+    margin-bottom: 10px;
+    line-height: 1.55;
+}
+.tutorial-body .tut-steps {
+    padding-left: 18px;
+    margin: 0 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.tutorial-body .tut-steps li {
+    font-size: 13px;
+    color: #ccc;
+    line-height: 1.55;
+}
+.tutorial-body .tut-steps li b {
+    color: #fff;
+}
+.tutorial-body .tut-tip {
+    background: rgba(0, 86, 179, 0.12);
+    border-left: 3px solid var(--primary);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #bcd6f0;
+    line-height: 1.55;
+    margin-bottom: 4px;
 }
 
 .tutorial-body {
