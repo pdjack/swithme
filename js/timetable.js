@@ -154,6 +154,7 @@ function renderPlanSlots(root, plan) {
             memoEl.textContent = plan.memo;
             memoEl.style.width = `calc(${firstRowCells * 100}% + ${firstRowCells - 1}px)`;
             memoEl.style.height = `calc(${rowSpan * 100}% + ${rowSpan - 1}px)`;
+            memoEl.style.setProperty('--memo-lines', String(rowSpan));
             firstSlot.appendChild(memoEl);
         }
     }
