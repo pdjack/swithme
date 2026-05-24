@@ -29,6 +29,7 @@ export default [
         lucide: 'readonly',
         Chart: 'readonly',
         navigator: 'readonly',
+        requestAnimationFrame: 'readonly',
       },
     },
     rules: {

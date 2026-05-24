@@ -8,6 +8,7 @@ import { restoreTimerState, state } from './store.js';
 import { initStaticIcons } from './icons.js';
 import { setupAnalysisPeriodButtons, setupSnapshotControls } from './analysis.js';
 import { seedHabitsForDate, setupHabitEditor } from './habits.js';
+import { maybeStartTutorialOnLaunch } from './tutorial.js';
 
 // SW 업데이트 시 자동 리로드
 if ('serviceWorker' in navigator) {
@@ -53,6 +54,8 @@ function init() {
     renderTimetable();
 
     initStaticIcons();
+
+    maybeStartTutorialOnLaunch();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
