@@ -1969,30 +1969,28 @@ body.m-subject-dragging .subject-row { touch-action: none; }
 .m-btn-reset:active { transform: scale(0.96); }
 .m-btn-task:active { transform: scale(0.9); }
 
-/* ── 하단 바: 탭 네비 + 컨트롤 ─────────────────── */
-.m-bottom-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    max-width: 400px;
-    flex-shrink: 0;
-}
-
+/* ── 하단 고정 탭 네비게이션 ─────────────────── */
 .m-tab-nav {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    flex: 1;
     gap: 4px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: rgba(10, 10, 11, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
 }
 
 .m-tab {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 4px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--border);
+    gap: 4px;
+    padding: 6px 4px;
+    background: transparent;
+    border: none;
     border-radius: 10px;
     color: var(--text-dim);
     cursor: pointer;
@@ -2000,20 +1998,23 @@ body.m-subject-dragging .subject-row { touch-action: none; }
 }
 
 .m-tab i {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
+}
+
+.m-tab-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: -0.1px;
 }
 
 .m-tab.active {
-    color: #fff;
-    background: rgba(0, 122, 255, 0.15);
-    border-color: var(--primary);
-    box-shadow: 0 0 10px rgba(0, 122, 255, 0.1);
+    color: var(--primary);
 }
 
 .m-tab:active {
-    transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.08);
+    transform: scale(0.94);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 

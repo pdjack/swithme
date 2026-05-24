@@ -359,23 +359,6 @@
                 </div>
             </div>
 
-            <!-- 하단: 탭 네비게이션 + 컨트롤 -->
-            <div class="m-bottom-bar">
-                <nav class="m-tab-nav">
-                    <button class="m-tab active" data-mtab="dashboard">
-                        <i data-lucide="layout-dashboard"></i>
-                    </button>
-                    <button class="m-tab" data-mtab="plan">
-                        <i data-lucide="calendar"></i>
-                    </button>
-                    <button class="m-tab" data-mtab="analyze">
-                        <i data-lucide="bar-chart-3"></i>
-                    </button>
-                    <button class="m-tab" data-mtab="settings">
-                        <i data-lucide="settings"></i>
-                    </button>
-                </nav>
-            </div>
         </section>
 
         <!-- 메인 콘텐츠 영역 -->
@@ -611,6 +594,26 @@
                 </div>
             </div>
         </main>
+
+        <!-- 하단 고정 탭 네비게이션 -->
+        <nav class="m-tab-nav">
+            <button class="m-tab active" data-mtab="dashboard">
+                <i data-lucide="layout-dashboard"></i>
+                <span class="m-tab-label">홈</span>
+            </button>
+            <button class="m-tab" data-mtab="plan">
+                <i data-lucide="calendar"></i>
+                <span class="m-tab-label">캘린더</span>
+            </button>
+            <button class="m-tab" data-mtab="analyze">
+                <i data-lucide="bar-chart-3"></i>
+                <span class="m-tab-label">분석</span>
+            </button>
+            <button class="m-tab" data-mtab="settings">
+                <i data-lucide="settings"></i>
+                <span class="m-tab-label">설정</span>
+            </button>
+        </nav>
     </div>
 
     <!-- ===================================================== -->
