@@ -816,48 +816,6 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     border: none;
     background: transparent;
 }
-
-.day-memo-dot {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--primary);
-    box-shadow: 0 0 6px rgba(0, 122, 255, 0.6);
-}
-
-.calendar-day-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.calendar-day-modal-header h2 {
-    margin: 0;
-}
-
-#calendar-day-modal-close {
-    font-size: 20px;
-    line-height: 1;
-    padding: 4px 10px;
-    cursor: pointer;
-}
-
-.calendar-day-modal-score {
-    font-size: 13px;
-    color: var(--muted, #aaa);
-    margin-bottom: 8px;
-    min-height: 18px;
-}
-
-#calendar-day-memo {
-    width: 100%;
-    resize: vertical;
-    box-sizing: border-box;
-}
 /* Analytics */
 .stat-group { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
 .glass-card .card-title {

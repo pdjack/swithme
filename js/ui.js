@@ -152,64 +152,6 @@ window.deleteReflectionItem = (id) => {
 };
 
 let currentCalendarDate = new Date();
-let calendarModalDateKey = null;
-
-function formatCalendarModalDate(dateKey) {
-    const d = new Date(dateKey + 'T00:00:00');
-    const weekday = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
-    return `${dateKey} (${weekday})`;
-}
-
-function commitCalendarMemo() {
-    if (!calendarModalDateKey) return;
-    const textarea = document.getElementById('calendar-day-memo');
-    if (!textarea) return;
-    const value = textarea.value.trim();
-    if (!state.calendarMemos) state.calendarMemos = {};
-    const prev = state.calendarMemos[calendarModalDateKey] || '';
-    if (value === prev) return;
-    if (value) {
-        state.calendarMemos[calendarModalDateKey] = value;
-    } else {
-        delete state.calendarMemos[calendarModalDateKey];
-    }
-    saveToLocal();
-}
-
-function closeCalendarDayModal() {
-    commitCalendarMemo();
-    const modal = document.getElementById('calendar-day-modal');
-    if (modal) modal.classList.remove('active');
-    calendarModalDateKey = null;
-    renderCalendar();
-    if (window.renderMobileCalendar) window.renderMobileCalendar();
-}
-
-export function openCalendarDayModal(dateKey) {
-    const modal = document.getElementById('calendar-day-modal');
-    if (!modal) return;
-    calendarModalDateKey = dateKey;
-
-    const title = document.getElementById('calendar-day-modal-title');
-    if (title) title.textContent = formatCalendarModalDate(dateKey);
-
-    const scoreEl = document.getElementById('calendar-day-modal-score');
-    if (scoreEl) {
-        const reflection = state.reflections[dateKey];
-        scoreEl.textContent = reflection && reflection.total !== undefined
-            ? `회고 점수: ${reflection.total}`
-            : '';
-    }
-
-    const textarea = document.getElementById('calendar-day-memo');
-    if (textarea) {
-        textarea.value = (state.calendarMemos && state.calendarMemos[dateKey]) || '';
-    }
-
-    modal.classList.add('active');
-}
-
-window.openCalendarDayModal = openCalendarDayModal;
 
 function renderCalendar() {
     const grid = document.getElementById('calendar-grid');
@@ -249,12 +191,17 @@ function renderCalendar() {
         if (reflection && reflection.total !== undefined) {
             scoreHtml = `<div class="day-score">${reflection.total}</div>`;
         }
-        const hasMemo = !!(state.calendarMemos && state.calendarMemos[dateKey]);
-        const memoDot = hasMemo ? `<div class="day-memo-dot" aria-label="메모 있음"></div>` : '';
 
-        div.innerHTML = `<span>${day}</span>${scoreHtml}${memoDot}`;
+        div.innerHTML = `<span>${day}</span>${scoreHtml}`;
         div.addEventListener('click', () => {
-            openCalendarDayModal(dateKey);
+            state.selectedDate = dateKey;
+            saveToLocal();
+            const picker = document.getElementById('date-picker');
+            if (picker) picker.value = dateKey;
+            if (window.seedHabitsForDate) window.seedHabitsForDate(dateKey);
+            switchTab('dashboard');
+            if (window.loadReflectionForDate) window.loadReflectionForDate(dateKey);
+            else if (window.loadTodayReflection) window.loadTodayReflection();
         });
         grid.appendChild(div);
     }
@@ -300,48 +247,6 @@ export function setupEventListeners() {
             }
         };
     }
-
-    const calendarDayModal = document.getElementById('calendar-day-modal');
-    const calendarDayModalClose = document.getElementById('calendar-day-modal-close');
-    const calendarDayModalGoto = document.getElementById('calendar-day-modal-goto');
-    if (calendarDayModalClose) {
-        calendarDayModalClose.onclick = () => closeCalendarDayModal();
-    }
-    if (calendarDayModal) {
-        calendarDayModal.addEventListener('click', (e) => {
-            if (e.target === calendarDayModal) closeCalendarDayModal();
-        });
-    }
-    if (calendarDayModalGoto) {
-        calendarDayModalGoto.onclick = () => {
-            const dateKey = calendarModalDateKey;
-            commitCalendarMemo();
-            const modal = document.getElementById('calendar-day-modal');
-            if (modal) modal.classList.remove('active');
-            calendarModalDateKey = null;
-            if (!dateKey) return;
-            state.selectedDate = dateKey;
-            saveToLocal();
-            const picker = document.getElementById('date-picker');
-            if (picker) picker.value = dateKey;
-            if (window.seedHabitsForDate) window.seedHabitsForDate(dateKey);
-            switchTab('dashboard');
-            if (window.loadReflectionForDate) window.loadReflectionForDate(dateKey);
-            else if (window.loadTodayReflection) window.loadTodayReflection();
-            updateDashboardDateDisplay();
-            renderTasks();
-            renderTimetable();
-            if (window.switchMobileTab) window.switchMobileTab('dashboard');
-            if (window.updateMobileDateDisplay) window.updateMobileDateDisplay();
-            renderCalendar();
-            if (window.renderMobileCalendar) window.renderMobileCalendar();
-        };
-    }
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && calendarDayModal && calendarDayModal.classList.contains('active')) {
-            closeCalendarDayModal();
-        }
-    });
 
     const displayDate = document.getElementById('display-date');
     const datePicker = document.getElementById('date-picker');

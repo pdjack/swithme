@@ -200,13 +200,25 @@ function renderMobileCalendar() {
         const scoreHtml = reflection?.total !== undefined
             ? `<div class="day-score">${reflection.total}</div>`
             : '';
-        const hasMemo = !!(state.calendarMemos && state.calendarMemos[dateKey]);
-        const memoDot = hasMemo ? `<div class="day-memo-dot" aria-label="메모 있음"></div>` : '';
 
-        div.innerHTML = `<span>${day}</span>${scoreHtml}${memoDot}`;
-
+        div.innerHTML = `<span>${day}</span>${scoreHtml}`;
+        
+        // 날짜 선택 클릭 이벤트 추가
         div.addEventListener('click', () => {
-            if (window.openCalendarDayModal) window.openCalendarDayModal(dateKey);
+            state.selectedDate = dateKey;
+            saveToLocal();
+            if (window.seedHabitsForDate) window.seedHabitsForDate(dateKey);
+            updateMobileDateDisplay();
+            switchMobileTab('dashboard'); // 대시보드 탭으로 전환하여 해당 날짜 계획 확인
+
+            // 전역 동기화 (PC 쪽도 필요한 경우)
+            if (typeof window.updateDashboardDateDisplay === 'function') {
+                window.updateDashboardDateDisplay();
+                if (typeof window.renderTasks === 'function') window.renderTasks();
+                if (typeof window.renderTimetable === 'function') window.renderTimetable();
+            }
+            if (window.loadReflectionForDate) window.loadReflectionForDate(dateKey);
+            else if (window.loadTodayReflection) window.loadTodayReflection();
         });
 
         grid.appendChild(div);
@@ -227,9 +239,6 @@ function renderMobileSubjectManager() {
     `).join('');
 }
 window.renderMobileSubjectManager = renderMobileSubjectManager;
-window.renderMobileCalendar = renderMobileCalendar;
-window.switchMobileTab = switchMobileTab;
-window.updateMobileDateDisplay = updateMobileDateDisplay;
 
 // ── 모바일 카테고리 순서 조정 (터치 드래그, DOM swap 방식) ──────
 let mSubjectDragState = null;
