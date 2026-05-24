@@ -442,6 +442,9 @@ function syncMobileReflectionInputs() {
         if (input) input.value = data ? (data[item.id] || 0) : 0;
     }
 
+    const mMemoEl = document.getElementById('m-reflection-memo');
+    if (mMemoEl) mMemoEl.value = data?.memo || '';
+
     window.syncMobileReflection();
 }
 
@@ -470,9 +473,11 @@ window.saveMobileReflection = () => {
         reflection[item.id] = parseInt(el(`m-input-${item.id}`)?.value) || 0;
     }
     reflection.total = parseInt(el('m-total-reflection-score')?.textContent) || 0;
+    reflection.memo = el('m-reflection-memo')?.value || '';
 
     state.reflections[targetDate] = reflection;
     saveToLocal();
+    if (el('reflection-memo')) el('reflection-memo').value = reflection.memo;
     alert(`[${targetDate}] 하루 회고가 저장되었습니다! 총점: ${reflection.total}점`);
 };
 

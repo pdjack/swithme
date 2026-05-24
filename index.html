@@ -67,6 +67,10 @@
                         <div id="reflection-items-container" class="reflection-grid">
                             <!-- JS가 state.reflectionItems 기반으로 동적 생성 -->
                         </div>
+                        <div class="reflection-memo-wrap">
+                            <label for="reflection-memo" class="reflection-memo-label">오늘의 메모</label>
+                            <textarea id="reflection-memo" class="reflection-memo" rows="3" placeholder="오늘 하루를 짧게 기록"></textarea>
+                        </div>
                         <button class="btn-save-reflection" onclick="saveDailyReflection()">오늘 하루 저장하기</button>
                     </div>
                 </section>
@@ -392,6 +396,10 @@
                                 </div>
                                 <div id="m-reflection-items-container">
                                     <!-- JS가 state.reflectionItems 기반으로 동적 생성 -->
+                                </div>
+                                <div class="reflection-memo-wrap">
+                                    <label for="m-reflection-memo" class="reflection-memo-label">오늘의 메모</label>
+                                    <textarea id="m-reflection-memo" class="reflection-memo" rows="3" placeholder="오늘 하루를 짧게 기록"></textarea>
                                 </div>
                                 <button class="btn-save-reflection" onclick="saveMobileReflection()">오늘 하루 저장하기</button>
                             </div>

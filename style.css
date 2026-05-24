@@ -644,6 +644,39 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     margin: 0;
 }
 
+.reflection-memo-wrap {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.reflection-memo-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8E8E93;
+}
+
+.reflection-memo {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 60px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.reflection-memo:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
 .btn-save-reflection {
     margin-top: auto;
     background: #1C1C1E;

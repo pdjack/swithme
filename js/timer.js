@@ -497,9 +497,13 @@ window.saveDailyReflection = () => {
         reflection[item.id] = parseInt(document.getElementById(`input-${item.id}`)?.value) || 0;
     }
     reflection.total = parseInt(document.getElementById('total-reflection-score')?.textContent) || 0;
+    reflection.memo = document.getElementById('reflection-memo')?.value || '';
 
     state.reflections[targetDate] = reflection;
     saveToLocal();
+    if (document.getElementById('m-reflection-memo')) {
+        document.getElementById('m-reflection-memo').value = reflection.memo;
+    }
     alert(`[${targetDate}] 하루 회고가 저장되었습니다! 총점: ${reflection.total}점`);
 };
 
@@ -511,6 +515,12 @@ window.loadReflectionForDate = (date) => {
         const input = document.getElementById(`input-${item.id}`);
         if (input) input.value = data ? (data[item.id] || 0) : 0;
     }
+
+    const memoEl = document.getElementById('reflection-memo');
+    if (memoEl) memoEl.value = data?.memo || '';
+
+    const mMemoEl = document.getElementById('m-reflection-memo');
+    if (mMemoEl) mMemoEl.value = data?.memo || '';
 
     window.updateReflection();
 };
