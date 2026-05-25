@@ -100,30 +100,75 @@ const MAIN_STEPS = [
         tab: 'analyze',
     },
     {
-        id: 'settings',
-        title: '내 입맛에 맞추기',
+        id: 'settings-category',
+        title: '설정 — 카테고리',
         body: `
-            <p class="tut-intro">앱을 본인 스타일에 맞게 바꿀 수 있는 곳. 세 가지 탭으로 나뉘어요.</p>
+            <p class="tut-intro">활동 분류를 직접 만드는 탭이에요.</p>
             <ol class="tut-steps">
-                <li><b>카테고리</b> — 활동 분류를 직접 만들어요. 이름·색상 변경, 추가/삭제 가능. 카테고리 색은 타임테이블과 분석 그래프에 그대로 나타나요.</li>
-                <li><b>회고 항목</b> — 매일 점검할 항목을 직접 구성. 예: ⏰시간관리, 📝오답정리, 🔄복습, 📚숙제. 각 항목마다 이름·이모지를 자유롭게 설정.</li>
-                <li><b>습관</b> — 매일 반복되는 일정 미리 등록. (아래 자세히 설명)</li>
+                <li><b>+ 버튼</b>으로 새 카테고리 추가 (예: 영어, 운동, 일).</li>
+                <li>이름·색상을 자유롭게 변경.</li>
+                <li>필요 없으면 삭제도 가능.</li>
             </ol>
-
-            <p class="tut-intro" style="margin-top:14px"><b>📌 습관 기능 자세히 보기</b></p>
-            <p class="tut-intro">매번 똑같이 적기 귀찮은 일정을 한 번만 등록해두면 매일 자동으로 들어가요.</p>
-            <ol class="tut-steps">
-                <li><b>요일 탭 선택</b> — 일/월/화/수/목/금/토 중 하나, 또는 '매일'.</li>
-                <li><b>할 일 등록</b> — 그 요일에 반복할 할 일을 추가. 예: "수학 문제집 풀기"를 '월·수·금'에 등록.</li>
-                <li><b>플랜 등록</b> — 시간대까지 미리 잡힌 일정. 예: "06:00~07:00 영어 듣기"를 매일에 등록.</li>
-                <li><b>자동 시드</b> — 그날 대시보드를 열면 등록한 항목이 <b>자동으로 오늘의 할 일/플랜에 추가</b>돼요.</li>
-                <li><b>우선순위</b> — '매일' 등록 항목보다 '특정 요일' 등록이 우선. 한 번 시드된 항목은 그날 다시 안 들어와요. (직접 지워도 같은 날엔 재시드 안 됨)</li>
-            </ol>
-            <p class="tut-tip">💡 매일 반복: <b>매일</b> 탭. 특정 요일만: 해당 <b>요일 탭</b>. 둘 다 등록하면 요일 탭이 더 우선. 새 플랜 탭을 만들 때마다 그 탭에도 자동 시드돼요.</p>
+            <p class="tut-tip">💡 카테고리 색은 <b>타임테이블 칸 색</b>과 <b>분석 그래프 색</b>에 그대로 반영돼요.</p>
         `,
-        mobile: '#m-settings-panel',
-        desktop: '#settings-canvas',
+        mobile: '[data-settings-tab="category"].m-settings-tab',
+        desktop: '[data-settings-tab="category"].settings-tab',
         tab: 'settings',
+        before: () => {
+            if (isMobile() && window.switchMobileSettingsTab) {
+                window.switchMobileSettingsTab('category');
+            } else if (window.switchSettingsTab) {
+                window.switchSettingsTab('category');
+            }
+        },
+    },
+    {
+        id: 'settings-reflection',
+        title: '설정 — 회고 항목',
+        body: `
+            <p class="tut-intro">매일 회고 탭에서 체크할 점검 항목을 직접 구성하는 곳이에요.</p>
+            <ol class="tut-steps">
+                <li><b>+ 버튼</b>으로 새 항목 추가 (예: ⏰시간관리, 📝오답정리, 🔄복습).</li>
+                <li>각 항목마다 <b>이름·이모지</b>를 자유롭게 설정.</li>
+                <li>필요 없는 항목은 삭제.</li>
+            </ol>
+            <p class="tut-tip">💡 여기서 만든 항목이 매일 <b>회고 탭의 체크리스트</b>로 그대로 나타나요.</p>
+        `,
+        mobile: '[data-settings-tab="reflection"].m-settings-tab',
+        desktop: '[data-settings-tab="reflection"].settings-tab',
+        tab: 'settings',
+        before: () => {
+            if (isMobile() && window.switchMobileSettingsTab) {
+                window.switchMobileSettingsTab('reflection');
+            } else if (window.switchSettingsTab) {
+                window.switchSettingsTab('reflection');
+            }
+        },
+    },
+    {
+        id: 'settings-habit',
+        title: '설정 — 습관',
+        body: `
+            <p class="tut-intro">매일 반복되는 일정을 한 번만 등록해두면 매일 자동으로 들어가요.</p>
+            <ol class="tut-steps">
+                <li><b>요일 탭 선택</b> — 일~토 중 하나, 또는 '매일'.</li>
+                <li><b>할 일 등록</b> — 예: "수학 문제집"을 월·수·금에 등록.</li>
+                <li><b>플랜 등록</b> — 시간대까지 잡힌 일정. 예: "06:00~07:00 영어 듣기"를 매일에 등록.</li>
+                <li><b>자동 시드</b> — 그날 대시보드 열면 등록 항목이 <b>오늘 할 일/플랜에 자동 추가</b>.</li>
+                <li>우선순위: <b>특정 요일 > 매일</b>. 한 번 시드된 항목은 그날 재시드 안 됨.</li>
+            </ol>
+            <p class="tut-tip">💡 매번 똑같이 적기 귀찮은 루틴이 있으면 여기서 한 번에 해결.</p>
+        `,
+        mobile: '[data-settings-tab="habit"].m-settings-tab',
+        desktop: '[data-settings-tab="habit"].settings-tab',
+        tab: 'settings',
+        before: () => {
+            if (isMobile() && window.switchMobileSettingsTab) {
+                window.switchMobileSettingsTab('habit');
+            } else if (window.switchSettingsTab) {
+                window.switchSettingsTab('habit');
+            }
+        },
     },
     {
         id: 'date',
@@ -169,22 +214,14 @@ const CONTEXT_STEPS = {
         body: `
             <p class="tut-intro">앱을 본인 스타일에 맞게 바꿀 수 있는 곳. 세 가지 탭으로 나뉘어요.</p>
             <ol class="tut-steps">
-                <li><b>카테고리</b> — 활동 분류 추가/삭제, 이름·색상 변경. 색은 타임테이블·그래프에 반영.</li>
-                <li><b>회고 항목</b> — 매일 점검할 체크리스트 구성. 이름·이모지 자유 설정.</li>
-                <li><b>습관</b> — 매일 반복되는 일정 한 번만 등록해두기. (아래 참고)</li>
+                <li><b>카테고리</b> — 활동 분류 추가/삭제, 색상 변경.</li>
+                <li><b>회고 항목</b> — 매일 체크할 항목 구성.</li>
+                <li><b>습관</b> — 반복 일정 한 번만 등록해두면 매일 자동 추가.</li>
             </ol>
-            <p class="tut-intro" style="margin-top:14px"><b>📌 습관 기능</b></p>
-            <ol class="tut-steps">
-                <li>일/월/화/수/목/금/토 중 또는 '매일' 탭 선택.</li>
-                <li>그 요일에 반복할 <b>할 일</b> 등록 (예: "수학 문제집"을 월·수·금).</li>
-                <li>시간대까지 잡힌 <b>플랜</b>도 등록 (예: "06~07 영어 듣기" 매일).</li>
-                <li>그날 대시보드 열면 <b>자동 추가</b>. 직접 지워도 같은 날 재시드 안 됨.</li>
-                <li>'매일' < '특정 요일' 우선순위. 둘 다 등록하면 요일 등록이 우선.</li>
-            </ol>
-            <p class="tut-tip">💡 매번 똑같이 적기 귀찮은 루틴이 있으면 여기서 한 번에 해결.</p>
+            <p class="tut-tip">💡 각 탭별 자세한 설명은 '튜토리얼 다시보기 ▾' 메뉴에서 분야별로 다시 볼 수 있어요.</p>
         `,
-        mobile: '#m-settings-panel',
-        desktop: '#settings-canvas',
+        mobile: '.m-settings-tab-bar',
+        desktop: '.settings-tab-bar',
     },
     date: {
         title: '다른 날짜 보기',
@@ -471,6 +508,116 @@ export function resetTutorial() {
     setTimeout(() => startMainTutorial({ full: true }), 200);
 }
 
+export function startSingleStep(id) {
+    const step = MAIN_STEPS.find(s => s.id === id);
+    if (!step) return;
+    ensureOverlay();
+    overlayEl.classList.add('active', 'tutorial-mode-context');
+    overlayEl.classList.remove('tutorial-mode-main');
+
+    applyStepTab(step);
+    if (typeof step.before === 'function') step.before();
+
+    overlayEl.querySelector('.tutorial-step-label').textContent = '';
+    overlayEl.querySelector('.tutorial-title').textContent = step.title;
+    overlayEl.querySelector('.tutorial-body').innerHTML = step.body;
+    overlayEl.querySelector('.tutorial-dots').innerHTML = '';
+    overlayEl.querySelector('.tutorial-prev').style.visibility = 'hidden';
+    overlayEl.querySelector('.tutorial-skip').style.display = 'none';
+    const nextBtn = overlayEl.querySelector('.tutorial-next');
+    nextBtn.textContent = '확인';
+
+    const closeHandler = () => {
+        overlayEl.classList.remove('active');
+        nextBtn.removeEventListener('click', closeHandler);
+        overlayEl.querySelector('.tutorial-skip').style.display = '';
+        overlayEl.querySelector('.tutorial-prev').style.visibility = '';
+    };
+    nextBtn.addEventListener('click', closeHandler);
+
+    const hole = overlayEl.querySelector('.tutorial-hole');
+    const bubble = overlayEl.querySelector('.tutorial-bubble');
+    // 탭 전환 후 DOM 안정화 대기
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const rect = getTargetRect(step);
+            if (rect) {
+                const padding = 8;
+                hole.setAttribute('x', Math.max(0, rect.left - padding));
+                hole.setAttribute('y', Math.max(0, rect.top - padding));
+                hole.setAttribute('width', rect.width + padding * 2);
+                hole.setAttribute('height', rect.height + padding * 2);
+                positionBubble(bubble, rect);
+            } else {
+                hole.setAttribute('width', 0);
+                hole.setAttribute('height', 0);
+                bubble.style.top = '50%';
+                bubble.style.left = '50%';
+                bubble.style.transform = 'translate(-50%, -50%)';
+            }
+        });
+    });
+}
+
+function toggleTutorialMenu(triggerEl) {
+    const existing = document.querySelector('.tutorial-menu');
+    if (existing) {
+        existing.remove();
+        document.removeEventListener('click', outsideMenuHandler, true);
+        return;
+    }
+    const menu = document.createElement('div');
+    menu.className = 'tutorial-menu';
+    const items = [
+        { id: '__full__', label: '처음부터 전체 보기' },
+        ...MAIN_STEPS.map((s, i) => ({ id: s.id, label: `${i + 1}. ${s.title}` })),
+    ];
+    menu.innerHTML = items.map((it, i) =>
+        `<button class="tutorial-menu-item${it.id === '__full__' ? ' is-full' : ''}" data-tut-id="${it.id}">${it.label}</button>${i === 0 ? '<div class="tutorial-menu-sep"></div>' : ''}`
+    ).join('');
+    document.body.appendChild(menu);
+
+    const r = triggerEl.getBoundingClientRect();
+    const menuW = 240;
+    let left = r.right - menuW;
+    left = Math.max(8, Math.min(left, window.innerWidth - menuW - 8));
+    let top = r.bottom + 6;
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    menu.style.width = `${menuW}px`;
+
+    menu.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-tut-id]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-tut-id');
+        menu.remove();
+        document.removeEventListener('click', outsideMenuHandler, true);
+        if (id === '__full__') {
+            resetTutorial();
+        } else {
+            startSingleStep(id);
+        }
+    });
+
+    setTimeout(() => document.addEventListener('click', outsideMenuHandler, true), 0);
+}
+
+function outsideMenuHandler(e) {
+    const menu = document.querySelector('.tutorial-menu');
+    if (!menu) {
+        document.removeEventListener('click', outsideMenuHandler, true);
+        return;
+    }
+    if (menu.contains(e.target)) return;
+    if (e.target.closest('.settings-tutorial-btn, .m-settings-tutorial-btn')) return;
+    menu.remove();
+    document.removeEventListener('click', outsideMenuHandler, true);
+}
+
+export function openTutorialMenu(triggerEl) {
+    toggleTutorialMenu(triggerEl);
+}
+
 export function maybeStartTutorialOnLaunch() {
     // 날짜 라벨 클릭 시 컨텍스트 튜토리얼 트리거 (PC + 모바일)
     const dateEls = ['display-date', 'm-display-date'];
@@ -486,3 +633,5 @@ export function maybeStartTutorialOnLaunch() {
 
 window.resetTutorial = resetTutorial;
 window.maybeShowContextTutorial = maybeShowContextTutorial;
+window.startSingleStep = startSingleStep;
+window.openTutorialMenu = openTutorialMenu;

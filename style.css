@@ -3805,3 +3805,50 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     color: var(--primary) !important;
     border: 1px dashed var(--primary) !important;
 }
+
+/* 튜토리얼 다시보기 드롭다운 메뉴 */
+.tutorial-menu {
+    position: fixed;
+    z-index: 10001;
+    background: var(--surface, #1a1d24);
+    border: 1px solid var(--border, rgba(255,255,255,0.12));
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: tutorialMenuIn 0.14s ease-out;
+}
+
+@keyframes tutorialMenuIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tutorial-menu-item {
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--text, #e9ecef);
+    padding: 9px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.tutorial-menu-item:hover {
+    background: rgba(255,255,255,0.07);
+}
+
+.tutorial-menu-item.is-full {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.tutorial-menu-sep {
+    height: 1px;
+    background: var(--border, rgba(255,255,255,0.1));
+    margin: 4px 2px;
+}

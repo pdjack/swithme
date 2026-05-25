@@ -73,6 +73,7 @@ function syncMobileStartBtn(isRunning) {
 }
 
 // ── 세팅 내부 탭 전환 ────────────────────────────────────────────
+window.switchMobileSettingsTab = switchMobileSettingsTab;
 function switchMobileSettingsTab(tab) {
     document.querySelectorAll('.m-settings-tab').forEach(btn =>
         btn.classList.toggle('active', btn.dataset.settingsTab === tab)
