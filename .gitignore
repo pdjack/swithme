@@ -4,4 +4,6 @@ dist
 .env
 .cursorrules
 .agent
+.agents/
+AGENTS.md
 .tmp/
