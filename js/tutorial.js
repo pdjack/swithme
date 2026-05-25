@@ -320,8 +320,8 @@ function positionBubble(bubble, targetRect) {
     const vh = window.innerHeight;
     const vw = window.innerWidth;
 
-    // 모바일은 가로 폭 가득, 위치만 상/하 결정
     bubble.style.transform = '';
+    bubble.style.bottom = 'auto';
     if (isMobile()) {
         bubble.style.left = `${margin}px`;
         bubble.style.right = `${margin}px`;
@@ -332,20 +332,23 @@ function positionBubble(bubble, targetRect) {
         bubble.style.width = '440px';
     }
 
-    // 타겟 위와 아래 중 더 공간 큰 쪽
-    const spaceBelow = vh - targetRect.bottom;
-    const spaceAbove = targetRect.top;
     const bubbleHeight = bubble.offsetHeight || 200;
+    const spaceBelow = vh - targetRect.bottom - margin;
+    const spaceAbove = targetRect.top - margin;
 
-    if (spaceBelow >= bubbleHeight + margin || spaceBelow >= spaceAbove) {
-        bubble.style.top = `${targetRect.bottom + margin}px`;
-        bubble.style.bottom = 'auto';
+    let topPos;
+    if (spaceBelow >= bubbleHeight) {
+        topPos = targetRect.bottom + margin;
+    } else if (spaceAbove >= bubbleHeight) {
+        topPos = targetRect.top - bubbleHeight - margin;
     } else {
-        bubble.style.top = 'auto';
-        bubble.style.bottom = `${vh - targetRect.top + margin}px`;
+        // 위·아래 모두 부족 → viewport 안에 강제로 들어가게 클램프
+        topPos = Math.max(margin, (vh - bubbleHeight) / 2);
     }
+    // 최종 클램프: 절대 viewport 밖으로 나가지 않게
+    topPos = Math.max(margin, Math.min(topPos, vh - bubbleHeight - margin));
+    bubble.style.top = `${topPos}px`;
 
-    // PC는 가로 중앙 정렬을 타겟 중심에 맞춤
     if (!isMobile()) {
         const targetCenter = targetRect.left + targetRect.width / 2;
         const bubbleWidth = 440;
