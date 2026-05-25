@@ -1776,7 +1776,16 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     font-weight: 600;
     color: var(--text-dim);
     letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
 }
+.m-date-label:active { transform: scale(0.96); }
 
 /* 타이머 / 스톱워치 모드 전환 버튼 */
 .m-mode-switcher {
