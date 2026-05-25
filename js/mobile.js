@@ -521,6 +521,7 @@ export function setupMobileUI() {
         });
         mDatePicker.addEventListener('change', (e) => {
             state.selectedDate = e.target.value;
+            saveToLocal();
             if (window.seedHabitsForDate) window.seedHabitsForDate(state.selectedDate);
             updateMobileDateDisplay();
             renderMobileTasks();
