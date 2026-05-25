@@ -626,9 +626,7 @@ export function maybeStartTutorialOnLaunch() {
         if (el) el.addEventListener('click', () => maybeShowContextTutorial('date'));
     });
 
-    if (localStorage.getItem(FLAG_MAIN_DONE) === '1') return;
-    // 페이지 안정화 후 시작
-    setTimeout(startMainTutorial, 600);
+    // 자동 시작하지 않음. 설정 메뉴의 튜토리얼 버튼으로만 진입.
 }
 
 window.resetTutorial = resetTutorial;

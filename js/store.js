@@ -107,13 +107,7 @@ function loadHabitSeedLog() {
 }
 
 export let state = {
-    tasks: JSON.parse(localStorage.getItem('switme_tasks')) || [
-        { id: 1, subject: 'ENG', name: '모의고사 1회', duration: '0s', completed: true, date: new Date().toISOString().split('T')[0] },
-        { id: 2, subject: 'ENG', name: '듣기평가 30문제', duration: '0s', completed: false, date: new Date().toISOString().split('T')[0] },
-        { id: 3, subject: 'KOR', name: '문학책 읽기', duration: '0s', completed: true, date: new Date().toISOString().split('T')[0] },
-        { id: 4, subject: 'MATH', name: '수1 문제집 30문제', duration: '0s', completed: true, date: new Date().toISOString().split('T')[0] },
-        { id: 5, subject: 'MATH', name: '오답노트', duration: '0s', completed: false, date: new Date().toISOString().split('T')[0] }
-    ],
+    tasks: JSON.parse(localStorage.getItem('switme_tasks')) || [],
     subjects: JSON.parse(localStorage.getItem('switme_subjects')) || [
         { id: 'ENG', name: '영어', color: '#E74C3C' },
         { id: 'MATH', name: '수학', color: '#3F51B5' },

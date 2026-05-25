@@ -507,7 +507,7 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 .task-actions {
     display: flex;
     gap: 12px;
-    opacity: 0.2; /* 기본적으로 살짝 보여서 존재를 알림 */
+    opacity: 1; /* 처음부터 또렷하게 표시 */
     transition: 0.2s;
 }
 
