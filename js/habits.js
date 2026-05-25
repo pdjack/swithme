@@ -318,6 +318,15 @@ function getHabitTasks() {
 
 function renderHabitTasks() {
     const tasks = getHabitTasks();
+    const subjectOrder = new Map(state.subjects.map((s, i) => [s.id, i]));
+    const sortedEntries = tasks
+        .map((t, idx) => ({ t, idx }))
+        .sort((a, b) => {
+            const oa = subjectOrder.has(a.t.subject) ? subjectOrder.get(a.t.subject) : Number.MAX_SAFE_INTEGER;
+            const ob = subjectOrder.has(b.t.subject) ? subjectOrder.get(b.t.subject) : Number.MAX_SAFE_INTEGER;
+            if (oa !== ob) return oa - ob;
+            return a.idx - b.idx;
+        });
     const renderInto = (rootId) => {
         const root = document.getElementById(rootId);
         if (!root) return;
@@ -325,7 +334,7 @@ function renderHabitTasks() {
             root.innerHTML = '<div class="habit-empty">이 요일에 등록된 습관 할 일이 없습니다.</div>';
             return;
         }
-        root.innerHTML = tasks.map((t, idx) => {
+        root.innerHTML = sortedEntries.map(({ t, idx }) => {
             const sub = state.subjects.find(s => s.id === t.subject);
             const color = sub ? sub.color : '#8E8E93';
             const subName = sub ? sub.name : t.subject;
