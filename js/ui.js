@@ -65,12 +65,6 @@ export function switchTab(tab) {
         if (analyzeView) analyzeView.style.display = 'grid';
         if (window.renderAnalysisDashboard) window.renderAnalysisDashboard();
     }
-
-    if (window.maybeShowContextTutorial) {
-        if (tab === 'analyze') window.maybeShowContextTutorial('analyze');
-        else if (tab === 'settings') window.maybeShowContextTutorial('settings');
-        else if (tab === 'plan') window.maybeShowContextTutorial('date');
-    }
 }
 
 export function renderSubjectManager() {

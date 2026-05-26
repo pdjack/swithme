@@ -619,14 +619,7 @@ export function openTutorialMenu(triggerEl) {
 }
 
 export function maybeStartTutorialOnLaunch() {
-    // 날짜 라벨 클릭 시 컨텍스트 튜토리얼 트리거 (PC + 모바일)
-    const dateEls = ['display-date', 'm-display-date'];
-    dateEls.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('click', () => maybeShowContextTutorial('date'));
-    });
-
-    // 자동 시작하지 않음. 설정 메뉴의 튜토리얼 버튼으로만 진입.
+    // 자동 시작/자동 컨텍스트 튜토리얼 없음. 설정 메뉴의 "튜토리얼 보기"로만 진입.
 }
 
 window.resetTutorial = resetTutorial;

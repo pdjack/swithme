@@ -122,12 +122,6 @@ function switchMobileTab(tab) {
     } else if (tab === 'analyze') {
         if (window.renderAnalysisDashboard) window.renderAnalysisDashboard();
     }
-
-    if (window.maybeShowContextTutorial) {
-        if (tab === 'analyze') window.maybeShowContextTutorial('analyze');
-        else if (tab === 'settings') window.maybeShowContextTutorial('settings');
-        else if (tab === 'plan') window.maybeShowContextTutorial('date');
-    }
 }
 
 // ── 모바일 할 일 목록 렌더링 ─────────────────────────────────────
