@@ -23,6 +23,12 @@ const MAIN_STEPS = [
         mobile: '#m-open-task-btn',
         desktop: '#open-task-modal',
         tab: 'dashboard',
+        before: () => {
+            // 회고 스텝이 남긴 'reflection' 컬럼 상태를 원복해 할 일 목록/+버튼이 항상 보이게 한다.
+            if (isMobile() && window.switchMobileColumnTab) {
+                window.switchMobileColumnTab('tasks');
+            }
+        },
     },
     {
         id: 'timer-start',
@@ -45,14 +51,12 @@ const MAIN_STEPS = [
         id: 'timetable',
         title: '하루 한눈에 보기',
         body: `
-            <p class="tut-intro">하루 24시간을 작은 칸으로 나눠 어디에 시간 썼는지 보여줘요. <b>한 칸 = 10분</b>.</p>
+            <p class="tut-intro">하루 24시간을 작은 칸으로 나눠 보여줘요. <b>한 칸 = 10분</b>.</p>
             <ol class="tut-steps">
-                <li>타이머로 잰 시간은 <b>자동으로 색칠</b>돼요.</li>
-                <li>빈 칸을 <b>직접 탭</b>하면 카테고리·메모를 적어 채울 수 있어요.</li>
-                <li>위쪽 <b>'기록' 탭</b>은 실제로 한 일, <b>'플랜' 탭</b>은 계획.</li>
-                <li>+ 버튼으로 여러 개의 기록표·계획표를 만들 수 있어요.</li>
+                <li>타이머로 잰 시간은 <b>자동 색칠</b>, 빈 칸은 <b>직접 탭</b>해 채워요.</li>
+                <li><b>'기록' 탭</b>은 실제로 한 일, <b>'플랜' 탭</b>은 계획.</li>
             </ol>
-            <p class="tut-tip">💡 새로고침(↻) 버튼을 누르면 그 표 안의 모든 칸을 한 번에 비울 수 있어요.</p>
+            <p class="tut-tip">💡 + 로 표 여러 개, 새로고침(↻)으로 한 번에 비우기.</p>
         `,
         mobile: '#m-timetable-root',
         desktop: '#timetable-root',
@@ -64,12 +68,10 @@ const MAIN_STEPS = [
         body: `
             <p class="tut-intro">하루를 마치며 짧게 점검하는 공간이에요.</p>
             <ol class="tut-steps">
-                <li>위에 있는 <b>'회고' 탭</b>으로 전환하면 나타나요.</li>
-                <li>오늘 잘한 항목에 <b>체크</b>하면 점수가 쌓여요. (예: 시간 관리, 복습 등)</li>
-                <li>아래 메모 칸에 <b>오늘의 한 줄</b>을 남겨보세요.</li>
-                <li>저장한 회고는 캘린더·분석 탭에서 다시 볼 수 있어요.</li>
+                <li>잘한 항목에 <b>체크</b>하면 점수가 쌓여요. (시간 관리·복습 등)</li>
+                <li>아래 칸에 <b>오늘의 한 줄</b> 메모. 캘린더·분석에서 다시 볼 수 있어요.</li>
             </ol>
-            <p class="tut-tip">💡 점검 항목은 '설정 → 회고 항목'에서 자유롭게 추가/삭제 가능.</p>
+            <p class="tut-tip">💡 점검 항목은 '설정 → 회고 항목'에서 추가/삭제.</p>
         `,
         mobile: '#m-reflection-items-container',
         desktop: '#reflection-items-container',
@@ -81,22 +83,57 @@ const MAIN_STEPS = [
         },
     },
     {
-        id: 'analyze',
-        title: '쌓인 기록 보기',
+        id: 'analyze-period',
+        title: '분석 — 기간 고르기',
         body: `
-            <p class="tut-intro">하루 단위가 아닌 <b>며칠~몇 달치 데이터</b>를 한 번에 보고 패턴을 찾는 탭이에요.</p>
+            <p class="tut-intro">하루가 아닌 <b>며칠~몇 달치 데이터</b>를 모아 패턴을 찾는 탭이에요.</p>
             <ol class="tut-steps">
-                <li><b>기간 선택</b> — 위쪽 7일/14일/30일/90일/직접 버튼으로 분석 범위 지정.</li>
-                <li><b>종합 점수 카드</b> — 회고 점수를 평균낸 100점 만점. 아래에 항목별 평균(시간관리·복습 등)이 함께 표시. 이전에 저장해둔 분석과 비교한 <b>증감 표시(▲▼)</b>도 떠요.</li>
-                <li><b>카테고리별 활동 시간 그래프</b> — 어디(영어·운동·일 등)에 얼마나 시간을 썼는지 막대 그래프로 비교. 색은 카테고리 색 그대로.</li>
-                <li><b>발견 카드</b> ✨ — 데이터를 자동 분석해 "수학 시간이 평소보다 30% 늘었어요" 같은 변화를 알려줘요.</li>
-                <li><b>제안 카드</b> ⚡ — 약점을 콕 집어 개선 방법을 제안. 예: "회고를 자주 빠뜨려요. 매일 저녁 알람을 권해요."</li>
-                <li><b>회고 메모 모음</b> 📓 — 그 기간 동안 남긴 메모들을 한 화면에서 다시 읽을 수 있어요.</li>
+                <li>위쪽 <b>7일/14일/30일/90일</b> 또는 <b>직접</b> 버튼으로 분석 범위를 정해요.</li>
             </ol>
-            <p class="tut-tip">💡 <b>이 분석 저장</b> — 위쪽 '이 분석 저장' 버튼을 누르면 지금 분석 결과가 통째로 보관돼요. 한 달 뒤·시험 후 다시 열어보면 그동안 얼마나 달라졌는지 확인할 수 있어요. 저장할 때 이름·메모도 함께 남길 수 있고, '저장됨' 버튼으로 언제든 다시 열어볼 수 있어요.</p>
+            <p class="tut-tip">💡 고른 기간 기준으로 아래 모든 카드가 다시 계산돼요.</p>
         `,
-        mobile: '#m-analyze-panel',
-        desktop: '#analyze-canvas',
+        mobile: '.m-period-bar',
+        desktop: '.analysis-period-bar',
+        tab: 'analyze',
+    },
+    {
+        id: 'analyze-score',
+        title: '분석 — 종합 점수',
+        body: `
+            <p class="tut-intro">회고 점수를 평균낸 <b>100점 만점</b> 카드예요.</p>
+            <ol class="tut-steps">
+                <li>항목별 평균(시간관리·복습 등)이 함께 표시돼요.</li>
+                <li>이전에 저장한 분석과 비교한 <b>증감 표시(▲▼)</b>도 떠요.</li>
+            </ol>
+        `,
+        mobile: '.m-score-card',
+        desktop: '.analysis-score-card',
+        tab: 'analyze',
+    },
+    {
+        id: 'analyze-graph',
+        title: '분석 — 카테고리 그래프',
+        body: `
+            <p class="tut-intro">어디(영어·운동·일 등)에 얼마나 시간을 썼는지 <b>막대 그래프</b>로 비교해요.</p>
+            <p class="tut-tip">💡 막대 색은 카테고리 색 그대로. 시간/비율 전환 가능.</p>
+        `,
+        mobile: '.m-trend-card',
+        desktop: '.analysis-trend-card',
+        tab: 'analyze',
+    },
+    {
+        id: 'analyze-insight',
+        title: '분석 — 발견·제안·메모',
+        body: `
+            <ol class="tut-steps">
+                <li><b>발견 ✨</b> — "수학 시간이 평소보다 30% 늘었어요" 같은 자동 분석.</li>
+                <li><b>제안 ⚡</b> — 약점을 콕 집어 개선 방법을 추천.</li>
+                <li><b>회고 메모 📓</b> — 그 기간 메모를 한 화면에서 다시 읽기.</li>
+            </ol>
+            <p class="tut-tip">💡 <b>이 분석 저장</b> 버튼으로 지금 상태를 보관 → 한 달 뒤·시험 후 다시 열어 변화 비교. '저장됨'에서 언제든 다시 열기.</p>
+        `,
+        mobile: '#m-insight-list',
+        desktop: '#insight-list',
         tab: 'analyze',
     },
     {
@@ -146,21 +183,61 @@ const MAIN_STEPS = [
         },
     },
     {
-        id: 'settings-habit',
-        title: '설정 — 습관',
+        id: 'habit-days',
+        title: '습관 — 요일 고르기',
         body: `
-            <p class="tut-intro">매일 반복되는 일정을 한 번만 등록해두면 매일 자동으로 들어가요.</p>
+            <p class="tut-intro">매일 반복되는 일을 한 번만 등록하면 그날 자동으로 들어가요.</p>
             <ol class="tut-steps">
-                <li><b>요일 탭 선택</b> — 일~토 중 하나, 또는 '매일'.</li>
-                <li><b>할 일 등록</b> — 예: "수학 문제집"을 월·수·금에 등록.</li>
-                <li><b>플랜 등록</b> — 시간대까지 잡힌 일정. 예: "06:00~07:00 영어 듣기"를 매일에 등록.</li>
-                <li><b>자동 추가</b> — 그날 대시보드를 열면 등록한 항목이 <b>오늘 할 일/플랜에 자동으로 들어가요</b>.</li>
-                <li>겹치면 <b>특정 요일이 우선</b>이에요. 한 번 추가된 항목은 그날엔 다시 안 들어와요 (직접 지워도 같은 날엔 안 돌아옴).</li>
+                <li>먼저 <b>요일 탭</b>(일~토) 또는 <b>'매일'</b>을 골라요.</li>
             </ol>
-            <p class="tut-tip">💡 매번 똑같이 적기 귀찮은 루틴이 있으면 여기서 한 번에 해결.</p>
+            <p class="tut-tip">💡 겹치면 <b>특정 요일이 '매일'보다 우선</b>.</p>
         `,
-        mobile: '[data-settings-tab="habit"].m-settings-tab',
-        desktop: '[data-settings-tab="habit"].settings-tab',
+        mobile: '#m-habit-day-tabs',
+        desktop: '#habit-day-tabs',
+        tab: 'settings',
+        before: () => {
+            if (isMobile() && window.switchMobileSettingsTab) {
+                window.switchMobileSettingsTab('habit');
+            } else if (window.switchSettingsTab) {
+                window.switchSettingsTab('habit');
+            }
+        },
+    },
+    {
+        id: 'habit-tasks',
+        title: '습관 — 할 일 자동 등록',
+        body: `
+            <p class="tut-intro">고른 요일에 <b>반복 할 일</b>을 등록해요.</p>
+            <ol class="tut-steps">
+                <li>예: "수학 문제집"을 월·수·금에 등록.</li>
+                <li>그날 대시보드를 열면 <b>오늘 할 일에 자동 추가</b>돼요.</li>
+            </ol>
+            <p class="tut-tip">💡 한 번 추가된 항목은 그날엔 지워도 다시 안 들어와요.</p>
+        `,
+        mobile: '#m-habit-task-list',
+        desktop: '#habit-task-list',
+        tab: 'settings',
+        before: () => {
+            if (isMobile() && window.switchMobileSettingsTab) {
+                window.switchMobileSettingsTab('habit');
+            } else if (window.switchSettingsTab) {
+                window.switchSettingsTab('habit');
+            }
+        },
+    },
+    {
+        id: 'habit-plan',
+        title: '습관 — 플랜 자동 등록',
+        body: `
+            <p class="tut-intro">시간대까지 정해진 <b>반복 플랜</b>도 등록할 수 있어요.</p>
+            <ol class="tut-steps">
+                <li>예: "06:00~07:00 영어 듣기"를 '매일'에 등록.</li>
+                <li>그날 <b>플랜 타임테이블에 자동</b>으로 채워져요.</li>
+            </ol>
+            <p class="tut-tip">💡 매번 똑같이 적기 귀찮은 루틴은 여기서 한 번에 해결.</p>
+        `,
+        mobile: '#m-habit-timetable-root',
+        desktop: '#habit-timetable-root',
         tab: 'settings',
         before: () => {
             if (isMobile() && window.switchMobileSettingsTab) {
