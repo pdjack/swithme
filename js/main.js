@@ -1,3 +1,4 @@
+import { registerSW } from 'virtual:pwa-register';
 import { updateDashboardDateDisplay, setupEventListeners, renderSubjectManager } from './ui.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
@@ -10,12 +11,33 @@ import { setupAnalysisPeriodButtons, setupSnapshotControls } from './analysis.js
 import { seedHabitsForDate, setupHabitEditor } from './habits.js';
 import { maybeStartTutorialOnLaunch } from './tutorial.js';
 
-// SW 업데이트 시 자동 리로드
+// 새 SW 활성화 시 자동 리로드
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         window.location.reload();
     });
 }
+
+// autoUpdate는 "감지되면 교체"만 담당하고 감지 트리거는 만들지 않는다.
+// 설치형 PWA는 최근앱 재개 시 load 이벤트가 없어 갱신을 놓치므로,
+// 포그라운드 복귀 + 주기 체크로 새 버전을 능동 확인한다.
+const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+
+registerSW({
+    onRegisteredSW(_swUrl, registration) {
+        if (!registration) return;
+
+        setInterval(() => {
+            registration.update();
+        }, UPDATE_CHECK_INTERVAL_MS);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                registration.update();
+            }
+        });
+    },
+});
 
 function init() {
     // 디바이스 감지 후 레이아웃 전환 (resize 시 자동 재적용)
