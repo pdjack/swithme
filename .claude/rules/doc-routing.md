@@ -46,6 +46,7 @@
 | UI/UX 규칙 변경 (네이밍, 이벤트, 상태 등) | `directives/ui-ux-guide.md` | 해당 규칙 섹션 |
 | PWA/배포 설정 변경 | `.claude/rules/pwa-deploy.md` | 미생성 시 새로 작성 |
 | 유저 읽기용 문서 변경 (`docs/PRD.md`, `README.md`, `directives/ui-ux-guide.md`, `directives/INDEX.md`, `docs/pwa-deploy.md`, `활용정보/*`) | `문서요약.html` | 해당 섹션 동기 갱신. 문서 추가/삭제 시 `CLAUDE.md`의 "유저 읽기용 문서" 표도 갱신. 파일명 `문서요약.html` 고정 |
+| **개선사항목록의 버그·개선 항목을 구현/해결** | `docs/개선사항목록.md` | 해당 항목에 ✅ 마킹 + 짧은 해결 요약 + 커밋 해시 주석. 이 백로그를 입력으로 착수한 작업은 완료 시 반드시 해당 항목 상태 갱신 |
 
 ### 더 이상 문서 업데이트 불필요 (스크립트가 대체)
 
