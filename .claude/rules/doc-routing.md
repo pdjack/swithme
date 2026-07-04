@@ -45,6 +45,7 @@
 | PC/모바일 간 UI 불일치 발견/수정 | `directives/ui-ux-guide.md` | 불일치 목록(섹션 3) 갱신 |
 | UI/UX 규칙 변경 (네이밍, 이벤트, 상태 등) | `directives/ui-ux-guide.md` | 해당 규칙 섹션 |
 | PWA/배포 설정 변경 | `.claude/rules/pwa-deploy.md` | 미생성 시 새로 작성 |
+| 유저 읽기용 문서 변경 (`docs/PRD.md`, `README.md`, `directives/ui-ux-guide.md`, `directives/INDEX.md`, `docs/pwa-deploy.md`, `활용정보/*`) | `문서요약.html` | 해당 섹션 동기 갱신. 문서 추가/삭제 시 `CLAUDE.md`의 "유저 읽기용 문서" 표도 갱신. 파일명 `문서요약.html` 고정 |
 
 ### 더 이상 문서 업데이트 불필요 (스크립트가 대체)
 
