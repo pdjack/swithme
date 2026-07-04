@@ -2,7 +2,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { updateDashboardDateDisplay, setupEventListeners, renderSubjectManager } from './ui.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
-import { updateTimerDisplay, startTimer, loadTodayReflection } from './timer.js';
+import { updateTimerDisplay, startTimer, loadTodayReflection, refreshTimerControls } from './timer.js';
 import { setupMobileUI } from './mobile.js';
 import { watchDeviceLayout } from './device.js';
 import { restoreTimerState, state } from './store.js';
@@ -56,16 +56,16 @@ function init() {
     loadTodayReflection();
     setupEventListeners();
 
-    // 앱 재시작 시 실행 중이던 타이머 복원
-    const timerRestored = restoreTimerState();
-    if (timerRestored) {
-        updateTimerDisplay();
-        startTimer();
-    } else {
-        updateTimerDisplay();
-    }
+    // 앱 재시작 시 타이머/스톱워치 상태 복원 (측정중·멈춤·선택 모드)
+    restoreTimerState();
+    updateTimerDisplay();
+    if (state.timer.isRunning) startTimer();
 
     setupMobileUI();
+
+    // 모바일 UI(관찰자·버튼) 준비 후 복원된 상태를 양쪽 화면에 반영
+    if (window.updateTimerDisplayExtended) window.updateTimerDisplayExtended();
+    refreshTimerControls();
     setupAnalysisPeriodButtons();
     setupSnapshotControls();
     setupHabitEditor();

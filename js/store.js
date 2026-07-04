@@ -282,29 +282,48 @@ export function restoreTimerState() {
 
     try {
         const data = JSON.parse(saved);
-        if (!data.isRunning || !data.wallStartTimestamp) {
-            clearTimerState();
-            return false;
-        }
 
-        state.timer.mode = data.mode;
-        state.timer.activeTaskId = data.activeTaskId;
+        state.timer.mode = data.mode || 'timer';
+        state.timer.activeTaskId = data.activeTaskId ?? null;
         state.timer.sessionStartSeconds = data.sessionStartSeconds;
         state.timer.totalDuration = data.totalDuration;
-        state.timer.wallStartTimestamp = data.wallStartTimestamp;
-        state.timer.elapsedAtPause = data.elapsedAtPause;
+        state.timer.elapsedAtPause = data.elapsedAtPause || 0;
         state.timer.sessionStartTime = data.sessionStartTime ? new Date(data.sessionStartTime) : null;
+        state.timer.isRunning = false;
+        state.timer.wallStartTimestamp = null;
 
-        const elapsedSinceResume = Math.floor((Date.now() - data.wallStartTimestamp) / 1000);
-        const totalElapsed = data.elapsedAtPause + elapsedSinceResume;
-
-        if (data.mode === 'timer') {
-            const remaining = Math.max(0, data.sessionStartSeconds - totalElapsed);
-            state.timer.seconds = remaining;
-        } else {
-            state.timer.stopwatchSeconds = totalElapsed;
+        // 시작 전(모드만 저장된) 상태: 마지막 선택 모드만 복원, 값은 초기값.
+        if (!data.sessionStartTime) {
+            if (state.timer.mode === 'timer') {
+                state.timer.seconds = state.timer.totalDuration || 1500;
+                state.timer.stopwatchSeconds = 0;
+            } else {
+                state.timer.stopwatchSeconds = 0;
+            }
+            return true;
         }
 
+        if (data.isRunning && data.wallStartTimestamp) {
+            // 측정 중이던 상태: 백그라운드 동안 흐른 시간을 elapsedAtPause에 접어넣어
+            // 재개 시 wallStartTimestamp를 새로 잡아도 숫자가 튀지 않게 한다.
+            const elapsedSinceResume = Math.floor((Date.now() - data.wallStartTimestamp) / 1000);
+            const totalElapsed = (data.elapsedAtPause || 0) + elapsedSinceResume;
+            state.timer.elapsedAtPause = totalElapsed;
+            if (state.timer.mode === 'timer') {
+                state.timer.seconds = Math.max(0, data.sessionStartSeconds - totalElapsed);
+            } else {
+                state.timer.stopwatchSeconds = totalElapsed;
+            }
+            state.timer.isRunning = true;
+            return true;
+        }
+
+        // 멈춤(일시정지) 상태: 멈춘 시점 누적값 그대로 복원.
+        if (state.timer.mode === 'timer') {
+            state.timer.seconds = Math.max(0, data.sessionStartSeconds - state.timer.elapsedAtPause);
+        } else {
+            state.timer.stopwatchSeconds = state.timer.elapsedAtPause;
+        }
         return true;
     } catch {
         clearTimerState();

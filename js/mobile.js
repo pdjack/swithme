@@ -10,7 +10,7 @@
  * - BEM Modifier: `--` 사용 (예: .tt-tab--active, .m-tt-tab--active)
  */
 
-import { state, saveToLocal, getActiveHistory, getActiveTimetable } from './store.js';
+import { state, saveToLocal, getActiveHistory, getActiveTimetable, persistTimerState } from './store.js';
 import { icon } from './icons.js';
 import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
 import { renderSubjectOptions, getGroupedTaskData } from './tasks.js';
@@ -65,12 +65,12 @@ function syncMobileStartBtn(isRunning) {
         btn.textContent = 'STOP';
         btn.style.background = '#FF2D55';
     } else {
-        btn.textContent = state.timer.seconds < (state.timer.totalDuration || 1500) && state.timer.mode === 'timer'
-            ? 'RESUME'
-            : 'START';
+        // 멈춤(일시정지)이면 RESUME, 시작 전이면 START — 모드 무관하게 진행 중 세션 유무로 판단.
+        btn.textContent = state.timer.sessionStartTime ? 'RESUME' : 'START';
         btn.style.background = 'var(--primary)';
     }
 }
+window.syncMobileStartBtn = syncMobileStartBtn;
 
 // ── 세팅 내부 탭 전환 ────────────────────────────────────────────
 window.switchMobileSettingsTab = switchMobileSettingsTab;
@@ -572,13 +572,14 @@ export function setupMobileUI() {
 
     if (mTimerBtn) {
         mTimerBtn.addEventListener('click', () => {
-            if (state.timer.isRunning) return;
+            if (state.timer.isRunning || state.timer.sessionStartTime) return;
             state.timer.mode = 'timer';
             mTimerBtn.classList.add('active');
             mStopwatchBtn?.classList.remove('active');
             // PC 버튼도 동기화
             document.getElementById('mode-timer-btn')?.classList.add('active');
             document.getElementById('mode-stopwatch-btn')?.classList.remove('active');
+            persistTimerState(); // 선택 모드 저장 → 재진입 시 복원
             updateTimerDisplay();
             syncMobileTimerDisplay();
         });
@@ -586,13 +587,14 @@ export function setupMobileUI() {
 
     if (mStopwatchBtn) {
         mStopwatchBtn.addEventListener('click', () => {
-            if (state.timer.isRunning) return;
+            if (state.timer.isRunning || state.timer.sessionStartTime) return;
             state.timer.mode = 'stopwatch';
             mStopwatchBtn.classList.add('active');
             mTimerBtn?.classList.remove('active');
             // PC 버튼도 동기화
             document.getElementById('mode-stopwatch-btn')?.classList.add('active');
             document.getElementById('mode-timer-btn')?.classList.remove('active');
+            persistTimerState(); // 선택 모드 저장 → 재진입 시 복원
             updateTimerDisplay();
             syncMobileTimerDisplay();
         });
@@ -685,7 +687,7 @@ export function setupMobileUI() {
 
             if (taskItem && !playBtn && !doneBtn && !deleteBtn) {
                 const id = Number(taskItem.dataset.taskId);
-                if (state.timer.isRunning) return; // 실행 중엔 선택 변경 불가
+                if (state.timer.isRunning || state.timer.sessionStartTime) return; // 실행·멈춤 중엔 선택 변경 불가
                 state.timer.activeTaskId = (state.timer.activeTaskId === id) ? null : id;
                 renderMobileTasks();
                 if (typeof window.renderTasks === 'function') window.renderTasks();
@@ -702,8 +704,8 @@ export function setupMobileUI() {
                         stopTimer();
                         syncMobileStartBtn(false);
                     } else {
-                        // 다른 태스크로 전환: 현재 완료하고 새 태스크 시작
-                        stopTimer();
+                        // 다른 태스크로 전환: 현재 세션 기록·초기화 후 새 태스크 새로 시작
+                        resetTimer();
                         state.timer.activeTaskId = id;
                         setTimeout(() => {
                             startTimer();
@@ -712,7 +714,10 @@ export function setupMobileUI() {
                         }, 100);
                     }
                 } else {
-                    // 멈춰있는 상태: 선택하고 시작
+                    // 멈춰있는 상태: 멈춘 세션이 다른 태스크 것이면 먼저 기록·초기화 후 시작
+                    if (state.timer.sessionStartTime && state.timer.activeTaskId !== id) {
+                        resetTimer();
+                    }
                     state.timer.activeTaskId = id;
                     startTimer();
                     syncMobileStartBtn(true);

@@ -8,7 +8,7 @@
 // - 버튼 순서: 좌(위험 동작) / 중앙(취소) / 우(주요 동작)
 // - 닫힐 때 등록했던 이벤트 리스너를 removeEventListener로 해제
 
-import { state, saveToLocal, scheduleRender } from './store.js';
+import { state, saveToLocal, scheduleRender, persistTimerState } from './store.js';
 import { icon } from './icons.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
@@ -271,23 +271,31 @@ export function setupEventListeners() {
     
     const modeTimerBtn = document.getElementById('mode-timer-btn');
     if (modeTimerBtn) {
-        modeTimerBtn.onclick = () => { 
-            if(state.timer.isRunning) return; 
-            state.timer.mode = 'timer'; 
+        modeTimerBtn.onclick = () => {
+            if(state.timer.isRunning || state.timer.sessionStartTime) return;
+            state.timer.mode = 'timer';
             document.getElementById('mode-timer-btn').classList.add('active');
             document.getElementById('mode-stopwatch-btn').classList.remove('active');
-            updateTimerDisplay(); 
+            document.getElementById('m-mode-timer-btn')?.classList.add('active');
+            document.getElementById('m-mode-stopwatch-btn')?.classList.remove('active');
+            persistTimerState();
+            updateTimerDisplay();
+            if (window.updateTimerDisplayExtended) window.updateTimerDisplayExtended();
         };
     }
     
     const modeStopwatchBtn = document.getElementById('mode-stopwatch-btn');
     if (modeStopwatchBtn) {
-        modeStopwatchBtn.onclick = () => { 
-            if(state.timer.isRunning) return; 
-            state.timer.mode = 'stopwatch'; 
+        modeStopwatchBtn.onclick = () => {
+            if(state.timer.isRunning || state.timer.sessionStartTime) return;
+            state.timer.mode = 'stopwatch';
             document.getElementById('mode-stopwatch-btn').classList.add('active');
             document.getElementById('mode-timer-btn').classList.remove('active');
-            updateTimerDisplay(); 
+            document.getElementById('m-mode-stopwatch-btn')?.classList.add('active');
+            document.getElementById('m-mode-timer-btn')?.classList.remove('active');
+            persistTimerState();
+            updateTimerDisplay();
+            if (window.updateTimerDisplayExtended) window.updateTimerDisplayExtended();
         };
     }
     
@@ -337,7 +345,7 @@ export function setupEventListeners() {
     
     const btnReset = document.querySelector('.btn-reset');
     if (btnReset) {
-        btnReset.addEventListener('click', resetTimer);
+        btnReset.addEventListener('click', () => resetTimer());
     }
 
     // Analysis Action Card Mouse Effect

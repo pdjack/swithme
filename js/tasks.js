@@ -1,6 +1,6 @@
 import { state, formatSeconds, saveToLocal, getActiveHistory } from './store.js';
 import { icon } from './icons.js';
-import { startTimer, stopTimer } from './timer.js';
+import { startTimer, stopTimer, resetTimer } from './timer.js';
 
 const taskList = document.getElementById('task-list');
 const subjectSelect = document.getElementById('task-subject');
@@ -78,8 +78,8 @@ window.playTask = (e, id) => {
         if (state.timer.activeTaskId === id) {
             stopTimer();
         } else {
-            // 다른 태스크로 전환
-            stopTimer();
+            // 다른 태스크로 전환: 현재 세션 기록·초기화 후 새 태스크 새로 시작
+            resetTimer();
             state.timer.activeTaskId = id;
             setTimeout(() => {
                 startTimer();
@@ -87,6 +87,10 @@ window.playTask = (e, id) => {
             }, 100);
         }
     } else {
+        // 멈춰있던 세션이 다른 태스크 것이면 먼저 기록·초기화 후 새로 시작
+        if (state.timer.sessionStartTime && state.timer.activeTaskId !== id) {
+            resetTimer();
+        }
         state.timer.activeTaskId = id;
         startTimer();
     }
@@ -107,8 +111,8 @@ window.deleteTask = (e, id) => {
     renderTasks(); 
 };
 
-window.selectTask = (id) => { 
-    if (state.timer.isRunning) return; 
+window.selectTask = (id) => {
+    if (state.timer.isRunning || state.timer.sessionStartTime) return;
     state.timer.activeTaskId = (state.timer.activeTaskId === id) ? null : id; 
     renderTasks(); 
 };

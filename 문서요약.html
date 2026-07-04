@@ -136,7 +136,7 @@
     <h4>3-1. MVP — 대시보드</h4>
     <table>
       <tr><th>기능</th><th>설명</th><th>상태</th></tr>
-      <tr><td>타이머 / 스톱워치</td><td>유저가 선택한 카테고리의 활동 시간을 측정 (카운트다운 또는 스톱워치 모드)</td><td class="done">✅ 완료</td></tr>
+      <tr><td>타이머 / 스톱워치</td><td>유저가 선택한 카테고리의 활동 시간을 측정 (카운트다운 또는 스톱워치 모드). STOP은 <strong>일시정지</strong>(값 유지·RESUME으로 재개)이며, 세션 기록은 RESET 또는 타이머 완료 시점에 저장(여러 번 멈췄다 재개해도 한 세션으로 합산). 측정 중·멈춤·선택 모드는 앱 재진입 시 복원.</td><td class="done">✅ 완료</td></tr>
       <tr><td>타이머 시간 설정</td><td>타이머 숫자 클릭 시 모달에서 시·분·초 셀을 각각 탭하여 텍스트 입력. 프리셋 칩(10·15·30분) 제공. "설정" 버튼으로 값만 적용(시작은 별도 START). 마지막 사용값 자동 기억. 스톱워치 모드 클릭 시 안내 토스트.</td><td class="done">✅ 완료</td></tr>
       <tr><td>타임테이블</td><td>측정한 활동 기록을 24시간 × 10분 단위 그리드에 카테고리 색상으로 표시</td><td class="done">✅ 완료</td></tr>
       <tr><td>할 일 관리</td><td>카테고리별 할 일 추가·삭제·완료 토글</td><td class="done">✅ 완료</td></tr>
@@ -211,7 +211,7 @@
       <tr><td><code>switme_habit_seed_log</code></td><td>날짜별 시드 기록. <code>{ taskKeys: [], planKeysByTab: { [tabId]: [] } }</code> 구조로 <strong>할 일은 단일 리스트, 플랜은 탭별 분리</strong>. 한 번 시드된 항목은 같은 날 재시드되지 않는다.</td></tr>
       <tr><td><code>switme_timetables</code></td><td>타임테이블 목록 (비-습관 사용자 탭은 <code>type: 'record' | 'plan'</code>로 종류 결정, 기록·플랜 각 최소 1개 보장 / <code>isHabit: true</code> 습관 8개 — 요일 7 + 매일 1)</td></tr>
       <tr><td><code>switme_active_timetable_id</code></td><td>현재 활성 타임테이블 ID</td></tr>
-      <tr><td><code>switme_timer</code></td><td>실행 중이던 타이머 상태 (앱 재시작 복원용)</td></tr>
+      <tr><td><code>switme_timer</code></td><td>타이머/스톱워치 상태 — 측정 중·멈춤(일시정지)·선택 모드 (앱 재시작 복원용)</td></tr>
       <tr><td><code>switme_timer_last_duration</code></td><td>타이머 마지막 설정 시간(초). 다음 모달 진입 시 초기값으로 사용.</td></tr>
     </table>
 

@@ -181,8 +181,32 @@ function openTimerSetModal() {
     modal.classList.add('active');
 }
 
+// 상태(측정중/멈춤/시작전)에 맞춰 PC·모바일 시작 버튼 문구와 모드 버튼 활성 표시를 동기화.
+// 앱 재실행 복원 직후, 저장된 상태를 화면에 반영하는 데 사용.
+export function refreshTimerControls() {
+    if (btnStart) {
+        if (state.timer.isRunning) {
+            btnStart.textContent = 'STOP';
+            btnStart.style.background = '#FF2D55';
+        } else if (state.timer.sessionStartTime) {
+            btnStart.textContent = 'RESUME';
+            btnStart.style.background = '#0056B3';
+        } else {
+            btnStart.textContent = 'START';
+            btnStart.style.background = '#0056B3';
+        }
+        btnStart.style.color = '#FFFFFF';
+    }
+    const isTimer = state.timer.mode === 'timer';
+    document.getElementById('mode-timer-btn')?.classList.toggle('active', isTimer);
+    document.getElementById('mode-stopwatch-btn')?.classList.toggle('active', !isTimer);
+    document.getElementById('m-mode-timer-btn')?.classList.toggle('active', isTimer);
+    document.getElementById('m-mode-stopwatch-btn')?.classList.toggle('active', !isTimer);
+    if (window.syncMobileStartBtn) window.syncMobileStartBtn(state.timer.isRunning);
+}
+
 window.editTimer = () => {
-    if (state.timer.isRunning) return;
+    if (state.timer.isRunning || state.timer.sessionStartTime) return;
     if (state.timer.mode !== 'timer') {
         showTimerToast('스톱워치는 0부터 시작합니다');
         return;
@@ -300,6 +324,7 @@ function releaseWakeLock() {
 }
 
 export function stopTimer() {
+    // stop = 일시정지: 값 유지, 기록은 reset/완료 시점에만. 멈춤 상태를 저장해 재진입 시 복원.
     state.timer.isRunning = false;
     clearInterval(state.timer.interval);
     if (state.timer.wallStartTimestamp) {
@@ -312,11 +337,12 @@ export function stopTimer() {
         btnStart.style.color = '#FFFFFF';
     }
     releaseWakeLock();
-    clearTimerState();
-    recordSession();
+    persistTimerState();
 }
 
-export function resetTimer() {
+export function resetTimer(shouldRecord = true) {
+    // 멈췄던(또는 진행 중이던) 세션을 기록에 저장한 뒤 초기화.
+    if (shouldRecord) recordSession();
     clearInterval(state.timer.interval);
     state.timer.isRunning = false;
     const lastDuration = state.timer.totalDuration || 1500;
@@ -338,11 +364,9 @@ export function resetTimer() {
 }
 
 function completeSession() {
-    recordSession();
-    clearTimerState();
     if (zenOverlay) zenOverlay.classList.remove('active');
     alert('Session Complete!');
-    resetTimer();
+    resetTimer(true); // 내부에서 recordSession + clearTimerState 처리
 }
 
 function recordSession() {
@@ -358,7 +382,6 @@ function recordSession() {
 
     if (actualDuration < 5) {
         state.timer.sessionStartTime = null;
-        if (state.timer.mode === 'stopwatch') state.timer.stopwatchSeconds = 0;
         return;
     }
 
@@ -396,7 +419,6 @@ function recordSession() {
     }
 
     state.timer.sessionStartTime = null;
-    if (state.timer.mode === 'stopwatch') state.timer.stopwatchSeconds = 0;
     updateTimerDisplay();
 }
 
