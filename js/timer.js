@@ -2,6 +2,7 @@ import { state, saveToLocal, persistTimerState, clearTimerState, getRecordHistor
 import { icon } from './icons.js';
 import { renderTasks } from './tasks.js';
 import { renderTimetable } from './timetable.js';
+import { showConfirmModal } from './modal.js';
 
 let wakeLock = null;
 
@@ -361,6 +362,41 @@ export function resetTimer(shouldRecord = true) {
         btnStart.style.color = '#FFFFFF';
     }
     updateTimerDisplay();
+}
+
+// 현재 기록 가능한(저장될) 경과 초. recordSession의 계산과 동일.
+function getRecordableSeconds() {
+    if (!state.timer.sessionStartTime) return 0;
+    const currentElapsed = state.timer.elapsedAtPause +
+        (state.timer.wallStartTimestamp
+            ? Math.floor((Date.now() - state.timer.wallStartTimestamp) / 1000)
+            : 0);
+    return state.timer.mode === 'timer'
+        ? Math.min(currentElapsed, state.timer.sessionStartSeconds)
+        : currentElapsed;
+}
+
+// RESET 버튼 진입점. 저장할 세션이 있으면 기록/폐기/취소 3버튼 확인.
+// 반환: 'record' | 'discard' | 'reset' | 'cancel' (cancel = 아무 변화 없음).
+export async function confirmResetTimer() {
+    const recordable = getRecordableSeconds();
+    if (recordable < 5) {
+        resetTimer(false);
+        return 'reset';
+    }
+    const m = Math.floor(recordable / 60);
+    const s = recordable % 60;
+    const measured = m > 0 ? `${m}분 ${s}초` : `${s}초`;
+    const choice = await showConfirmModal({
+        title: '측정 초기화',
+        message: `${measured} 측정됨. 어떻게 할까요?`,
+        okText: '기록',
+        cancelText: '취소',
+        middleText: '폐기',
+    });
+    if (choice === 'ok') { resetTimer(true); return 'record'; }
+    if (choice === 'middle') { resetTimer(false); return 'discard'; }
+    return 'cancel';
 }
 
 function completeSession() {

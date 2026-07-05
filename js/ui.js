@@ -12,7 +12,7 @@ import { state, saveToLocal, scheduleRender, persistTimerState } from './store.j
 import { icon } from './icons.js';
 import { renderTasks, renderSubjectOptions } from './tasks.js';
 import { renderTimetable } from './timetable.js';
-import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
+import { startTimer, stopTimer, confirmResetTimer, updateTimerDisplay } from './timer.js';
 
 let navItems = [];
 const dashboardView = document.getElementById('dashboard-canvas');
@@ -345,7 +345,7 @@ export function setupEventListeners() {
     
     const btnReset = document.querySelector('.btn-reset');
     if (btnReset) {
-        btnReset.addEventListener('click', () => resetTimer());
+        btnReset.addEventListener('click', () => confirmResetTimer());
     }
 
     // Analysis Action Card Mouse Effect

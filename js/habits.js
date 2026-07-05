@@ -17,6 +17,7 @@ import {
 } from './store.js';
 import { icon } from './icons.js';
 import { bindPlanSelection, startResizeMode } from './timetable.js';
+import { showConfirmModal } from './modal.js';
 
 const START_HOUR = 6;
 
@@ -51,37 +52,6 @@ function syncDashboardAfterHabitChange() {
     if (typeof window.renderTimetable === 'function') window.renderTimetable();
 }
 
-// 위험 동작 확인용 인앱 모달. confirm()을 대체해 디자인 통일.
-function showConfirmModal({ title = '확인', message = '', okText = '삭제', cancelText = '취소' } = {}) {
-    return new Promise(resolve => {
-        const modal = document.getElementById('confirm-modal');
-        const titleEl = document.getElementById('confirm-modal-title');
-        const messageEl = document.getElementById('confirm-modal-message');
-        const okBtn = document.getElementById('confirm-modal-ok');
-        const cancelBtn = document.getElementById('confirm-modal-cancel');
-        if (!modal || !titleEl || !messageEl || !okBtn || !cancelBtn) {
-            resolve(window.confirm(message));
-            return;
-        }
-        titleEl.textContent = title;
-        messageEl.textContent = message;
-        okBtn.textContent = okText;
-        cancelBtn.textContent = cancelText;
-
-        const newOk = okBtn.cloneNode(true);
-        okBtn.replaceWith(newOk);
-        const newCancel = cancelBtn.cloneNode(true);
-        cancelBtn.replaceWith(newCancel);
-
-        function close(result) {
-            modal.classList.remove('active');
-            resolve(result);
-        }
-        newOk.addEventListener('click', () => close(true));
-        newCancel.addEventListener('click', () => close(false));
-        modal.classList.add('active');
-    });
-}
 
 // 습관 정의 1건이 삭제됐을 때, 모든 날짜에 시드된 동일 항목까지 청소한다.
 // - 카테고리/이름이 일치하는 fromHabit 태스크를 state.tasks에서 제거.

@@ -1,5 +1,6 @@
 import { state, getSubjectColor, saveToLocal, getActiveHistory, getActiveTimetable, getActivePlans } from './store.js';
 import { renderTasks } from './tasks.js';
+import { showConfirmModal } from './modal.js';
 
 // ─── 상수 ───────────────────────────────────────────────────────────
 const START_HOUR = 6;
@@ -73,12 +74,63 @@ function buildRecordRows(root, slotMap) {
             if (activeSession) {
                 slot.classList.add('filled');
                 slot.style.background = getSubjectColor(activeSession.subject);
+                slot.style.cursor = 'pointer';
+                slot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteRecordSession(activeSession);
+                });
             }
             slots.appendChild(slot);
         }
         row.appendChild(slots);
         root.appendChild(row);
     }
+}
+
+// ─── 기록 세션 삭제 (기록 슬롯 탭) ─────────────────────────────────
+
+function formatDuration(totalSecs) {
+    const m = Math.floor(totalSecs / 60);
+    const s = totalSecs % 60;
+    return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+}
+
+async function deleteRecordSession(session) {
+    const tt = getActiveTimetable();
+    if (!tt || !Array.isArray(tt.history)) return;
+    const idx = tt.history.indexOf(session);
+    if (idx === -1) return;
+
+    const start = new Date(session.startTime);
+    const end = new Date(start.getTime() + session.duration * 1000);
+    const fmt = d => `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+
+    const ok = await showConfirmModal({
+        title: '기록 삭제',
+        message: `${fmt(start)}~${fmt(end)} · ${formatDuration(session.duration)} 기록을 삭제할까요?`,
+        okText: '삭제',
+        cancelText: '취소',
+    });
+    if (!ok) return;
+
+    tt.history.splice(idx, 1);
+    recalcTaskDuration(session.taskId, tt.history);
+    saveToLocal();
+    renderTasks();
+    renderTimetable();
+}
+
+// 세션 삭제 후 해당 태스크의 누적 시간 문자열 재계산.
+function recalcTaskDuration(taskId, history) {
+    if (!taskId) return;
+    state.tasks = state.tasks.map(t => {
+        if (t.id !== taskId) return t;
+        const totalSecs = history.filter(h => h.taskId === t.id).reduce((acc, h) => acc + h.duration, 0);
+        const m = Math.floor(totalSecs / 60);
+        const s = totalSecs % 60;
+        const timeStr = m > 0 ? `${m}m ${s}s` : `${s}s`;
+        return { ...t, duration: timeStr };
+    });
 }
 
 // ─── 계획 모드 그리드 빌드 ──────────────────────────────────────────

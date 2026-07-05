@@ -750,6 +750,12 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
     flex: 1; background: var(--glass); color: var(--text-dim); border: 1px solid var(--border);
     padding: 18px; border-radius: 20px; cursor: pointer; font-weight: 600;
 }
+.confirm-modal-danger {
+    color: var(--pink); border-color: rgba(255, 45, 85, 0.4);
+}
+.confirm-modal-danger:hover {
+    background: rgba(255, 45, 85, 0.1);
+}
 
 /* Timetable Grid - Brand Sync */
 .slot.filled {

@@ -12,7 +12,7 @@
 
 import { state, saveToLocal, getActiveHistory, getActiveTimetable, persistTimerState } from './store.js';
 import { icon } from './icons.js';
-import { startTimer, stopTimer, resetTimer, updateTimerDisplay } from './timer.js';
+import { startTimer, stopTimer, resetTimer, confirmResetTimer, updateTimerDisplay } from './timer.js';
 import { renderSubjectOptions, getGroupedTaskData } from './tasks.js';
 import { renderSubjectManager } from './ui.js';
 import { renderTimetable } from './timetable.js';
@@ -617,8 +617,9 @@ export function setupMobileUI() {
     // ── RESET ───────────────────────────────────────────────────
     const mBtnReset = document.getElementById('m-btn-reset');
     if (mBtnReset) {
-        mBtnReset.addEventListener('click', () => {
-            resetTimer();
+        mBtnReset.addEventListener('click', async () => {
+            const result = await confirmResetTimer();
+            if (result === 'cancel') return;
             syncMobileTimerDisplay();
             syncMobileStartBtn(false);
         });
