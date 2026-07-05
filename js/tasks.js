@@ -1,4 +1,4 @@
-import { state, formatSeconds, saveToLocal, getActiveHistory } from './store.js';
+import { state, formatSeconds, saveToLocal, getActiveHistory, localDateKey } from './store.js';
 import { icon } from './icons.js';
 import { startTimer, stopTimer, resetTimer } from './timer.js';
 
@@ -13,7 +13,7 @@ export function getGroupedTaskData() {
     return state.subjects.map(subject => {
         const tasks = dailyTasks.filter(t => t.subject === subject.id);
         const totalSecs = activeHistory
-            .filter(h => h.subject === subject.id && h.startTime.startsWith(state.selectedDate))
+            .filter(h => h.subject === subject.id && localDateKey(h.startTime) === state.selectedDate)
             .reduce((acc, h) => acc + h.duration, 0);
 
         return {
@@ -21,7 +21,7 @@ export function getGroupedTaskData() {
             tasks,
             totalTimeFormatted: formatSeconds(totalSecs)
         };
-    }).filter(s => s.tasks.length > 0 || activeHistory.some(h => h.subject === s.id && h.startTime.startsWith(state.selectedDate)));
+    }).filter(s => s.tasks.length > 0 || activeHistory.some(h => h.subject === s.id && localDateKey(h.startTime) === state.selectedDate));
 }
 
 export function renderTasks() {

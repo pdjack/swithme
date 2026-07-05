@@ -200,6 +200,10 @@ function renderCalendar() {
             if (picker) picker.value = dateKey;
             if (window.seedHabitsForDate) window.seedHabitsForDate(dateKey);
             switchTab('dashboard');
+            // 대시보드 즉시 반영 (날짜 표시·할 일·타임테이블). 이전엔 누락돼 스테일 표시됨.
+            updateDashboardDateDisplay();
+            renderTasks();
+            renderTimetable();
             if (window.loadReflectionForDate) window.loadReflectionForDate(dateKey);
             else if (window.loadTodayReflection) window.loadTodayReflection();
         });
@@ -255,6 +259,7 @@ export function setupEventListeners() {
         datePicker.value = state.selectedDate;
         datePicker.onchange = (e) => {
             state.selectedDate = e.target.value;
+            saveToLocal();
             if (window.seedHabitsForDate) window.seedHabitsForDate(state.selectedDate);
             updateDashboardDateDisplay();
             renderTasks();

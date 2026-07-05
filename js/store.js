@@ -167,7 +167,7 @@ export let state = {
     habits: loadHabits(),
     habitSeedLog: loadHabitSeedLog(),
     habitEditorDay: 'daily', // 현재 편집 중인 요일 키 (daily/mon/tue/wed/thu/fri/sat/sun)
-    selectedDate: new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    selectedDate: localDateKey(new Date()) // YYYY-MM-DD (로컬 기준)
 };
 
 // Ensure all tasks have a date
@@ -255,6 +255,17 @@ export function getHabitDayKeyForDate(dateStr) {
 
 export const HABIT_DAY_KEYS_ORDERED = ['daily', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 export const HABIT_DAY_LABELS_KO = HABIT_DAY_LABELS;
+
+// 로컬(벽시계) 기준 YYYY-MM-DD 키. 날짜 버킷·비교는 전부 이 함수로 통일한다.
+// (toISOString은 UTC라 한국 밤 시간대 기록이 전날로 새는 문제를 유발)
+export function localDateKey(d) {
+    const dt = d instanceof Date ? d : new Date(d);
+    if (Number.isNaN(dt.getTime())) return '';
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
 
 export function getSubjectColor(id) {
     const sub = state.subjects.find(s => s.id === id);

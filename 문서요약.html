@@ -605,11 +605,12 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
     <blockquote>위 4건 커밋 <code>cd6ee78</code>에서 해결. 실기기(설치형 PWA) 수동 검증은 유저 몫으로 남음.</blockquote>
     <h4>기록 / 데이터</h4>
     <ul>
-      <li><strong>할 일 수행 기록 소실:</strong> 기록 화면 나갔다가 창 닫은 뒤 재진입하면 기록 사라짐.</li>
-      <li><strong>환경 간 데이터 불일치:</strong> <code>swithme-delta.vercel.app</code> 과 <code>swithme.app</code> 의 로드·세이브 값이 다름.</li>
-      <li><strong>기록한 시간 즉시 표시 안 됨.</strong></li>
-      <li><strong>날짜 변경 시 대시보드 반영 지연:</strong> 날짜 바뀌어도 대시보드 설정 날짜가 곧바로 업데이트 안 됨.</li>
+      <li>✅ <strong>할 일 수행 기록 소실:</strong> 기록 화면 나갔다가 창 닫은 뒤 재진입하면 기록 사라짐. → 날짜 계산 UTC↔로컬 혼용을 <strong>로컬 벽시계로 통일</strong>. 재실행 시 밤 시간대 기록이 전날로 새던 문제 해결.</li>
+      <li>☐ <strong>환경 간 데이터 불일치:</strong> <code>swithme-delta.vercel.app</code> 과 <code>swithme.app</code> 의 로드·세이브 값이 다름. → <strong>코드로 해결 불가.</strong> 도메인마다 <code>localStorage</code> 분리. 배포 주소 단일화 또는 로그인·서버 동기화(로드맵) 필요.</li>
+      <li>✅ <strong>기록한 시간 즉시 표시 안 됨:</strong> 시간 합계는 UTC 문자열, 타임테이블 블럭은 로컬 기준이라 형제 불일치. → 로컬 날짜로 통일해 일치.</li>
+      <li>✅ <strong>날짜 변경 시 대시보드 반영 지연:</strong> PC 달력 날짜 클릭이 대시보드 갱신 누락(모바일 정상). → PC 경로에 즉시 갱신 추가.</li>
     </ul>
+    <blockquote>위 3건(로컬 날짜 통일 + PC 달력 갱신) 해결. 데이터 불일치는 도메인 분리 이슈로 클라 코드 범위 밖.</blockquote>
     <h4>습관 타임테이블</h4>
     <ul>
       <li><strong>메모 표시 안 됨:</strong> 습관 타임테이블 메모(블럭 메모 포함) 안 보임.</li>

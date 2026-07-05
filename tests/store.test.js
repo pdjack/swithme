@@ -41,8 +41,10 @@ describe('store.js', () => {
       expect(store.state.timer.isRunning).toBe(false);
     });
 
-    it('selectedDate가 오늘 날짜(YYYY-MM-DD)여야 한다', () => {
-      const today = new Date().toISOString().split('T')[0];
+    it('selectedDate가 오늘 날짜(YYYY-MM-DD, 로컬 기준)여야 한다', () => {
+      // 로컬 벽시계 기준. toISOString(UTC)은 밤 시간대 기록이 전날로 새는 버그의 원인.
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       expect(store.state.selectedDate).toBe(today);
     });
   });

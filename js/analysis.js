@@ -1,4 +1,4 @@
-import { state, saveToLocal } from './store.js';
+import { state, saveToLocal, localDateKey } from './store.js';
 import { icon } from './icons.js';
 
 /**
@@ -47,7 +47,7 @@ function getChartData() {
 
 // ── 날짜 유틸 ──────────────────────────────────────────
 function toDateKey(d) {
-    return d.toISOString().split('T')[0];
+    return localDateKey(d);
 }
 
 function buildDateRange(days, endDate = new Date()) {
