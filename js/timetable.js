@@ -459,7 +459,10 @@ function showPlanSlotModal(startSlot, endSlot) {
 
 // ─── 계획 상세/수정/삭제 모달 ───────────────────────────────────────
 
-function showPlanDetailModal(plan) {
+export function showPlanDetailModal(plan, options = {}) {
+    const getPlans = options.getPlans || getActivePlans;
+    const onChange = options.onChange || renderTimetable;
+    const resizeRoots = options.resizeRoots || null;
     const modal = document.getElementById('plan-detail-modal');
     const viewDetail = modal.querySelector('[data-view="detail"]');
     const viewChoice = modal.querySelector('[data-view="edit-choice"]');
@@ -512,11 +515,15 @@ function showPlanDetailModal(plan) {
     }
 
     function onDelete() {
-        const plans = getActivePlans();
+        if (typeof options.onDelete === 'function') {
+            options.onDelete(plan, closeModal);
+            return;
+        }
+        const plans = getPlans();
         const idx = plans.findIndex(p => p.id === plan.id);
         if (idx !== -1) plans.splice(idx, 1);
         saveToLocal();
-        renderTimetable();
+        onChange();
         closeModal();
     }
 
@@ -532,13 +539,13 @@ function showPlanDetailModal(plan) {
 
     function onEditTime() {
         closeModal();
-        startResizeMode(plan);
+        startResizeMode(plan, resizeRoots ? { roots: resizeRoots, onAfterEdit: onChange } : {});
     }
 
     function onMemoSave() {
         plan.memo = memoInput.value.trim();
         saveToLocal();
-        renderTimetable();
+        onChange();
         closeModal();
     }
 

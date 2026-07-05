@@ -16,7 +16,7 @@ import {
     HABIT_DAY_LABELS_KO
 } from './store.js';
 import { icon } from './icons.js';
-import { bindPlanSelection, startResizeMode } from './timetable.js';
+import { bindPlanSelection, showPlanDetailModal } from './timetable.js';
 import { showConfirmModal } from './modal.js';
 
 const START_HOUR = 6;
@@ -459,6 +459,26 @@ function buildHabitGrid(root, plans, isPc) {
                 openHabitPlanDetail(plan);
             });
         }
+
+        if (plan.memo) {
+            const firstSlot = root.querySelector(`.slot[data-slot-idx="${plan.startSlot}"]`);
+            if (firstSlot) {
+                const SLOTS_PER_ROW = 6;
+                const startRow = Math.floor(plan.startSlot / SLOTS_PER_ROW);
+                const endRow = Math.floor(plan.endSlot / SLOTS_PER_ROW);
+                const rowSpan = endRow - startRow + 1;
+                const firstRowEndSlot = Math.min(plan.endSlot, startRow * SLOTS_PER_ROW + SLOTS_PER_ROW - 1);
+                const firstRowCells = firstRowEndSlot - plan.startSlot + 1;
+                const memoEl = document.createElement('div');
+                memoEl.className = 'plan-block__memo';
+                if (rowSpan > 1) memoEl.classList.add('plan-block__memo--multi');
+                memoEl.textContent = plan.memo;
+                memoEl.style.width = `calc(${firstRowCells * 100}% + ${firstRowCells - 1}px)`;
+                memoEl.style.height = `calc(${rowSpan * 100}% + ${rowSpan - 1}px)`;
+                memoEl.style.setProperty('--memo-lines', String(rowSpan));
+                firstSlot.appendChild(memoEl);
+            }
+        }
     }
 
     // 빈 슬롯 → 짧게 누름(단일 칸) 또는 길게 누른 뒤 드래그(범위)로 추가
@@ -518,66 +538,38 @@ function openHabitPlanAdd(startSlot, endSlot) {
 }
 
 function openHabitPlanDetail(plan) {
-    const modal = document.getElementById('plan-detail-modal');
-    const timeLabel = document.getElementById('plan-detail-time-label');
-    const subjectEl = document.getElementById('plan-detail-subject');
-    const memoEl = document.getElementById('plan-detail-memo');
-    const deleteBtn = document.getElementById('plan-detail-delete');
-    const cancelBtn = document.getElementById('plan-detail-cancel');
-    const editBtn = document.getElementById('plan-detail-edit');
+    // 대시보드 블럭과 동일한 상세/수정 패널을 재사용한다. 데이터 소스만 습관 타임테이블로,
+    // 삭제는 시드 정리를 포함한 습관 전용 확인 흐름으로 오버라이드한다.
+    const onChange = () => {
+        renderHabitPlanGrid();
+        syncDashboardAfterHabitChange();
+    };
+    const resizeRoots = [
+        document.getElementById('habit-timetable-root'),
+        document.getElementById('m-habit-timetable-root')
+    ].filter(Boolean);
 
-    timeLabel.textContent = slotRangeLabel(plan.startSlot, plan.endSlot);
-    if (plan.subject) {
-        const sub = state.subjects.find(s => s.id === plan.subject);
-        subjectEl.textContent = sub ? sub.name : plan.subject;
-        subjectEl.style.color = getSubjectColor(plan.subject);
-        subjectEl.style.display = '';
-    } else {
-        subjectEl.style.display = 'none';
-    }
-    memoEl.textContent = plan.memo || '(메모 없음)';
-    modal.classList.add('active');
-
-    const newDelete = deleteBtn.cloneNode(true);
-    deleteBtn.replaceWith(newDelete);
-    const newCancel = cancelBtn.cloneNode(true);
-    cancelBtn.replaceWith(newCancel);
-    const newEdit = editBtn.cloneNode(true);
-    editBtn.replaceWith(newEdit);
-
-    function close() { modal.classList.remove('active'); }
-
-    newDelete.addEventListener('click', async () => {
-        const dayLabel = HABIT_DAY_LABELS_KO[state.habitEditorDay];
-        close();
-        const ok = await showConfirmModal({
-            title: '습관 플랜 삭제',
-            message: `이 습관 플랜을 삭제하면 ${dayLabel} 요일에 자동 생성된 같은 시간대 박스도 모든 날짜에서 함께 사라집니다.\n계속할까요?`
-        });
-        if (!ok) return;
-        const tt = getHabitTimetable(state.habitEditorDay);
-        if (tt) {
-            const idx = tt.plans.findIndex(p => p.id === plan.id);
-            if (idx !== -1) tt.plans.splice(idx, 1);
-            purgeSeededPlan(plan);
-            saveToLocal();
-            renderHabitPlanGrid();
-            syncDashboardAfterHabitChange();
-        }
-    });
-    newCancel.addEventListener('click', close);
-    newEdit.addEventListener('click', () => {
-        close();
-        // 대시보드와 동일한 핸들 드래그 수정 흐름. 활성 디바이스(PC/모바일) 그리드만 대상으로.
-        const pcRoot = document.getElementById('habit-timetable-root');
-        const mRoot = document.getElementById('m-habit-timetable-root');
-        startResizeMode(plan, {
-            roots: [pcRoot, mRoot],
-            onAfterEdit: () => {
-                renderHabitPlanGrid();
-                syncDashboardAfterHabitChange();
+    showPlanDetailModal(plan, {
+        getPlans: () => getHabitTimetable(state.habitEditorDay)?.plans || [],
+        onChange,
+        resizeRoots,
+        onDelete: async (target, close) => {
+            const dayLabel = HABIT_DAY_LABELS_KO[state.habitEditorDay];
+            close();
+            const ok = await showConfirmModal({
+                title: '습관 플랜 삭제',
+                message: `이 습관 플랜을 삭제하면 ${dayLabel} 요일에 자동 생성된 같은 시간대 박스도 모든 날짜에서 함께 사라집니다.\n계속할까요?`
+            });
+            if (!ok) return;
+            const tt = getHabitTimetable(state.habitEditorDay);
+            if (tt) {
+                const idx = tt.plans.findIndex(p => p.id === target.id);
+                if (idx !== -1) tt.plans.splice(idx, 1);
+                purgeSeededPlan(target);
+                saveToLocal();
+                onChange();
             }
-        });
+        }
     });
 }
 
