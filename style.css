@@ -2699,7 +2699,7 @@ body.m-subject-dragging .subject-row { touch-action: none; }
 /* ── 세션 기록 토스트 ──────────────────────────────────────── */
 .record-toast {
     position: fixed;
-    bottom: 40px;
+    bottom: calc(40px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%) translateY(20px);
     background: rgba(30, 30, 30, 0.92);
