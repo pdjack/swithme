@@ -84,6 +84,9 @@
   <a class="sec" href="#prd-4">4. 기술 스택·아키텍처</a>
   <a class="sec" href="#prd-5">5. 화면 구조</a>
   <a class="sec" href="#prd-8">6~8. 성공기준·일정·리스크</a>
+  <a class="sec" href="#prd-9">9. 수익 모델</a>
+  <a class="sec" href="#prd-10">10. 플랫폼 전략 (TWA)</a>
+  <a class="doc" href="#twa">📦 TWA 출시 할 일</a>
   <a class="doc" href="#readme">📖 README</a>
   <a class="doc" href="#ui">🎨 UI/UX 일관성 가이드</a>
   <a class="doc" href="#index">🗂️ Directives 인덱스</a>
@@ -105,6 +108,7 @@
       <tr><td><a href="#pwa">PWA·배포</a></td><td>배포할 때, PWA 문제날 때</td></tr>
       <tr><td><a href="#analysis">분석 철학 / <a href="#tips">스마트 가이드</a></td><td>분석·통계·추천 기능 기획할 때</td></tr>
       <tr><td><a href="#improve">개선사항 목록</a></td><td>버그·개선 요청 현황 볼 때. 무엇이 남았고 무엇이 됐는지(✅)</td></tr>
+      <tr><td><a href="#twa">TWA 출시 할 일</a></td><td>스토어 출시 진행할 때. "할 일" 이라고 말하면 다음 항목을 제시함</td></tr>
     </table>
   </div>
 
@@ -271,9 +275,194 @@
     <h4>8. 리스크 및 제약사항</h4>
     <table>
       <tr><th>항목</th><th>설명</th></tr>
-      <tr><td>웹 기반 한계</td><td>브라우저 환경이므로 <strong>푸시 알림</strong> 등 네이티브 기능 사용 불가</td></tr>
+      <tr><td>웹 기반 한계</td><td>백그라운드 상시 실행, 센서·하드웨어 접근 등 일부 네이티브 기능 사용 불가. <strong>푸시 알림은 사용 가능</strong> (안드로이드 Chrome 지원, iOS는 Safari 16.4+ <strong>설치형 PWA 한정</strong> 지원)</td></tr>
       <tr><td>데이터 영속성</td><td><code>localStorage</code> 기반이므로 브라우저 데이터 삭제 시 모든 데이터 유실</td></tr>
       <tr><td>서버 미사용</td><td>기기 간 데이터 동기화 불가, 백업 기능 없음</td></tr>
+    </table>
+    <blockquote>
+      <p><strong>정정 이력 (2026-07-15):</strong> 기존 "푸시 알림 등 네이티브 기능 사용 불가" 기술은 사실이 아니었다. Web Push는 안드로이드에서 오래전부터, iOS에서도 16.4(2023)부터 설치형 PWA에 한해 지원된다. 이 오기재로 인해 <strong>알림 기반 리텐션 설계가 검토 대상에서 제외되어 있었다.</strong> 향후 리텐션 기능 기획 시 푸시는 현 스택으로 구현 가능한 선택지로 취급한다.</p>
+    </blockquote>
+
+    <h3 id="prd-9">9. 수익 모델 <span class="tag">☐ 미착수</span></h3>
+    <blockquote>
+      <p><strong>상태:</strong> 검토만 완료. 구현 착수 안 함. <strong>현 구조(서버·계정 없음)에서는 유료화 자체가 불가능</strong>하므로 로그인·백엔드 도입이 선행 조건이다.</p>
+    </blockquote>
+    <h4>9-1. 현 구조의 제약</h4>
+    <table>
+      <tr><th>제약</th><th>수익화에 미치는 영향</th></tr>
+      <tr><td>서버 없음, <code>localStorage</code> 단독</td><td>결제 검증·구독 상태 확인 불가</td></tr>
+      <tr><td>기기 간 동기화 불가</td><td>유저가 지불할 가장 명확한 이유(데이터 안전·기기 이동)가 부재</td></tr>
+      <tr><td>도메인별 <code>localStorage</code> 분리</td><td>배포 주소가 다르면 데이터도 분리</td></tr>
+    </table>
+    <h4>9-2. 채택 후보 — Freemium</h4>
+    <p>무료 기능은 유지하고, <strong>데이터가 축적될수록 가치가 커지는 것</strong>만 유료로 잠근다.</p>
+    <table>
+      <tr><th>구분</th><th>범위</th></tr>
+      <tr><td><strong>무료</strong></td><td>타이머·타임테이블·할 일·습관·캘린더·회고 기록 전부 + 단기(7일) 분석</td></tr>
+      <tr><td>유료 후보 1</td><td>계정 동기화·백업 — 기기 간 이동, 브라우저 데이터 삭제 시 복구</td></tr>
+      <tr><td>유료 후보 2</td><td>장기 분석 — 30일/90일/연간 트렌드, 기간 비교</td></tr>
+      <tr><td>유료 후보 3</td><td>처방전 심화 — 규칙 기반이 아닌 개인 이력 축적 기반</td></tr>
+      <tr><td>유료 후보 4</td><td>데이터 내보내기 — CSV·이미지 리포트</td></tr>
+    </table>
+    <p><strong>근거:</strong> 타이머·할 일은 대체재가 많아 유료화 시 즉시 이탈한다. 반면 유저 본인의 축적 데이터는 대체 불가이며, 스윗미의 차별점(회고→분석→처방 루프)도 시간 축적이 전제라 유료 라인과 겹친다.</p>
+    <h4>9-3. 명시적 제외 — 검토 후 기각</h4>
+    <table>
+      <tr><th>기각안</th><th>사유</th></tr>
+      <tr><td>광고</td><td>몰입 도구라는 정체성 훼손. 유의미한 수익엔 대규모 트래픽 필요</td></tr>
+      <tr><td>선불 구매(앱 유료 판매)</td><td>웹 결제 선불은 전환율이 낮음</td></tr>
+      <tr><td>일회성 라이선스</td><td>서버 유지비는 계속 발생하는데 수입은 1회 → 구조적 적자</td></tr>
+    </table>
+    <h4>9-4. 참고 — 스토어 결제 수수료</h4>
+    <p>앱 내에서 디지털 상품을 판매할 경우 스토어 자체 결제가 강제된다 (Google Play 기준 수수료 15%, 연매출 100만 달러 미만). 앱 내부에서 자체 웹 결제창을 띄우는 것은 정책 위반이다. 웹(브라우저)에서만 판매할 경우엔 해당 없음.</p>
+
+    <h3 id="prd-10">10. 플랫폼 전략 — TWA 결정 (2026-07-15)</h3>
+    <h4>10-1. 결정</h4>
+    <p><strong>TWA(Trusted Web Activity)로 Google Play 진입. 네이티브 앱 개발은 보류.</strong></p>
+    <p>TWA는 기존 PWA를 안드로이드 앱으로 포장하는 방식이다. 코드 재작성이 없고, 웹 배포 시 앱에도 즉시 반영된다(스토어 재심사 불필요).</p>
+    <h4>10-2. 결정의 전제 — ⚠️ 이것이 바뀌면 결정도 무효</h4>
+    <blockquote>
+      <p><strong>현재 목표는 "학습"이다.</strong> 구체적으로 <strong>앱을 스토어에서 굴리는 전 과정</strong>(등록·심사·데이터 안전 양식·버전 배포·결제 연동)을 익히는 것이 목적이며, <strong>유저 확보·수익은 현 목표가 아니다.</strong></p>
+    </blockquote>
+    <h4>10-3. 판단 기준별 근거</h4>
+    <table>
+      <tr><th>기준</th><th>값</th><th>TWA를 지지하는가</th></tr>
+      <tr><td>목표</td><td>학습(스토어 운영)</td><td>✅ TWA가 그 학습을 수일 내 제공. 네이티브는 동일 학습을 수개월 뒤 제공</td></tr>
+      <tr><td>iOS 필요성</td><td>불필요</td><td>✅ 네이티브의 최대 이점(iOS 진입)이 무력화</td></tr>
+      <tr><td>가용 시간</td><td>일 2시간</td><td>✅ TWA는 수용 가능. 네이티브 재작성은 이 속도로 수개월</td></tr>
+      <tr><td>실패 감내</td><td>별점 사고 감내 가능</td><td>✅ TWA의 유일한 고유 리스크가 감내 범위 내</td></tr>
+      <tr><td>지연 비용</td><td>학습 시작이 늦어짐</td><td>✅ TWA는 즉시 착수 가능</td></tr>
+    </table>
+    <h4>10-4. 기각한 대안</h4>
+    <table>
+      <tr><th>대안</th><th>사유</th></tr>
+      <tr><td>네이티브 (Kotlin/Swift 또는 Flutter/RN)</td><td>전면 재작성 필요(현 코드 재활용 ≈ 0). 현 목표가 "앱 개발 학습"이 아니라 "스토어 운영 학습"이므로 동일 학습을 수개월 더 비싸게 사는 셈. iOS 불필요로 최대 이점도 상실. Apple 개발자 계정 연 $99 상시 발생</td></tr>
+      <tr><td>현상 유지 (웹만)</td><td>스토어 진입 불가 → 목표(학습) 달성 자체가 불가능</td></tr>
+    </table>
+    <h4>10-5. 결정을 뒤집어야 하는 조건 (Reversal Triggers)</h4>
+    <p>아래 중 하나라도 발생하면 <strong>§10 전체를 재검토</strong>한다. 결론만 승계하지 말 것.</p>
+    <ol>
+      <li><strong>목표가 "학습" → "제품(유저 확보·수익)"으로 변경.</strong> 이 경우 §9의 선행 조건(로그인·서버)이 되살아나며, 데이터 유실 리스크가 감내 불가 수준으로 격상된다.</li>
+      <li><strong>iOS 지원이 필요해짐.</strong> TWA는 iOS를 커버하지 못한다 (Apple 미허용).</li>
+      <li><strong>백그라운드 상시 실행·센서 접근 등 웹이 못 하는 기능이 핵심 요구가 됨.</strong></li>
+    </ol>
+    <h4>10-6. 알려진 미해결 리스크</h4>
+    <table>
+      <tr><th>리스크</th><th>내용</th><th>해소 조건</th></tr>
+      <tr><td><strong>데이터 유실</strong></td><td>TWA는 Chrome 저장소를 공유한다. 유저가 Chrome에서 "인터넷 사용 기록 삭제"를 실행하면 앱을 삭제하지 않았는데도 기록이 전부 소실된다. 웹에서는 납득되던 동작이 <strong>앱에서는 버그로 인식</strong>된다</td><td><strong>서버 동기화 도입 시 소멸.</strong> TWA 고유 문제가 아니라 서버 부재로 인한 문제</td></tr>
+      <tr><td>Chrome 의존</td><td>기기에 Chrome(또는 호환 브라우저)이 없거나 비활성화되면 주소창이 노출되거나 실행 불가</td><td>없음 (구조적)</td></tr>
+      <tr><td>심사 거절</td><td>Google은 TWA를 공식 허용하나, "웹사이트 단순 포장" 앱은 스팸 정책으로 거절한다. 경계는 심사자 재량</td><td>없음 (기능 충실도로 완화)</td></tr>
+      <tr><td>연 1회 강제 재빌드</td><td>Google의 Android 타겟 API 레벨 요구치가 매년 상승. 앱을 수정하지 않아도 매년 재빌드·재제출해야 하며, 미이행 시 검색에서 제외</td><td>없음 (상시 운영 비용)</td></tr>
+    </table>
+    <h4>10-7. 리스크 완화 — 비공개 테스트 트랙</h4>
+    <p>Play Console의 <strong>비공개 테스트 트랙</strong>(초대한 테스터 최대 100명, 공개 별점·리뷰 없음)을 사용하면 §10-6의 데이터 유실 리스크가 공개 평판으로 굳는 것을 방지하면서 §10-2의 학습 목표는 거의 그대로 달성할 수 있다.</p>
+    <p><strong>트랙 선택 시 상실되는 학습:</strong> 실제 유저 반응·별점 관리 경험. → <strong>미결정. 착수 전 유저 판단 필요.</strong></p>
+  </section>
+
+  <!-- ============ TWA 출시 할 일 ============ -->
+  <section class="doc" id="twa">
+    <h2>📦 TWA 출시 — 할 일 <span class="tag">☐ 착수 전</span></h2>
+    <blockquote>
+      <p>실행 체크리스트. 결정의 배경·근거는 <a href="#prd-10">PRD §10</a>에 있다. <strong>이 문서는 "무엇을 하는가"만 다룬다.</strong></p>
+      <p><strong>호출 규칙:</strong> 유저가 <strong>"할 일"</strong>이라고 말하면 Claude가 이 문서를 읽고 <strong>다음 미완료 항목</strong>을 제시한다.</p>
+    </blockquote>
+    <h4>0. 현재 상태</h4>
+    <table>
+      <tr><th>항목</th><th>상태</th></tr>
+      <tr><td>전체 진행</td><td>☐ 착수 전 (0/13)</td></tr>
+      <tr><td>현재 병목</td><td><strong>B-1 구글 개발자 계정 등록</strong> — 유저 몫, 심사 며칠~몇 주 소요</td></tr>
+      <tr><td>미결정 사항</td><td><strong>트랙 선택</strong> (비공개 테스트 vs 공개 출시)</td></tr>
+    </table>
+    <p><strong>이미 확보된 것 (추가 작업 불필요):</strong> PWA 매니페스트 · 아이콘 2종(192·512) · Service Worker · 배포 도메인 <code>swithme.app</code>. TWA에 필요한 웹 측 재료는 대부분 갖춰져 있다.</p>
+
+    <h4>1. ⚠️ 착수 전 선결 — 트랙 선택 (유저 결정)</h4>
+    <p><strong>이걸 정해야 나머지가 시작된다.</strong> 이후 작업 내용이 갈린다.</p>
+    <table>
+      <tr><th>선택지</th><th>내용</th><th>상실하는 것</th></tr>
+      <tr><td><strong>비공개 테스트</strong></td><td>초대한 테스터만(최대 100명). 공개 별점·리뷰 없음</td><td>실제 유저 반응·별점 관리 경험</td></tr>
+      <tr><td><strong>공개 출시</strong></td><td>스토어 검색 노출. 별점·리뷰 영구 공개</td><td>없음. 단 데이터 유실 사고가 공개 평판으로 영구히 굳음</td></tr>
+    </table>
+    <p><strong>☐ 결정 대기 중</strong></p>
+
+    <h4>2-A. Claude가 하는 것</h4>
+    <table>
+      <tr><th>#</th><th>할 일</th><th>내용</th><th>선행 조건</th><th>상태</th></tr>
+      <tr><td>A-1</td><td>도메인 소유 증명</td><td>안드로이드가 주소창을 감추려면 "이 도메인이 내 것"이라는 증명이 필요하다. 앱 서명 지문을 사이트에 파일로 올린다. <strong>어긋나면 앱이 주소창을 달고 뜬다</strong></td><td><strong>B-2 완료 필수</strong></td><td>☐</td></tr>
+      <tr><td>A-2</td><td>앱 파일 빌드</td><td>현 웹을 감싼 안드로이드 앱 파일 생성. 아이콘·이름·색은 기존 것 그대로</td><td>없음</td><td>☐</td></tr>
+      <tr><td>A-3</td><td>매니페스트 보강</td><td>스토어 요구 항목 중 누락분 채움 (앱 고유 ID 등)</td><td>없음</td><td>☐</td></tr>
+      <tr><td>A-4</td><td>개인정보처리방침 작성</td><td><strong>스토어 필수. 없으면 등록 자체가 막힌다.</strong> 데이터를 기기에만 저장하므로 내용은 짧다. 단 <strong>실제 접속 가능한 URL이어야</strong> 하므로 사이트에 페이지로 게시</td><td>없음</td><td>☐</td></tr>
+      <tr><td>A-5</td><td>아이콘 여백 점검</td><td>512px 아이콘이 "마스크 적용"으로 설정돼 있다. 안드로이드가 원형·둥근사각형으로 잘라내므로 여백이 부족하면 로고가 잘린다</td><td>없음</td><td>☐</td></tr>
+    </table>
+
+    <h4>2-B. 유저가 하는 것 (Claude 대행 불가)</h4>
+    <p>계정 인증·결제·법적 신고는 본인이 해야 한다.</p>
+    <table>
+      <tr><th>#</th><th>할 일</th><th>내용</th><th>상태</th></tr>
+      <tr><td>B-1</td><td>구글 개발자 계정 등록</td><td><strong>$25 (1회)</strong>. 신분증 인증 필요. <strong>개인 계정은 심사에 며칠~몇 주 소요 — 실질 병목</strong></td><td>☐</td></tr>
+      <tr><td>B-2</td><td>Play Console에서 앱 생성</td><td>앱 이름·기본 정보 입력. <strong>완료 시 앱 서명 지문이 나오며, 이걸 Claude에게 전달해야 A-1이 진행됨</strong></td><td>☐</td></tr>
+      <tr><td>B-3</td><td>트랙 설정</td><td>§1에서 정한 트랙으로 설정</td><td>☐</td></tr>
+      <tr><td>B-4</td><td>데이터 안전 양식 제출</td><td>수집 데이터 신고. 스윗미는 "수집 없음"이라 간단</td><td>☐</td></tr>
+      <tr><td>B-5</td><td>스토어 등록 정보 입력</td><td>설명문, 스크린샷, 카테고리, 콘텐츠 등급 설문</td><td>☐</td></tr>
+      <tr><td>B-6</td><td>앱 파일 업로드</td><td>A-2 결과물 업로드</td><td>☐</td></tr>
+    </table>
+
+    <h4>3. 실행 순서</h4>
+    <pre>[§1 트랙 결정]  ← 유저. 여기부터 시작
+       ↓
+[B-1 개발자 계정 등록] ──── 심사 대기 (며칠~몇 주) ────┐
+       ↓                                            │
+       │        이 대기 시간 동안 병렬 진행 가능 →  [A-2 빌드]
+       │                                          [A-3 매니페스트]
+       │                                          [A-4 개인정보처리방침]
+       │                                          [A-5 아이콘]
+       ↓                                            │
+[B-2 앱 생성 → 서명 지문 확보]  ←───────────────────┘
+       ↓
+[A-1 도메인 소유 증명]   ← 지문 없으면 불가
+       ↓
+[B-3 트랙] → [B-4 데이터 안전] → [B-5 등록 정보] → [B-6 업로드]
+       ↓
+[검증 — §4]</pre>
+    <p><strong>요점:</strong> B-1 심사 대기가 가장 길다. 그 시간에 A-2~A-5를 끝내둔다.</p>
+
+    <h4>4. 검증 — 소유자 분리</h4>
+    <table>
+      <tr><th>검증 항목</th><th>소유자</th><th>자동화</th></tr>
+      <tr><td>앱 파일이 정상 빌드되는가</td><td>Claude</td><td>✅ 가능</td></tr>
+      <tr><td>증명 파일이 사이트에 정상 게시되는가</td><td>Claude</td><td>✅ 가능</td></tr>
+      <tr><td><strong>실기기(안드로이드 폰)에서 주소창 없이 뜨는가</strong></td><td><strong>유저</strong></td><td>❌ <strong>불가</strong></td></tr>
+      <tr><td><strong>타이머·데이터 저장이 앱 내부에서 정상 동작하는가</strong></td><td><strong>유저</strong></td><td>❌ <strong>불가</strong></td></tr>
+    </table>
+    <blockquote>
+      <p><strong>⚠️ 완료 조건:</strong> 위 두 항목(유저 몫)을 통과하지 않으면 <strong>"됐다" 판정 불가</strong>다.</p>
+      <p><strong>자동 검증만으로는 실패 경로를 잡지 못한다.</strong> 증명 파일이 어긋나면 앱이 주소창을 달고 뜨는데, <strong>이 증상은 실기기에서만 보인다.</strong> 빌드 성공·파일 게시 성공은 이 실패와 무관하게 통과한다.</p>
+    </blockquote>
+
+    <h4>5. 예상 소요·비용</h4>
+    <table>
+      <tr><th>항목</th><th>값</th></tr>
+      <tr><td>Claude 작업</td><td>반나절</td></tr>
+      <tr><td>유저 작업</td><td>1~2시간 (심사 대기 제외)</td></tr>
+      <tr><td><strong>전체 기간</strong></td><td><strong>개발자 계정 심사에 좌우 — 며칠~몇 주</strong></td></tr>
+      <tr><td>비용</td><td>$25 (구글 개발자 등록, 1회)</td></tr>
+    </table>
+
+    <h4>6. 예상 마찰 지점</h4>
+    <table>
+      <tr><th>지점</th><th>내용</th></tr>
+      <tr><td>개발자 계정 심사 대기</td><td>며칠~몇 주. 이 기간 B 작업 전면 정지. A 작업으로 메움</td></tr>
+      <tr><td>빌드 도구 설치</td><td>현재 이 컴퓨터에 Java 미설치. 빌드 도구가 자동으로 받아오나 <strong>최초 1회 수 GB 다운로드</strong> 발생</td></tr>
+      <tr><td>순서 의존</td><td>서명 지문(B-2) → 증명 파일(A-1). 유저 작업이 Claude 작업을 막음</td></tr>
+      <tr><td>심사 거절 가능성</td><td>"웹사이트 단순 포장" 판정 시 거절. 거절 사유가 모호하게 통보될 수 있음</td></tr>
+    </table>
+
+    <h4>7. 출시 이후 상시 의무</h4>
+    <p>출시로 끝이 아니다. 등록하는 순간 아래가 영구히 따라온다.</p>
+    <table>
+      <tr><th>의무</th><th>주기</th></tr>
+      <tr><td>Android 타겟 API 레벨 상향 대응 (재빌드·재제출)</td><td><strong>매년.</strong> 앱을 수정하지 않아도 필수. 미이행 시 검색에서 제외</td></tr>
+      <tr><td>개인정보처리방침 최신 유지</td><td>수집 항목 변경 시</td></tr>
+      <tr><td>로그인 도입 시 계정 삭제 경로 제공 (앱 + 웹 양쪽)</td><td>로그인 도입 시</td></tr>
+      <tr><td>별점·리뷰 대응</td><td>공개 트랙 선택 시 상시</td></tr>
     </table>
   </section>
 
