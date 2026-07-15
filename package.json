@@ -1,7 +1,7 @@
 {
   "name": "switme",
   "version": "1.0.0",
-  "description": "Deep Focus Dashboard - Sweet Me",
+  "description": "Deep Focus Dashboard - SwitMe",
   "type": "module",
   "main": "index.html",
   "scripts": {
