@@ -101,6 +101,7 @@
   <a class="doc" href="#analysis">🧠 분석 철학</a>
   <a class="doc" href="#tips">💡 스마트 가이드(팁)</a>
   <a class="doc" href="#improve">🛠️ 개선사항 목록</a>
+  <a class="doc" href="#marketing">📣 마케팅 플랜</a>
 </nav>
 
 <main>
@@ -117,6 +118,7 @@
       <tr><td><a href="#improve">개선사항 목록</a></td><td>버그·개선 요청 현황 볼 때. 무엇이 남았고 무엇이 됐는지(✅)</td></tr>
       <tr><td><a href="#twa">TWA 출시 할 일</a></td><td>스토어 출시 진행할 때. "할 일" 이라고 말하면 다음 항목을 제시함</td></tr>
       <tr><td><a href="#decide">합리적 의사결정 원칙</a></td><td>뭔가 골라야 할 때. "합리적인 선택" 이라고 말하면 Claude가 이 원칙을 적용함. <strong>개발 아닌 결정에도 씀</strong></td></tr>
+      <tr><td><a href="#marketing">마케팅 플랜</a></td><td>홍보·마케팅 진행할 때. 타겟·채널·릴스 콘텐츠 아이디어·4주 로드맵</td></tr>
     </table>
   </div>
 
@@ -1044,6 +1046,65 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
       <li>AI가 읽을 수 있도록 글자는 이미지 대신 <strong>텍스트</strong>로, 가급적 <strong>서버 사이드 렌더링(SSR)</strong> 활용.</li>
       <li>웹앱이 무엇을 하는 앱인지 <strong>상세하고 유익한 설명글</strong> 작성.</li>
     </ul>
+  </section>
+
+  <!-- ============ 마케팅 플랜 ============ -->
+  <section class="doc" id="marketing">
+    <h2>📣 마케팅 플랜 <span class="tag">홍보할 때</span></h2>
+    <blockquote><strong>타겟:</strong> 수험생·학생 + 갓생러 MZ · <strong>예산:</strong> 소액(월 10~30만, 오가닉 중심) · <strong>최종 수정:</strong> 2026-07-15</blockquote>
+
+    <h3>1. 포지셔닝 — 한 문장 무기</h3>
+    <p>경쟁 앱(열품타·타임스탬프·투두메이트) 대비 차별점 2개로 좁힌다.</p>
+    <ul>
+      <li><strong>"기록만 하는 앱 말고, 처방까지 해주는 앱"</strong> — 공부시간 재는 앱은 많다. 스윗미는 데이터를 보고 무엇을 고쳐야 하는지 알려준다(처방전·인사이트).</li>
+      <li><strong>"설치·로그인·회원가입 0. 링크 누르면 끝."</strong> — 경쟁 앱은 가입·친구추가 부담이 있다. 스윗미는 진입장벽이 없다.</li>
+    </ul>
+    <p><strong>카피 코어:</strong> "공부시간 재지 말고, 공부습관 고쳐라"</p>
+
+    <h3>2. 채널 우선순위 (예산 대비 효율순)</h3>
+    <table>
+      <tr><th>순위</th><th>채널</th><th>왜</th><th>예산</th></tr>
+      <tr><td>1</td><td>인스타 릴스 + 틱톡</td><td>갓생·스터디 콘텐츠 알고리즘 강함. 오가닉 도달 최고</td><td>0원(제작만)</td></tr>
+      <tr><td>2</td><td>커뮤니티 침투</td><td>수험생 밀집(오르비·수만휘·디시 공부갤·에타)</td><td>0원</td></tr>
+      <tr><td>3</td><td>소액 인스타 광고</td><td>릴스 중 반응 좋은 것만 부스팅</td><td>월 10~20만</td></tr>
+      <tr><td>4</td><td>마이크로 인플루언서</td><td>갓생 릴스러 시딩(팔로워 1~5만)</td><td>월 0~10만(무료 시딩 우선)</td></tr>
+    </table>
+    <p>소액 예산 정답 = <strong>릴스 몰빵</strong>. 투두메이트류가 릴스 밈 하나로 폭발한 전례가 있다.</p>
+
+    <h3>3. 4주 실행 로드맵</h3>
+    <table>
+      <tr><th>주차</th><th>단계</th><th>할 일</th></tr>
+      <tr><td>1주</td><td>기반</td><td>계정 개설, 프로필·랜딩 링크 정비, 릴스 5개 사전 촬영</td></tr>
+      <tr><td>2주</td><td>오가닉 발사</td><td>릴스 주3회 업로드, 커뮤니티 3곳 후기형 글</td></tr>
+      <tr><td>3주</td><td>증폭</td><td>상위 릴스 부스팅(일 5천~1만), 인플루언서 5명 무료 시딩 DM</td></tr>
+      <tr><td>4주</td><td>측정·반복</td><td>유입 소스별 성과 확인, 먹히는 포맷 증산</td></tr>
+    </table>
+    <blockquote><strong>선결 과제 (☐ 유입 추적):</strong> 현재 스윗미는 유입 추적 도구가 없다. 채널별 성과를 알려면 방문 카운트(Vercel Analytics 또는 UTM 링크)가 필요하다.</blockquote>
+
+    <h3>4. SNS 콘텐츠 아이디어 (릴스/틱톡)</h3>
+    <p><strong>A. 훅 강한 밈·공감형</strong></p>
+    <ul>
+      <li>"공부 앱 100개 깔아본 사람만 아는 진실" → 다 가입시키고 광고 뜸 / 스윗미는 링크 하나</li>
+      <li>"열품타 켜놓고 폰 본 사람 손" → 죄책감 밈 → 처방전 팩폭</li>
+      <li>회고 처방전 화면 클로즈업: "앱이 내 공부습관 팩트폭행함"</li>
+    </ul>
+    <p><strong>B. 정보·꿀팁형 (저장 유도)</strong></p>
+    <ul>
+      <li>"공부 시간만 재면 안 되는 이유" → 순공 밀도·루틴 일관성 → 분석 탭</li>
+      <li>"회고하는 애들이 성적 오르는 이유" → 하루 회고 기능</li>
+      <li>24시간 그리드 채우는 타임랩스 (색깔 채워지는 게 시각적으로 강함)</li>
+    </ul>
+    <p><strong>C. 자기노출·챌린지형 (참여 유도)</strong></p>
+    <ul>
+      <li>"#스윗미_타임테이블 챌린지" — 자기 하루 그리드 인증</li>
+      <li>"일주일 공부 데이터 공개함" → 트렌드 그래프 리뷰</li>
+      <li>Before/After: 처방전 따라 1주일 → 점수 변화 공개</li>
+    </ul>
+    <p><strong>D. 갓생 라이프스타일</strong></p>
+    <ul>
+      <li>"새벽 5시 갓생 루틴" 브이로그에 타이머 자연 노출 (인플루언서 시딩용)</li>
+    </ul>
+    <blockquote><strong>주력 소재:</strong> ① 24시간 색상 그리드 타임랩스 ② 처방전 팩폭 화면. 스크롤 멈추는 비주얼 2개를 릴스 메인으로.</blockquote>
   </section>
 </main>
 
