@@ -24,10 +24,3 @@
 | `python3 execution/extract-html-structure.py` | HTML 셸 구조, 전체 ID 목록, PC↔모바일 ID 매핑, 공유 컴포넌트 |
 | `python3 execution/extract-css-variables.py` | CSS 변수(:root), 주요 셀렉터, 미디어 쿼리, 애니메이션 |
 | `python3 execution/extract-js-api.py` | export 함수, window 전역, 모듈 의존성, localStorage 키, SVG 아이콘 키 |
-
-## 기능 플랜
-
-| 파일 | 설명 |
-|------|------|
-| `AI_학습_강화_플랜.md` | AI 기반 성취도 예측, 맞춤형 피드백, 지능형 학습 계획 추천 기능 구축 플랜 |
-| `AI_통합_분석_플랜.md` | 성향 진단(Test) + 학습 데이터(Data) 결합을 통한 성적 예측 및 초개인화 학습 지침 설계 |

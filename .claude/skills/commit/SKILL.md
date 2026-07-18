@@ -46,7 +46,7 @@ argument-hint: "[커밋 메시지 힌트 (선택)]"
 - `git add .` 대신 관련 파일만 선별적으로 staging
 - 사용자가 힌트를 제공하면 해당 내용을 커밋 메시지에 반영
 - 커밋 메시지 끝에 Co-Authored-By 라인 추가:
-  `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
+  `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`
 - HEREDOC 방식으로 커밋 메시지 전달
 - **푸시 단계는 사용자 확인 없이 자동 진행** (이 skill 호출 자체가 푸시 동의로 간주)
 - `--force` / `--no-verify`는 절대 사용하지 않음
