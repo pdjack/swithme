@@ -75,7 +75,7 @@
 <body>
 <nav id="nav">
   <h1>스윗미 문서 요약</h1>
-  <div class="sub">8개 문서 통합 · 내용 누락 없음</div>
+  <div class="sub">13개 문서 통합 · 내용 누락 없음</div>
   <input id="search" type="text" placeholder="🔍 내용 검색…">
   <a class="doc" href="#prd">📋 PRD (기획서)</a>
   <a class="sec" href="#prd-1">1. 개요·비전</a>
@@ -87,6 +87,7 @@
   <a class="sec" href="#prd-9">9. 수익 모델</a>
   <a class="sec" href="#prd-10">10. 플랫폼 전략 (TWA)</a>
   <a class="doc" href="#twa">📦 TWA 출시 할 일</a>
+  <a class="doc" href="#phase3">🔐 Phase 3 할 일 (로그인·결제)</a>
   <a class="doc" href="#decide">🧭 합리적 의사결정 원칙</a>
   <a class="sec" href="#decide-1">1부. 결정 전 — 기준</a>
   <a class="sec" href="#decide-2">2부. 결정 중 — 구조</a>
@@ -118,6 +119,7 @@
       <tr><td><a href="#analysis">분석 철학 / <a href="#tips">스마트 가이드</a></td><td>분석·통계·추천 기능 기획할 때</td></tr>
       <tr><td><a href="#improve">개선사항 목록</a></td><td>버그·개선 요청 현황 볼 때. 무엇이 남았고 무엇이 됐는지(✅)</td></tr>
       <tr><td><a href="#twa">TWA 출시 할 일</a></td><td>스토어 출시 진행할 때. "할 일" 이라고 말하면 다음 항목을 제시함</td></tr>
+      <tr><td><a href="#phase3">Phase 3 할 일</a></td><td>로그인·동기화·결제·푸시 진행할 때. 스택 Firebase+IAP 확정. 근거 PRD §9-5</td></tr>
       <tr><td><a href="#decide">합리적 의사결정 원칙</a></td><td>뭔가 골라야 할 때. "합리적인 선택" 이라고 말하면 Claude가 이 원칙을 적용함. <strong>개발 아닌 결정에도 씀</strong></td></tr>
       <tr><td><a href="#marketing">마케팅 플랜</a></td><td>홍보·마케팅 진행할 때. 타겟·채널·릴스 콘텐츠 아이디어·4주 로드맵</td></tr>
       <tr><td><a href="#roadmap">개발 로드맵</a></td><td>개발 방향·단계·기간 볼 때. Phase별 마일스톤·기술 구조·미정 사항</td></tr>
@@ -295,9 +297,10 @@
       <p><strong>정정 이력 (2026-07-15):</strong> 기존 "푸시 알림 등 네이티브 기능 사용 불가" 기술은 사실이 아니었다. Web Push는 안드로이드에서 오래전부터, iOS에서도 16.4(2023)부터 설치형 PWA에 한해 지원된다. 이 오기재로 인해 <strong>알림 기반 리텐션 설계가 검토 대상에서 제외되어 있었다.</strong> 향후 리텐션 기능 기획 시 푸시는 현 스택으로 구현 가능한 선택지로 취급한다.</p>
     </blockquote>
 
-    <h3 id="prd-9">9. 수익 모델 <span class="tag">☐ 미착수</span></h3>
+    <h3 id="prd-9">9. 수익 모델 <span class="tag">☐ 미착수 · 스택 확정 2026-07-19</span></h3>
     <blockquote>
-      <p><strong>상태:</strong> 검토만 완료. 구현 착수 안 함. <strong>현 구조(서버·계정 없음)에서는 유료화 자체가 불가능</strong>하므로 로그인·백엔드 도입이 선행 조건이다.</p>
+      <p><strong>상태:</strong> 검토 완료. Phase 3에서 백엔드(Firebase)·인앱결제(Google Play IAP) 도입이 <strong>확정</strong>되어 결제 구현이 기술적으로 가능해졌다(근거 9-5).</p>
+      <p><strong>⚠️ 목적 유의:</strong> 결제를 붙이되 목적은 <strong>학습(결제 흐름 경험)</strong>이며 <strong>샌드박스로 실수익을 받지 않는다.</strong> 실수익·유저 확보 추구가 아니므로 §10-5 뒤집기조건 #1은 미발동.</p>
     </blockquote>
     <h4>9-1. 현 구조의 제약</h4>
     <table>
@@ -326,6 +329,21 @@
     </table>
     <h4>9-4. 참고 — 스토어 결제 수수료</h4>
     <p>앱 내에서 디지털 상품을 판매할 경우 스토어 자체 결제가 강제된다 (Google Play 기준 수수료 15%, 연매출 100만 달러 미만). 앱 내부에서 자체 웹 결제창을 띄우는 것은 정책 위반이다. 웹(브라우저)에서만 판매할 경우엔 해당 없음.</p>
+    <blockquote><p><strong>TWA 앱 내 결제 가능 (2026-07-19 확인):</strong> TWA 앱 안에서도 인앱결제가 <strong>된다</strong>. <code>Digital Goods API</code> + <code>Payment Request API</code>로 Google Play Billing을 호출(Chrome 101+, 구글 공식 샘플 <code>pwa-play-billing</code>). 금지되는 것은 Stripe 등 <strong>자체 웹 결제창</strong>이고, Play 공식 IAP는 디지털 상품 판매 시 오히려 강제되는 표준이다.</p></blockquote>
+
+    <h4>9-5. 백엔드·결제 스택 결정 (2026-07-19)</h4>
+    <p><strong>결정:</strong> Phase 3 백엔드를 <strong>Firebase(BaaS)</strong>로, 결제를 <strong>Google Play 인앱결제(IAP)</strong>로 확정. 인증·동기화·푸시·결제 검증을 모두 Firebase에서 처리.</p>
+    <p><strong>⚠️ 전제:</strong> 목표는 <strong>학습</strong>이며 학습 범위에 로그인·결제 흐름이 포함된다(§10-2). 실수익 추구가 아니라 과정 경험이 목적.</p>
+    <table>
+      <tr><th>기준</th><th>근거</th></tr>
+      <tr><td>배움의 밀도</td><td>TWA·IAP·푸시·구글 로그인이 전부 구글 생태계 → 흐름이 한곳에서 맞물려 안 끊김</td></tr>
+      <tr><td>개발 기간 = 산출물</td><td>Firebase는 인증·DB·동기화 즉시 제공 → 일 2시간으로 몇 주에 a~z. 직접 서버는 수개월</td></tr>
+      <tr><td>되돌림 비용</td><td>타 백엔드 이전은 데이터 이사 필요하나 학습 규모라 작음 → 양방향 문</td></tr>
+      <tr><td>결제 위치(진짜 병목)</td><td>IAP는 TWA 학습과 일관. TWA 앱 내 IAP 기술적 가능(9-4)</td></tr>
+    </table>
+    <p><strong>기각안:</strong> Supabase(결제·푸시와 이종 조합이라 학습 마찰, SQL 우위는 목표상 가치 낮음) · 직접 서버(일 2시간이면 수개월, 과투자) · 웹 결제 Stripe(TWA 앱 안에서 못 굴림).</p>
+    <p><strong>⚠️ 뒤집는 조건:</strong> ① 목표가 실제로 학습→제품(수익) 전환 · ② iOS 필요 · ③ Firebase 무료 한도 초과.</p>
+    <p><strong>미해결 리스크:</strong> 벤더 종속(학습 규모라 감내) · NoSQL 모델링(설계 학습으로 흡수) · 실결제 미경험(샌드박스만, 목표상 감수).</p>
 
     <h3 id="prd-10">10. 플랫폼 전략 — TWA 결정 (2026-07-15)</h3>
     <h4>10-1. 결정</h4>
@@ -334,6 +352,7 @@
     <h4>10-2. 결정의 전제 — ⚠️ 이것이 바뀌면 결정도 무효</h4>
     <blockquote>
       <p><strong>현재 목표는 "학습"이다.</strong> 구체적으로 <strong>앱을 스토어에서 굴리는 전 과정</strong>(등록·심사·데이터 안전 양식·버전 배포·결제 연동)을 익히는 것이 목적이며, <strong>유저 확보·수익은 현 목표가 아니다.</strong></p>
+      <p><strong>학습 범위 확장 (2026-07-19):</strong> 학습 대상에 <strong>로그인·계정 동기화·인앱결제(IAP) 연동 흐름</strong>을 포함(Phase 3). 단 <strong>결제는 샌드박스로 실수익 없음.</strong> 따라서 10-5 뒤집기조건 #1은 <strong>미발동</strong> — 수익 추구가 아니라 결제·인증 과정 자체를 학습 산출물로 삼는 것. 스택 결정은 9-5.</p>
     </blockquote>
     <h4>10-3. 판단 기준별 근거</h4>
     <table>
@@ -496,6 +515,38 @@
     </table>
   </section>
 
+  <!-- ============ Phase 3 할 일 ============ -->
+  <section class="doc" id="phase3">
+    <h2>🔐 Phase 3 — 로그인·동기화·결제·푸시 할 일 <span class="tag">☐ 착수 전</span></h2>
+    <blockquote><p><strong>실행 체크리스트.</strong> 왜 Firebase/IAP인지는 <a href="#prd-9">PRD §9-5</a>. 목적은 <strong>학습</strong> — 결제는 샌드박스, 실수익 없음. "할 일"이라고 말하면 현 단계에 맞는 다음 항목을 제시함.</p></blockquote>
+    <h4>0. 현재 상태</h4>
+    <table>
+      <tr><th>항목</th><th>상태</th></tr>
+      <tr><td>전체 진행</td><td>☐ 착수 전 (0/4 단계)</td></tr>
+      <tr><td>스택</td><td>Firebase(Auth·Firestore·FCM) + Google Play IAP</td></tr>
+      <tr><td>순서 제약</td><td>①계정 뿌리 → ②동기화 → ③푸시 / ④결제</td></tr>
+      <tr><td>현재 병목</td><td>사전 준비 P — 유저 구글 계정으로 Firebase 프로젝트 생성(유저 몫)</td></tr>
+    </table>
+    <h4>P. 사전 준비 (유저 몫)</h4>
+    <ul>
+      <li>☐ P-1 Firebase 콘솔에서 프로젝트 생성 · P-2 웹 앱 등록·키 확보 · P-3 구글/이메일 로그인 사용 설정 · P-4 무료 티어 한도 확인</li>
+      <li>설정 키는 시크릿 → <code>.env</code> 관리(하드코딩 금지)</li>
+    </ul>
+    <h4>1. 계정·로그인 (뿌리)</h4>
+    <ul><li>☐ Firebase 연동 · 구글 로그인 · 이메일 로그인 · 로그인 화면 <strong>PC·모바일 양쪽</strong> · 게스트 모드 유지(회귀 방지) · 설정에 로그인 상태 표시 · lint/테스트 · (유저)실기기 로그인 확인</li></ul>
+    <h4>2. 데이터 동기화·백업 (핵심 — 유실 해소)</h4>
+    <ul><li>☐ Firestore에 <code>state</code> 매핑 · 로컬↔클라우드 양방향 동기화 · 충돌 처리 · 유닛테스트 · (유저)<strong>기기 2대 교차 동기화 확인</strong> · (유저)브라우저 기록 삭제 후 복구 확인</li></ul>
+    <h4>3. 푸시 알림</h4>
+    <ul><li>☐ FCM 설정·권한 UX · 할 일·습관 리마인더 · (유저)실기기 알림 수신 확인</li></ul>
+    <h4>4. 결제 (IAP — 샌드박스, 실수익 없음)</h4>
+    <ul><li>☐ 유료 잠금 기능 1개 선정 · Play Console 인앱 상품 등록·라이선스 테스터 · Digital Goods API 연동 · Firebase 구매 검증·잠금 해제 · (유저)샌드박스 결제 완주</li></ul>
+    <h4>검증 소유자</h4>
+    <ul>
+      <li>Claude 자동: lint·기존 테스트·동기화 유닛테스트</li>
+      <li><strong>유저 수동(완료 조건):</strong> 실기기 로그인, 기기 2대 동기화, 유실 복구, 푸시 수신, 샌드박스 결제. 자동 검사로는 "됐다" 확정 불가 — 실기기·2대·스토어 환경 필요.</li>
+    </ul>
+  </section>
+
   <!-- ============ 합리적 의사결정 원칙 ============ -->
   <section class="doc" id="decide">
     <h2>🧭 합리적 의사결정 원칙 <span class="tag">판단할 때</span></h2>
@@ -656,8 +707,10 @@
       <tr><th>사례</th><th>결정 문서</th><th>날짜</th></tr>
       <tr><td>TWA vs 네이티브 (이 문서의 출처)</td><td><a href="#prd-10">PRD §10</a></td><td>2026-07-15</td></tr>
       <tr><td>TWA 출시 경로 확정 — 가짜 비교축 붕괴</td><td><a href="#twa">TWA 할 일</a> · <a href="#prd-10">PRD §10-7</a></td><td>2026-07-17</td></tr>
+      <tr><td>Phase 3 백엔드·결제 스택 — 전제 재해석 + 진짜 병목</td><td><a href="#prd-9">PRD §9-5</a></td><td>2026-07-19</td></tr>
     </table>
     <p><strong>B-2. 가짜 비교축 붕괴:</strong> "비공개냐 공개냐"를 유저 선택으로 적었으나, 개인 계정은 공개 출시 불가(비공개 강제)라 <strong>고를 여지가 없었다.</strong> 진짜 결정자(계정 종류)가 비교 축 밖에 있었다(원칙 4). 틀린 "자유 선택" 전제가 누락된 강제 관문(테스터 12명×14일)을 가리고 있었다.</p>
+    <p><strong>B-3. Phase 3 스택:</strong> ① <strong>전제 재해석:</strong> "착수=목표를 학습→제품으로 전환"이란 이분 프레임이 가짜였다. 유저가 "학습은 유지, 로그인·결제 흐름을 학습 대상에 포함"으로 재정의 → 뒤집기조건 미발동. ② <strong>진짜 병목:</strong> "백엔드 A냐 B냐" 위에 "결제 어디서(IAP vs 웹)"가 상위 결정. ③ <strong>명시적 철회:</strong> 결제 미정 때 Supabase 권장 → IAP·푸시 확정으로 전제 바뀌자 소리 내어 철회, Firebase로 변경. ④ <strong>리스크 회피 먼저:</strong> 실결제 리스크를 감내 아닌 샌드박스로 회피.</p>
     <blockquote><p><strong>교훈:</strong> "A냐 B냐"가 주어지면 그 갈래가 정말 유저 통제 아래 있는지부터 확인하라. 외부 제약이 이미 답을 정했다면 결정이 아니라 사실 확인이고, 진짜 결정은 딴 데 있다.</p></blockquote>
   </section>
 
@@ -1128,7 +1181,7 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
       <tr><th>단계</th><th>기간(AI 기준)</th><th>마일스톤</th><th>핵심 목표</th><th>상태</th></tr>
       <tr><td>Phase 1</td><td>~1주</td><td>Core Logic</td><td>데이터 구조, 타이머·타임테이블·회고 집계 알고리즘</td><td class="done">✅ 완료</td></tr>
       <tr><td>Phase 2</td><td>~1~2주</td><td>MVP UI/UX</td><td>대시보드·분석·설정·캘린더, PC/모바일 셸, 화면 전환</td><td class="done">✅ 완료</td></tr>
-      <tr><td>Phase 3</td><td>~2~3주</td><td>Features</td><td>로그인·계정 동기화·백업, 푸시 알림</td><td class="todo">☐ 미착수</td></tr>
+      <tr><td>Phase 3</td><td>~2~3주</td><td>Features</td><td>로그인·계정 동기화·백업, 푸시 알림, 인앱결제(IAP) 학습. <strong>스택 확정: Firebase + Google Play IAP</strong>. 세부 → <a href="#phase3">Phase 3 할 일</a></td><td class="todo">☐ 미착수 (스택 확정)</td></tr>
       <tr><td>Phase 4</td><td>~1~2주 개발 <strong>+ 14일 관문(고정)</strong></td><td>Beta/Release</td><td>TWA로 Google Play 진입 — 비공개 테스트(개인 계정 의무) → 12명×14일 → 공개 심사</td><td class="todo">☐ 진행 예정</td></tr>
     </table>
     <h4>AI가 줄이는 / 못 줄이는 구간</h4>
@@ -1146,7 +1199,7 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
     <h4>프론트엔드 / 백엔드</h4>
     <ul>
       <li><strong>프론트엔드:</strong> HTML5 + Vanilla JS(ES6+) + Vanilla CSS. PWA(Service Worker).</li>
-      <li><strong>백엔드:</strong> ☐ <strong>미정</strong> — Phase 3 도입 시 결정. 스택·인증·DB 전부 미확정.</li>
+      <li><strong>백엔드:</strong> ✅ <strong>확정 — Firebase(BaaS)</strong>. 인증(구글+이메일)·동기화(Firestore)·푸시(FCM)·결제 검증(IAP) 통합. 근거 PRD §9-5. ☐ 미구현.</li>
     </ul>
     <h4>모듈화 계획 (UI ↔ 로직 분리)</h4>
     <ul>
@@ -1157,15 +1210,16 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
     <h4>데이터 모델</h4>
     <ul>
       <li><strong>현재(클라이언트 단독):</strong> 카테고리, 날짜별 할 일/플랜, 타임테이블 history, 회고 점수, 습관.</li>
-      <li><strong>계정 데이터:</strong> ☐ <strong>미정</strong> — Phase 3 서버 스키마 설계.</li>
+      <li><strong>계정 데이터:</strong> ☐ Firestore 스키마 <strong>설계 예정</strong>(Phase 3) — 스택은 Firestore 확정, <code>state</code> 매핑 설계는 3.2에서.</li>
     </ul>
 
     <h3>미정 사항 요약</h3>
     <table>
-      <tr><th>미정 항목</th><th>결정 시점</th><th>근거</th></tr>
-      <tr><td>백엔드 스택</td><td>Phase 3 착수 시</td><td>PRD §9</td></tr>
-      <tr><td>인증 방식·DB</td><td>Phase 3 착수 시</td><td>PRD §9</td></tr>
-      <tr><td>계정 데이터 스키마</td><td>Phase 3 설계 시</td><td>—</td></tr>
+      <tr><th>항목</th><th>상태</th><th>근거</th></tr>
+      <tr><td>백엔드 스택</td><td>✅ 확정 — Firebase</td><td>PRD §9-5</td></tr>
+      <tr><td>인증 방식·DB</td><td>✅ 확정 — Firebase Auth(구글+이메일)·Firestore</td><td>PRD §9-5</td></tr>
+      <tr><td>결제 방식</td><td>✅ 확정 — Google Play IAP(샌드박스)</td><td>PRD §9-5</td></tr>
+      <tr><td>계정 데이터 스키마</td><td>☐ Phase 3 설계 시 (Firestore 매핑)</td><td><a href="#phase3">Phase 3 할 일</a></td></tr>
     </table>
   </section>
 </main>

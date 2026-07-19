@@ -10,6 +10,7 @@
 - **프론트엔드:** HTML5, Vanilla CSS, Vanilla JavaScript (ES6+)
 - **디자인 시스템:** 다크 모드, 글래스모피즘(Glassmorphism), 현대적 타이포그래피(Inter, Outfit), 부드러운 그라데이션과 마이크로 인터랙션
 - **상태 관리:** `localStorage` 기반 클라이언트 사이드 저장
+- **백엔드(Phase 3 확정, ☐ 미구현):** Firebase — Auth(구글+이메일), Firestore(동기화·백업), FCM(푸시), Google Play IAP 결제 검증. 결정 근거 PRD §9-5, 세부 태스크 `docs/phase3-할일.md`. 설정 키는 `.env`로 관리(하드코딩 금지).
 - **코드 품질:** ESLint (Flat Config) + Prettier
 - **테스트:** Vitest + jsdom (`tests/` 디렉토리)
 - **PWA:** `vite-plugin-pwa`를 통한 오프라인 지원, Service Worker 자동 생성
