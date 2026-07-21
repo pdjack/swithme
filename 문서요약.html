@@ -357,6 +357,7 @@
       <tr><td>결제 위치</td><td>실결제도 IAP로 동일 처리. 9-5 스택 결정 불변</td></tr>
     </table>
     <p><strong>기각안:</strong> 샌드박스 유지(정산·세금·환불 못 겪음 → 목표 미달) · 비공개 테스트 종료(유저 반응·별점 경험 상실) · 규모 제한 없는 홍보(학습 산출물 동일한데 세무 부담만 증가).</p>
+    <p><strong>출시 순서 확정 (2026-07-21):</strong> <strong>Phase 3 먼저.</strong> 데이터 유실이 해소된 상태로 출시한다. 단 Phase 3 §4(결제)는 <strong>인앱 상품 등록이 스토어 앱 생성을 요구</strong>하므로 출시 이후로 밀린다 — 순환 의존. 상세는 <a href="#roadmap">로드맵</a>.</p>
     <p><strong>⚠️ 뒤집는 조건:</strong> ① 성공 기준이 "과정 완주"→"유저 수·매출액"으로 이동(§10-5 #1 발동) · ② 사업자등록·통신판매업 부담이 감당 범위 초과 · ③ 매출이 예상을 크게 초과.</p>
     <h5>알려진 미해결 리스크</h5>
     <table>
@@ -478,13 +479,9 @@
       <tr><td>A-5′</td><td>아이콘 등록</td><td>유저가 제작한 여백 버전을 앱 설정에 반영</td><td><strong>A-5 완료 필수</strong></td><td>☐</td></tr>
     </table>
     <blockquote>
-      <p><strong>⚠️ A-4 개인정보처리방침 — 출시 순서에 따라 내용이 갈린다.</strong> 방침과 데이터 안전 양식은 <strong>실제로 스토어에 올라간 그 버전이 하는 일</strong>을 기술해야 한다. 미래 계획을 미리 쓰면 "수집한다고 신고했는데 안 함" 불일치가 된다.</p>
-      <table>
-        <tr><th>순서</th><th>방침 내용</th><th>후속 의무</th></tr>
-        <tr><td><strong>TWA 먼저 출시 → 나중에 Phase 3</strong></td><td>지금은 "수집 없음"</td><td>Phase 3 배포 시 방침 + 데이터 안전 양식 <strong>동시 갱신 필수</strong></td></tr>
-        <tr><td>Phase 3 완료 후 출시</td><td>처음부터 계정·활동기록 수집 기준</td><td>1회 작성으로 끝. 출시가 Phase 3 기간만큼 지연</td></tr>
-      </table>
-      <p><strong>☐ 유저 판단 대기.</strong> 어느 쪽이든 실결제 도입 시점엔 결제 관련 항목 추가가 필요하다.</p>
+      <p><strong>✅ A-4 개인정보처리방침 — 내용 기준 확정 (2026-07-21).</strong> <strong>출시 순서가 "Phase 3 먼저"로 확정</strong>됐으므로 출시 버전에는 이미 로그인·동기화가 들어있다. 따라서 방침은 <strong>처음부터 "수집함" 기준으로 1회 작성</strong>한다.</p>
+      <p>담을 것: 계정 정보(이메일·구글 계정 식별자), 활동 데이터(타이머·할 일·회고 기록)의 서버 저장, 저장 위치·보관 기간, <strong>계정 삭제 경로</strong>, 문의 연락처.</p>
+      <p><strong>⚠️ 결제는 별도:</strong> 결제는 출시 이후에 붙으므로 그 시점에 결제 항목을 <strong>추가 갱신</strong>하고 데이터 안전 양식도 재제출한다. <s>"수집 없음"으로 쓴 뒤 나중에 갱신하는 안</s> → <strong>기각</strong>(출시 시점에 이미 사실과 다름).</p>
     </blockquote>
 
     <h4>2-B. 유저 — 앱 등록·빌드·아이콘 (Claude 대행 불가)</h4>
@@ -495,7 +492,7 @@
       <tr><td>A-5</td><td>아이콘 여백 버전 제작</td><td>현 512px 아이콘은 로고가 가장자리까지 차 있어 <strong>안드로이드가 원형·둥근사각형으로 자를 때 좌우가 잘린다</strong>(실물 확인함). 로고를 중앙 80% 안에 넣은 512px 1장 제작 → 폴더에 넣으면 Claude가 A-5′로 등록. <strong>유저 몫으로 이관 (2026-07-21)</strong></td><td>☐</td></tr>
       <tr><td>B-1</td><td>Play Console에서 앱 생성</td><td>앱 이름·기본 정보 입력. <strong>완료 시 앱 서명 지문이 나오며, 이걸 Claude에게 전달해야 A-1이 진행됨</strong></td><td>☐</td></tr>
       <tr><td>B-2</td><td>비공개 테스트 트랙 설정</td><td>앱 파일을 비공개 트랙에 올림</td><td>☐</td></tr>
-      <tr><td>B-3</td><td>데이터 안전 양식 제출</td><td>수집 데이터 신고. <strong>⚠️ 현 버전 기준으로만 "수집 없음"이다. Phase 3(로그인·동기화) 또는 실결제 배포 시 이 서술은 거짓이 되며 양식 재제출이 의무다</strong></td><td>☐</td></tr>
+      <tr><td>B-3</td><td>데이터 안전 양식 제출</td><td>수집 데이터 신고. <strong>출시 버전에 로그인·동기화가 포함되므로 "수집함"으로 신고</strong>(계정 정보·활동 데이터). ⚠️ 결제 도입 시 <strong>재제출 의무</strong></td><td>☐</td></tr>
       <tr><td>B-4</td><td>스토어 등록 정보 입력</td><td>설명문, 스크린샷, 카테고리, 콘텐츠 등급 설문</td><td>☐</td></tr>
       <tr><td>B-5</td><td>앱 파일 업로드</td><td>A-2 결과물 업로드</td><td>☐</td></tr>
     </table>
@@ -513,9 +510,9 @@
     <p>결정 근거 PRD 9-6. <strong>기술 작업이 아니며 Claude 대행 불가.</strong></p>
     <table>
       <tr><th>#</th><th>할 일</th><th>내용</th><th>상태</th></tr>
-      <tr><td>D-1</td><td>⚠️ <strong>사업자등록·통신판매업 신고 필요 여부 확인</strong></td><td><strong>가장 먼저.</strong> 이 답이 나머지를 좌우한다. 확인처: <strong>국세청 126</strong>, 관할 구청 지역경제과(통신판매업), 홈택스 온라인 상담. <strong>이 문서·Claude 설명을 근거로 진행 금지 — 틀리면 가산세로 돌아온다</strong></td><td>☐</td></tr>
+      <tr><td>D-1</td><td>⚠️ <strong>사업자등록·통신판매업 절차 확인</strong></td><td><strong>가장 먼저.</strong> 확인처: <strong>국세청 126</strong>, 관할 구청 지역경제과(통신판매업), 홈택스 온라인 상담. <strong>이 문서·Claude 설명을 근거로 진행 금지 — 틀리면 가산세로 돌아온다</strong><br>질문 예: <em>"개인이 만든 앱을 구글 플레이에 올려 1,000원짜리 상품을 파는데 연 매출이 몇만 원 수준입니다. 사업자등록과 통신판매업 신고는 어떻게 해야 하나요?"</em></td><td>☐</td></tr>
       <tr><td>D-2</td><td>판매자 등록 (구글)</td><td>개발자 계정에 결제 프로필 등록 — 이름·주소·계좌·세금 정보. 상대는 구글이며 국가 신고가 아니다. 이거 없으면 유료 상품 판매 불가</td><td>☐</td></tr>
-      <tr><td>D-3</td><td>사업자등록 / 통신판매업 신고</td><td>D-1 결과 필요하다고 나오면 실행</td><td>☐</td></tr>
+      <tr><td>D-3</td><td>사업자등록 / 통신판매업 신고</td><td>✅ <strong>하기로 확정 (2026-07-21).</strong> D-1에서 확인할 것은 "할지 말지"가 아니라 <strong>무엇을·어디에·언제</strong> — 사업자 유형(간이/일반), 업종 코드, 통신판매업 면제 여부, 등록 시점(매출 발생 전/후)</td><td>☐</td></tr>
       <tr><td>D-4</td><td><strong>환불 대응 방침 작성</strong></td><td>① 환불 사유 범위(기능 미작동/단순 변심/실수 구매) ② 기간 ③ 접수 경로 ④ 거절 시 통보 방식 → 스토어 등록 정보·앱 내 게시</td><td>☐</td></tr>
       <tr><td>D-5</td><td>공개 연락처 확보</td><td>환불·문의 접수용 이메일. <strong>스토어에 공개 노출된다</strong></td><td>☐</td></tr>
     </table>
@@ -610,26 +607,42 @@
       <tr><td>전체 진행</td><td>☐ 착수 전 (0/4 단계)</td></tr>
       <tr><td>스택</td><td>Firebase(Auth·Firestore·FCM) + Google Play IAP</td></tr>
       <tr><td><strong>결제 확정 (2026-07-21)</strong></td><td><strong>실결제.</strong> 유료 상품 1개·최저가. <s>샌드박스</s> 폐기 — PRD 9-6</td></tr>
-      <tr><td>순서 제약</td><td>①계정 뿌리 → ②동기화 → ③푸시 / ④결제</td></tr>
+      <tr><td><strong>출시 순서 확정 (2026-07-21)</strong></td><td><strong>Phase 3 먼저 → 출시.</strong> 단 ④결제는 출시 이후 (아래 순환 의존)</td></tr>
+      <tr><td>순서 제약</td><td>①계정 뿌리 → ②동기화 → ③푸시 <strong>[출시 전]</strong> / ④결제 <strong>[출시 후]</strong></td></tr>
       <tr><td>현재 병목</td><td>사전 준비 P — 유저 구글 계정으로 Firebase 프로젝트 생성(유저 몫)</td></tr>
     </table>
+    <h4>⚠️ 순환 의존 — Phase 3는 출시를 사이에 두고 쪼개진다</h4>
+    <p>"Phase 3 전부 완료 → 출시"는 <strong>물리적으로 불가능</strong>하다. §4(결제)의 인앱 상품 등록은 <strong>Play Console에 앱이 생성돼 있어야</strong> 가능하므로, <strong>출시가 결제의 선행 조건</strong>이다.</p>
+    <pre>§P 사전준비 → §1 로그인 → §2 동기화 → §3 푸시     ← [출시 전]
+        ↓
+[비공개 테스트 출시 — TWA 할 일 A·B단계]           ← 스토어에 앱 생성
+        ↓
+§4 결제 구현·검증                                  ← [출시 후] 여기서만 가능
+        ↓
+[테스터 12명×14일 → 공개 출시 + 실결제 개시]
+        ↓
+§5 갱신 의무</pre>
+    <p><strong>의도 보존:</strong> 공개 출시 시점엔 §2가 끝나 <strong>데이터 유실 문제가 없다.</strong> 이것이 "Phase 3 먼저" 결정의 목적이었다.</p>
+
     <h4>P. 사전 준비 (유저 몫)</h4>
     <ul>
       <li>☐ P-1 Firebase 콘솔에서 프로젝트 생성 · P-2 웹 앱 등록·키 확보 · P-3 구글/이메일 로그인 사용 설정 · P-4 무료 티어 한도 확인</li>
       <li>설정 키는 시크릿 → <code>.env</code> 관리(하드코딩 금지)</li>
     </ul>
-    <h4>1. 계정·로그인 (뿌리)</h4>
+    <h4>1. 계정·로그인 (뿌리) — <strong>[출시 전]</strong></h4>
     <ul><li>☐ Firebase 연동 · 구글 로그인 · 이메일 로그인 · 로그인 화면 <strong>PC·모바일 양쪽</strong> · <strong>게스트 모드 유지(회귀 방지 + ⚠️ 마케팅 포지셔닝의 전제 — 마케팅 플랜 §1이 "가입 없이 바로 쓰고, 원하면 로그인" 문구에 의존)</strong> · 설정에 로그인 상태 표시 · lint/테스트 · (유저)실기기 로그인 확인</li></ul>
-    <h4>2. 데이터 동기화·백업 (핵심 — 유실 해소)</h4>
+    <h4>2. 데이터 동기화·백업 (핵심 — 유실 해소) — <strong>[출시 전, 최우선]</strong></h4>
+    <blockquote><p><strong>이 단계가 "Phase 3 먼저" 결정의 이유다.</strong> 기기 2대 교차 확인·유실 복구 확인이 통과하지 않은 채 출시하면 결정의 목적이 소멸한다.</p></blockquote>
     <ul><li>☐ Firestore에 <code>state</code> 매핑 · 로컬↔클라우드 양방향 동기화 · 충돌 처리 · 유닛테스트 · (유저)<strong>기기 2대 교차 동기화 확인</strong> · (유저)브라우저 기록 삭제 후 복구 확인</li></ul>
-    <h4>3. 푸시 알림</h4>
+    <h4>3. 푸시 알림 — <strong>[출시 전]</strong></h4>
     <ul><li>☐ FCM 설정·권한 UX · 할 일·습관 리마인더 · (유저)실기기 알림 수신 확인</li></ul>
-    <h4>4. 결제 (IAP — <strong>실결제</strong>, 상품 1개·최저가)</h4>
-    <blockquote><p>근거 PRD 9-6. <strong>선행 조건: TWA 할 일 D단계</strong>(사업자·통신판매업 확인, 판매자 등록, 환불 방침, 연락처). <strong>D-1 답 없이 실결제 착수 금지.</strong></p></blockquote>
+    <h4>4. 결제 (IAP — <strong>실결제</strong>, 상품 1개·최저가) — <strong>[출시 후]</strong></h4>
+    <blockquote><p>근거 PRD 9-6. <strong>선행 조건 두 가지:</strong> ① <strong>비공개 테스트 출시 완료</strong> — 인앱 상품 등록은 스토어에 앱이 있어야 가능(위 순환 의존) · ② <strong>TWA 할 일 D단계</strong>(사업자·통신판매업 확인, 판매자 등록, 환불 방침, 연락처). <strong>D-1 답 없이 실결제 착수 금지.</strong></p></blockquote>
     <ul><li>☐ 유료 잠금 기능 1개 선정 · <strong>최저가 책정</strong> · Play Console 인앱 상품 등록 · Digital Goods API 연동 · Firebase 구매 검증·잠금 해제 · <strong>환불 처리 흐름 구현(구매 취소 시 재잠금)</strong> · (유저)라이선스 테스터로 <strong>샌드박스 검증 먼저</strong> · (유저)<strong>실결제 1회 완주</strong>(결제→입금→수수료 차감 확인) · (유저)<strong>환불 1회 완주</strong> · (유저)정산 내역·세금 신고 자료 확인</li></ul>
     <blockquote><p><strong>샌드박스는 폐기가 아니라 강등이다.</strong> 목표 달성 수단에서 <strong>개발 중 테스트 수단</strong>으로 역할이 바뀌었다.</p></blockquote>
-    <h4>5. 배포 시 갱신 의무 (누락 시 정책 위반)</h4>
-    <ul><li>☐ <strong>개인정보처리방침 갱신</strong>("수집 없음" 폐기, 계정·활동·결제 정보 명시) · <strong>데이터 안전 양식 재제출</strong> · <strong>계정 삭제 경로 제공</strong>(앱·웹 양쪽, 스토어 필수) · 마케팅 포지셔닝이 실제 앱과 일치하는지 재확인</li></ul>
+    <h4>5. 갱신 의무 (누락 시 정책 위반)</h4>
+    <p><strong>출시 순서가 "Phase 3 먼저"라 방침은 처음부터 "수집함" 기준으로 쓴다</strong>(TWA 할 일 A-4). 아래는 그 이후 <strong>결제가 붙는 시점</strong>의 의무다.</p>
+    <ul><li>☐ <strong>개인정보처리방침에 결제 항목 추가</strong>(구매 이력·결제 처리자 정보) · <strong>데이터 안전 양식 재제출</strong> · <strong>계정 삭제 경로 제공</strong>(앱·웹 양쪽, 스토어 필수 — <strong>출시 전에 이미 필요</strong>) · 마케팅 포지셔닝이 실제 앱과 일치하는지 재확인</li></ul>
     <h4>검증 소유자</h4>
     <ul>
       <li>Claude 자동: lint·기존 테스트·동기화 유닛테스트</li>
@@ -1300,8 +1313,20 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
       <li>Phase 3(서버·계정)이 수익화(§9)·데이터 유실 해소의 선행 조건.</li>
       <li>Phase 4는 Phase 3 없이 착수 가능하나 데이터 유실 리스크는 서버 도입 전까지 잔존(PRD §10-6).</li>
       <li><strong>실결제(Phase 3 §4)는 Phase 4 D단계</strong>(사업자 확인·판매자 등록·환불 방침)<strong>가 선행 조건.</strong> 기술이 아니라 행정이 병목이므로 <strong>D-1(사업자·통신판매업 확인)은 지금 병렬 착수가 유리</strong>하다.</li>
-      <li><strong>☐ 미정 — 출시 순서:</strong> TWA를 먼저 출시하고 Phase 3를 나중에 할지, Phase 3 완료 후 출시할지. 이 순서가 개인정보처리방침·데이터 안전 양식의 내용을 결정한다.</li>
     </ul>
+
+    <h4>✅ 출시 순서 확정 (2026-07-21) — Phase 3 먼저</h4>
+    <p><strong>결정:</strong> 데이터 유실이 해소된 상태로 유저 앞에 나간다. 개인정보처리방침은 처음부터 "수집함" 기준 1회 작성.</p>
+    <blockquote><p><strong>⚠️ 순환 의존 발견:</strong> "Phase 3 전부 완료 → 출시"는 <strong>물리적으로 불가능</strong>하다. Phase 3 §4(결제)의 인앱 상품 등록은 <strong>Play Console에 앱이 생성돼 있어야</strong> 가능하므로, 출시가 결제의 선행 조건이다. 따라서 Phase 3를 <strong>출시 전/후로 쪼갠다.</strong></p></blockquote>
+    <pre>Phase 3 ① 로그인 → ② 동기화·백업 → ③ 푸시     ← 출시 전
+        ↓
+[비공개 테스트 출시]                            ← 여기서 스토어에 앱 생성
+        ↓
+Phase 3 ④ 결제 구현·검증                        ← 상품 등록은 여기서만 가능
+        ↓
+[테스터 12명 × 14일] → [공개 출시 + 실결제 개시]</pre>
+    <p><strong>의도 보존:</strong> 공개 출시 시점엔 ②가 이미 끝나 <strong>데이터 유실 문제가 없다.</strong></p>
+    <p><strong>기각한 순서 (TWA 먼저):</strong> 출시가 2~3주 빠르나 유실 리스크를 안고 출시하게 되고, 방침·데이터 안전 양식을 2회 작성해야 한다. "방침 갱신·재제출 경험"은 출시 후 기능 추가 시 자연히 발생하므로 <strong>영구 손실이 아니라 시점 이동</strong>이다.</p>
 
     <h3>3. 기술 스택 및 구조</h3>
     <h4>프론트엔드 / 백엔드</h4>
@@ -1329,8 +1354,8 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
       <tr><td>결제 방식</td><td>✅ 확정 — Google Play IAP <strong>(실결제, 상품 1개·최저가)</strong></td><td>PRD §9-5 · <strong>§9-6</strong></td></tr>
       <tr><td>출시 범위</td><td>✅ 확정 — <strong>공개 출시까지</strong> (12명×14일 관문 필수)</td><td>PRD §9-6 · §10-7</td></tr>
       <tr><td>계정 데이터 스키마</td><td>☐ Phase 3 설계 시 (Firestore 매핑)</td><td><a href="#phase3">Phase 3 할 일</a></td></tr>
-      <tr><td>사업자등록·통신판매업 필요 여부</td><td>☐ <strong>유저가 직접 확인</strong> (국세청 126·관할 구청)</td><td><a href="#twa">TWA 할 일 D-1</a></td></tr>
-      <tr><td>출시 순서 (TWA 먼저 vs Phase 3 먼저)</td><td>☐ 미정 — 개인정보처리방침 내용을 결정</td><td><a href="#twa">TWA 할 일 A-4</a></td></tr>
+      <tr><td>출시 순서</td><td>✅ 확정 — <strong>Phase 3 먼저</strong> (단 결제는 출시 후, 순환 의존)</td><td>로드맵 "출시 순서 확정"</td></tr>
+      <tr><td>사업자등록·통신판매업</td><td>✅ <strong>하기로 확정.</strong> ☐ 절차(유형·업종·시점)는 유저가 직접 확인 (국세청 126·관할 구청)</td><td><a href="#twa">TWA 할 일 D-1·D-3</a></td></tr>
     </table>
   </section>
 </main>
