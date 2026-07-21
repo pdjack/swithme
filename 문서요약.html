@@ -297,10 +297,10 @@
       <p><strong>정정 이력 (2026-07-15):</strong> 기존 "푸시 알림 등 네이티브 기능 사용 불가" 기술은 사실이 아니었다. Web Push는 안드로이드에서 오래전부터, iOS에서도 16.4(2023)부터 설치형 PWA에 한해 지원된다. 이 오기재로 인해 <strong>알림 기반 리텐션 설계가 검토 대상에서 제외되어 있었다.</strong> 향후 리텐션 기능 기획 시 푸시는 현 스택으로 구현 가능한 선택지로 취급한다.</p>
     </blockquote>
 
-    <h3 id="prd-9">9. 수익 모델 <span class="tag">☐ 미착수 · 스택 확정 2026-07-19</span></h3>
+    <h3 id="prd-9">9. 수익 모델 <span class="tag">☐ 미착수 · 스택 확정 2026-07-19 · 실결제 전환 2026-07-21</span></h3>
     <blockquote>
       <p><strong>상태:</strong> 검토 완료. Phase 3에서 백엔드(Firebase)·인앱결제(Google Play IAP) 도입이 <strong>확정</strong>되어 결제 구현이 기술적으로 가능해졌다(근거 9-5).</p>
-      <p><strong>⚠️ 목적 유의:</strong> 결제를 붙이되 목적은 <strong>학습(결제 흐름 경험)</strong>이며 <strong>샌드박스로 실수익을 받지 않는다.</strong> 실수익·유저 확보 추구가 아니므로 §10-5 뒤집기조건 #1은 미발동.</p>
+      <p><strong>⚠️ 목적 유의 (2026-07-21 개정):</strong> 결제를 붙이되 목적은 <strong>학습(앱 개발 전 과정 경험)</strong>이다. 다만 <strong>샌드박스에서 실결제로 전환</strong>됐다 — 정산·수수료·세금·환불이 학습 대상에 포함되기 때문(9-6). 성공 기준은 매출액이 아니라 <strong>각 과정의 완주 여부</strong>이므로 §10-5 뒤집기조건 #1은 여전히 미발동.</p>
     </blockquote>
     <h4>9-1. 현 구조의 제약</h4>
     <table>
@@ -343,7 +343,30 @@
     </table>
     <p><strong>기각안:</strong> Supabase(결제·푸시와 이종 조합이라 학습 마찰, SQL 우위는 목표상 가치 낮음) · 직접 서버(일 2시간이면 수개월, 과투자) · 웹 결제 Stripe(TWA 앱 안에서 못 굴림).</p>
     <p><strong>⚠️ 뒤집는 조건:</strong> ① 목표가 실제로 학습→제품(수익) 전환 · ② iOS 필요 · ③ Firebase 무료 한도 초과.</p>
-    <p><strong>미해결 리스크:</strong> 벤더 종속(학습 규모라 감내) · NoSQL 모델링(설계 학습으로 흡수) · 실결제 미경험(샌드박스만, 목표상 감수).</p>
+    <p><strong>미해결 리스크:</strong> 벤더 종속(학습 규모라 감내) · NoSQL 모델링(설계 학습으로 흡수) · <s>실결제 미경험</s> <strong>→ ✅ 해소(2026-07-21), 9-6 실결제 전환으로 소멸</strong>.</p>
+    <blockquote><p><strong>2026-07-21 갱신:</strong> 스택 결정 자체는 유효하다. 결제가 샌드박스→실결제로 바뀌었으나 Firebase·IAP 조합은 그대로이며, 오히려 실결제가 IAP 선택을 더 강하게 지지한다.</p></blockquote>
+
+    <h4>9-6. 실결제 전환 결정 <span class="tag">2026-07-21</span></h4>
+    <p><strong>결정:</strong> 결제를 <strong>샌드박스에서 실결제로 전환</strong>한다. 유료 상품 <strong>1개·최저가</strong>, 홍보는 <strong>자체 제작 콘텐츠 중심의 소액</strong>. <strong>공개 출시까지</strong> 진행한다.</p>
+    <blockquote><p><strong>⚠️ 전제 (목표 정의 확장):</strong> 앱 개발의 전 과정을 직접 겪는다. 기획·구현·출시뿐 아니라 <strong>유지보수·홍보·매출·정산·세금·환불 대응까지 포함</strong>한다. <strong>성공 기준은 유저 수나 매출액이 아니라 각 과정을 완주했는가</strong>이다.</p></blockquote>
+    <table>
+      <tr><th>기준</th><th>근거</th></tr>
+      <tr><td>목표가 "전 과정 경험"</td><td>샌드박스는 정의상 <strong>돈·법·세금이 빠진</strong> 버전이라 목표 미달. 기술 흐름만 같음</td></tr>
+      <tr><td>공개 출시 필요성</td><td>낯선 유저 반응·공개 별점 관리는 <strong>공개 트랙만</strong> 제공. 비공개로 대체 불가</td></tr>
+      <tr><td>규모 완화 (원칙 8 — 2단계)</td><td>회피는 목표 미달이라 불가. <strong>상품 1개·최저가·소액 홍보</strong>로 학습 손실 없이 금액 규모만 최소화</td></tr>
+      <tr><td>결제 위치</td><td>실결제도 IAP로 동일 처리. 9-5 스택 결정 불변</td></tr>
+    </table>
+    <p><strong>기각안:</strong> 샌드박스 유지(정산·세금·환불 못 겪음 → 목표 미달) · 비공개 테스트 종료(유저 반응·별점 경험 상실) · 규모 제한 없는 홍보(학습 산출물 동일한데 세무 부담만 증가).</p>
+    <p><strong>⚠️ 뒤집는 조건:</strong> ① 성공 기준이 "과정 완주"→"유저 수·매출액"으로 이동(§10-5 #1 발동) · ② 사업자등록·통신판매업 부담이 감당 범위 초과 · ③ 매출이 예상을 크게 초과.</p>
+    <h5>알려진 미해결 리스크</h5>
+    <table>
+      <tr><th>리스크</th><th>내용</th><th>해소 조건</th></tr>
+      <tr><td><strong>세무·법적 의무</strong></td><td>사업자등록 시 부가세(1·7월)·종합소득세(5월) <strong>정기 신고 의무</strong> 발생, <strong>폐업 신고 전까지 지속</strong>. 매출 0원이어도 무실적 신고 필요</td><td>없음(구조적). <strong>⚠️ 필요 여부는 국세청 126·관할 구청에 직접 확인 — 이 문서를 근거로 진행 금지</strong></td></tr>
+      <tr><td>통신판매업 신고</td><td>온라인 판매 시 지자체 신고. 사업자등록과 <strong>별개 절차</strong>. 소규모 면제 규정 여부 미확인</td><td>직접 확인</td></tr>
+      <tr><td>공개 별점</td><td>공개 트랙 진입 시 별점·리뷰가 <strong>영구 기록</strong>(일방향 문)</td><td>없음. 목표상 감내</td></tr>
+      <tr><td>환불 대응</td><td>자동 환불 기간 이후 요청은 개발자가 판단·응대. 공개 연락처 필요</td><td>방침 문서화로 완화</td></tr>
+    </table>
+    <blockquote><p><strong>정정 이력:</strong> 최초 트리거 #1 미발동 근거로 <strong>"유저 확보 동기 없음 — 홍보 행동이 추가되지 않았다"</strong>를 제시했으나, 홍보가 학습 범위에 포함되면서 사실과 달라져 <strong>철회</strong>했다. 대체 근거는 "성공 기준이 숫자가 아니라 완주 여부".</p></blockquote>
 
     <h3 id="prd-10">10. 플랫폼 전략 — TWA 결정 (2026-07-15)</h3>
     <h4>10-1. 결정</h4>
@@ -351,8 +374,20 @@
     <p>TWA는 기존 PWA를 안드로이드 앱으로 포장하는 방식이다. 코드 재작성이 없고, 웹 배포 시 앱에도 즉시 반영된다(스토어 재심사 불필요).</p>
     <h4>10-2. 결정의 전제 — ⚠️ 이것이 바뀌면 결정도 무효</h4>
     <blockquote>
-      <p><strong>현재 목표는 "학습"이다.</strong> 구체적으로 <strong>앱을 스토어에서 굴리는 전 과정</strong>(등록·심사·데이터 안전 양식·버전 배포·결제 연동)을 익히는 것이 목적이며, <strong>유저 확보·수익은 현 목표가 아니다.</strong></p>
-      <p><strong>학습 범위 확장 (2026-07-19):</strong> 학습 대상에 <strong>로그인·계정 동기화·인앱결제(IAP) 연동 흐름</strong>을 포함(Phase 3). 단 <strong>결제는 샌드박스로 실수익 없음.</strong> 따라서 10-5 뒤집기조건 #1은 <strong>미발동</strong> — 수익 추구가 아니라 결제·인증 과정 자체를 학습 산출물로 삼는 것. 스택 결정은 9-5.</p>
+      <p><strong>현재 목표는 "학습"이다 (2026-07-21 최종 정의):</strong> <strong>앱 개발의 전 과정을 직접 겪는다.</strong> 기획·구현·출시뿐 아니라 <strong>유지보수·홍보·매출·정산·세금·환불 대응까지 포함</strong>한다. <strong>성공 기준은 유저 수나 매출액이 아니라 각 과정을 완주했는가</strong>이다.</p>
+      <p><strong>학습 범위 확장 이력</strong><br>
+      · <strong>2026-07-19 (1차):</strong> 로그인·동기화·IAP 연동 흐름 포함(Phase 3). 이 시점엔 <strong>결제를 샌드박스로 한정</strong>.<br>
+      · <strong>2026-07-21 (2차):</strong> 샌드박스는 <strong>돈·법·세금이 빠진 버전</strong>이라 "전 과정 경험"에 미달함이 드러남. <strong>실결제·공개 출시·홍보</strong>를 범위에 포함. 결정은 9-6.</p>
+    </blockquote>
+    <blockquote>
+      <p><strong>§10-5 뒤집기조건 #1 재판정 (2026-07-21): 미발동.</strong></p>
+      <table>
+        <tr><th>#</th><th>근거</th></tr>
+        <tr><td>1</td><td><strong>수익이 목적이 아니라 학습 소재다.</strong> 실결제를 켜는 이유는 정산·수수료·세금·환불이 어떻게 도는지 겪기 위함이며, 매출은 부산물</td></tr>
+        <tr><td>2</td><td><strong>성공 기준이 숫자가 아니다.</strong> 홍보를 하더라도 판정 기준은 "홍보→유입→매출→환불→세금 신고를 한 바퀴 겪었는가"이지 "몇 명 모았는가"가 아니다</td></tr>
+        <tr><td>3</td><td><strong>트리거가 격상시킬 리스크가 이미 해소 예정이다.</strong> #1의 실효는 "데이터 유실이 감내 불가로 격상되고 서버가 필수"인데, Phase 3에서 서버 도입이 이미 확정</td></tr>
+      </table>
+      <p><strong>철회된 근거:</strong> 초안에서 근거 ②로 "유저 확보 동기 없음 — 홍보 행동이 추가되지 않았다"를 썼으나, 홍보가 학습 범위에 포함되면서 사실과 어긋나 <strong>명시적으로 철회</strong>했다. 위 표 2번이 대체 근거다.</p>
     </blockquote>
     <h4>10-3. 판단 기준별 근거</h4>
     <table>
@@ -389,7 +424,8 @@
     <ul>
       <li><strong>개인 개발자 계정(2023-11-13 이후 생성)은 공개 출시 권한을 처음부터 받지 못한다.</strong> 비공개 테스트에서 <strong>테스터 12명 이상 × 14일 연속</strong> 충족 후 프로덕션 권한 신청(심사 최대 7일)해야 공개가 열린다.</li>
       <li>따라서 "별점 리스크를 비공개 테스트로 회피한다"는 원칙 8 판단은 <strong>적용 여지가 없었다</strong> — 회피 여부를 고를 수 없고 비공개가 의무. 별점 리스크는 자동 회피되나 선택의 결과가 아니다.</li>
-      <li><strong>남은 유저 판단:</strong> 학습 목표가 <strong>비공개 테스트까지만으로 충족되는가</strong>, 아니면 <strong>공개 출시까지 가는가</strong>. 후자만 12명×14일 관문을 요한다.</li>
+      <li><s>남은 유저 판단</s> <strong>→ 해소 (2026-07-21): 공개 출시까지 간다.</strong> 목표 정의에 홍보·매출·유저 반응·별점 관리가 포함되므로 비공개 종료는 목표 미달. 따라서 <strong>12명×14일 관문은 선택이 아니라 필수 경로</strong>로 확정. 근거 9-6.</li>
+      <li><strong>결제 학습에 관한 사실 정정:</strong> 인앱결제 <strong>기술 흐름</strong>(상품 등록·결제창·구매 검증·기능 해제)은 라이선스 테스터를 쓰면 <strong>비공개 테스트에서도 완주 가능</strong>하다. 즉 "결제를 배우려면 공개가 필요하다"는 연결은 성립하지 않는다. 공개 출시를 요구하는 것은 결제가 아니라 <strong>실제 정산·세금·낯선 유저 반응·공개 별점</strong>이다.</li>
       <li>정책 출처: Play Console Help — new personal developer accounts (2024-12-11 개정: 20→12명).</li>
     </ul>
   </section>
@@ -404,46 +440,68 @@
     <h4>0. 현재 상태</h4>
     <table>
       <tr><th>항목</th><th>상태</th></tr>
-      <tr><td>전체 진행</td><td>☐ 착수 전 (0/14)</td></tr>
+      <tr><td>전체 진행</td><td>☐ 착수 전 (0/19)</td></tr>
       <tr><td><strong>경로 확정</strong></td><td><strong>개인 계정 보유 → 비공개 테스트 의무 경로.</strong> 공개 출시는 관문 통과 후에만 가능</td></tr>
-      <tr><td>현재 병목</td><td><strong>C-1 테스터 12명 × 14일 연속</strong> — 공개까지 갈 때만. 사람 섭외 문제라 실패 위험 높음</td></tr>
-      <tr><td>미결정 사항</td><td>없음 (트랙 선택은 계정 상태로 확정됨)</td></tr>
+      <tr><td><strong>최종 목표 확정 (2026-07-21)</strong></td><td><strong>공개 출시까지 간다.</strong> 목표 정의에 홍보·매출·유저 반응·별점 관리가 포함되므로 비공개 종료는 목표 미달 (PRD 10-2·9-6)</td></tr>
+      <tr><td><strong>결제 확정 (2026-07-21)</strong></td><td><strong>실결제.</strong> 유료 상품 1개·최저가. 샌드박스 폐기 (PRD 9-6)</td></tr>
+      <tr><td>현재 병목</td><td><strong>C-1 테스터 12명 × 14일 연속</strong> — 사람 섭외 문제라 실패 위험 높음</td></tr>
+      <tr><td>미결정 사항</td><td>사업자등록·통신판매업 신고 필요 여부 → <strong>D-1에서 유저가 직접 확인</strong></td></tr>
     </table>
     <p><strong>이미 확보된 것 (추가 작업 불필요):</strong> <strong>구글 개발자 계정(개인, 보유 확인)</strong> · PWA 매니페스트 · 아이콘 2종(192·512) · Service Worker · 배포 도메인 <code>swithme.app</code>. 등록·심사 단계 불필요. 남은 건 앱 포장 + 비공개 테스트 관문.</p>
 
     <h4>1. ⚠️ 경로 확정 — 비공개 테스트 의무 (선택 아님)</h4>
     <blockquote><p><strong>이건 결정이 아니다.</strong> 유저 계정이 <strong>개인 계정</strong>이라 구글 정책상 <strong>공개 출시를 처음부터 받을 수 없다.</strong> 비공개 테스트로 관문을 통과해야 공개가 열린다.</p></blockquote>
     <p><strong>정책(2026):</strong> 2023-11-13 이후 만든 개인 계정은 프로덕션 권한 전에 ①비공개 테스트 ②<strong>테스터 12명 이상</strong> 참여 ③<strong>14일 연속</strong> 유지(이탈 시 리셋) ④프로덕션 신청 ⑤심사 최대 7일. 20→12명은 2024-12-11 완화. 회사 계정·구 개인 계정은 면제(유저는 해당 안 됨).</p>
+    <h5>✅ 출시 목표 확정 (2026-07-21) — 공개 출시까지</h5>
     <table>
-      <tr><th>목표</th><th>어디까지</th><th>12명×14일?</th></tr>
-      <tr><td><strong>비공개까지만</strong></td><td>테스터에게 배포·실기기 검증. 스토어 운영 학습 대부분 달성</td><td>❌ 불필요</td></tr>
-      <tr><td><strong>공개 출시까지</strong></td><td>스토어 검색 노출·공개 별점</td><td>✅ 필수 관문</td></tr>
+      <tr><th>목표</th><th>어디까지</th><th>판정</th></tr>
+      <tr><td>비공개까지만</td><td>테스터에게 배포·실기기 검증</td><td>❌ <strong>기각.</strong> 낯선 유저 반응·공개 별점 관리를 못 겪어 목표 미달</td></tr>
+      <tr><td><strong>공개 출시까지</strong></td><td>스토어 검색 노출·공개 별점·실제 매출</td><td>✅ <strong>채택</strong></td></tr>
     </table>
-    <p><strong>☐ 유저 판단 대기:</strong> 비공개까지만으로 학습 목표가 충족되는가, 아니면 공개까지 가는가. 이 답이 C 단계 착수 여부를 가른다.</p>
+    <p>→ <strong>C 단계(12명×14일 관문)는 선택이 아니라 필수 경로다.</strong> 근거 PRD 9-6·10-7.</p>
+    <p><strong>참고 — 결제 학습만 놓고 보면 공개는 불필요했다:</strong> 인앱결제 기술 흐름은 라이선스 테스터로 <strong>비공개에서도 완주 가능</strong>하다. 공개를 요구하는 것은 결제가 아니라 <strong>실제 정산·세금·유저 반응·공개 별점</strong>이다.</p>
+    <h5>비공개 vs 공개 테스트 — 차이 (혼동 방지)</h5>
+    <table>
+      <tr><th></th><th>비공개(Closed)</th><th>공개(Open)</th></tr>
+      <tr><td>참여</td><td>지정한 이메일 목록만</td><td>누구나(링크·스토어 검색)</td></tr>
+      <tr><td>스토어 검색 노출</td><td>❌</td><td>✅</td></tr>
+      <tr><td>공개 별점·리뷰</td><td>❌ 안 남음</td><td>✅ <strong>영구 기록(일방향 문)</strong></td></tr>
+      <tr><td>12명×14일 관문 충족</td><td>✅ 여기서만 채움</td><td>❌</td></tr>
+    </table>
 
     <h4>2-A. Claude가 하는 것</h4>
     <table>
       <tr><th>#</th><th>할 일</th><th>내용</th><th>선행 조건</th><th>상태</th></tr>
       <tr><td>A-1</td><td>도메인 소유 증명</td><td>안드로이드가 주소창을 감추려면 "이 도메인이 내 것"이라는 증명이 필요하다. 앱 서명 지문을 사이트에 파일로 올린다. <strong>어긋나면 앱이 주소창을 달고 뜬다</strong></td><td><strong>B-1 완료 필수</strong></td><td>☐</td></tr>
-      <tr><td>A-2</td><td>앱 파일 빌드</td><td>현 웹을 감싼 안드로이드 앱 파일 생성. 아이콘·이름·색은 기존 것 그대로</td><td>없음</td><td>☐</td></tr>
-      <tr><td>A-3</td><td>매니페스트 보강</td><td>스토어 요구 항목 중 누락분 채움 (앱 고유 ID 등)</td><td>없음</td><td>☐</td></tr>
-      <tr><td>A-4</td><td>개인정보처리방침 작성</td><td><strong>스토어 필수. 없으면 등록 자체가 막힌다.</strong> 데이터를 기기에만 저장하므로 내용은 짧다. 단 <strong>실제 접속 가능한 URL이어야</strong> 하므로 사이트에 페이지로 게시</td><td>없음</td><td>☐</td></tr>
-      <tr><td>A-5</td><td>아이콘 여백 점검</td><td>512px 아이콘이 "마스크 적용"으로 설정돼 있다. 안드로이드가 원형·둥근사각형으로 잘라내므로 여백이 부족하면 로고가 잘린다</td><td>없음</td><td>☐</td></tr>
+      <tr><td>A-3</td><td>매니페스트 보강</td><td>스토어 요구 항목 중 누락분 채움 (앱 고유 ID, 화면 방향, 언어). <strong>검색엔진용 메타(제목·설명·공유 미리보기)는 이미 완비 — 별개 항목이며 손대지 않는다</strong></td><td>없음</td><td>☐</td></tr>
+      <tr><td>A-4</td><td>개인정보처리방침 작성</td><td><strong>스토어 필수. 없으면 등록 자체가 막힌다.</strong> 실제 접속 가능한 URL로 사이트에 게시</td><td>아래 ⚠️ 참조</td><td>☐</td></tr>
+      <tr><td>A-5′</td><td>아이콘 등록</td><td>유저가 제작한 여백 버전을 앱 설정에 반영</td><td><strong>A-5 완료 필수</strong></td><td>☐</td></tr>
     </table>
+    <blockquote>
+      <p><strong>⚠️ A-4 개인정보처리방침 — 출시 순서에 따라 내용이 갈린다.</strong> 방침과 데이터 안전 양식은 <strong>실제로 스토어에 올라간 그 버전이 하는 일</strong>을 기술해야 한다. 미래 계획을 미리 쓰면 "수집한다고 신고했는데 안 함" 불일치가 된다.</p>
+      <table>
+        <tr><th>순서</th><th>방침 내용</th><th>후속 의무</th></tr>
+        <tr><td><strong>TWA 먼저 출시 → 나중에 Phase 3</strong></td><td>지금은 "수집 없음"</td><td>Phase 3 배포 시 방침 + 데이터 안전 양식 <strong>동시 갱신 필수</strong></td></tr>
+        <tr><td>Phase 3 완료 후 출시</td><td>처음부터 계정·활동기록 수집 기준</td><td>1회 작성으로 끝. 출시가 Phase 3 기간만큼 지연</td></tr>
+      </table>
+      <p><strong>☐ 유저 판단 대기.</strong> 어느 쪽이든 실결제 도입 시점엔 결제 관련 항목 추가가 필요하다.</p>
+    </blockquote>
 
-    <h4>2-B. 유저 — 앱 등록 (Claude 대행 불가)</h4>
+    <h4>2-B. 유저 — 앱 등록·빌드·아이콘 (Claude 대행 불가)</h4>
     <p><strong>개발자 계정은 이미 보유 → 등록 단계 생략.</strong></p>
     <table>
       <tr><th>#</th><th>할 일</th><th>내용</th><th>상태</th></tr>
+      <tr><td>A-2</td><td>앱 파일 빌드</td><td>현 웹을 감싼 안드로이드 앱 파일 생성. <strong>유저 몫으로 이관 (2026-07-21)</strong></td><td>☐</td></tr>
+      <tr><td>A-5</td><td>아이콘 여백 버전 제작</td><td>현 512px 아이콘은 로고가 가장자리까지 차 있어 <strong>안드로이드가 원형·둥근사각형으로 자를 때 좌우가 잘린다</strong>(실물 확인함). 로고를 중앙 80% 안에 넣은 512px 1장 제작 → 폴더에 넣으면 Claude가 A-5′로 등록. <strong>유저 몫으로 이관 (2026-07-21)</strong></td><td>☐</td></tr>
       <tr><td>B-1</td><td>Play Console에서 앱 생성</td><td>앱 이름·기본 정보 입력. <strong>완료 시 앱 서명 지문이 나오며, 이걸 Claude에게 전달해야 A-1이 진행됨</strong></td><td>☐</td></tr>
       <tr><td>B-2</td><td>비공개 테스트 트랙 설정</td><td>앱 파일을 비공개 트랙에 올림</td><td>☐</td></tr>
-      <tr><td>B-3</td><td>데이터 안전 양식 제출</td><td>수집 데이터 신고. 스윗미는 "수집 없음"이라 간단</td><td>☐</td></tr>
+      <tr><td>B-3</td><td>데이터 안전 양식 제출</td><td>수집 데이터 신고. <strong>⚠️ 현 버전 기준으로만 "수집 없음"이다. Phase 3(로그인·동기화) 또는 실결제 배포 시 이 서술은 거짓이 되며 양식 재제출이 의무다</strong></td><td>☐</td></tr>
       <tr><td>B-4</td><td>스토어 등록 정보 입력</td><td>설명문, 스크린샷, 카테고리, 콘텐츠 등급 설문</td><td>☐</td></tr>
       <tr><td>B-5</td><td>앱 파일 업로드</td><td>A-2 결과물 업로드</td><td>☐</td></tr>
     </table>
 
-    <h4>2-C. 유저 — 공개 출시 관문 (§1에서 "공개까지" 택한 경우에만)</h4>
-    <p><strong>비공개까지만 하기로 하면 이 단계 전체 생략.</strong></p>
+    <h4>2-C. 유저 — 공개 출시 관문 <span class="tag">✅ 필수 확정</span></h4>
+    <p><strong>2026-07-21: 생략 불가.</strong> §1에서 공개 출시로 확정됐다.</p>
     <table>
       <tr><th>#</th><th>할 일</th><th>내용</th><th>상태</th></tr>
       <tr><td>C-1</td><td>테스터 12명 × 14일</td><td><strong>실제 구글 계정 12개 이상</strong>을 비공개 테스트에 참여시키고 <strong>14일 연속</strong> 유지. 중간 이탈 시 리셋. <strong>혼자 만드는 앱엔 최대 마찰 지점</strong></td><td>☐</td></tr>
@@ -451,11 +509,32 @@
       <tr><td>C-3</td><td>공개 출시</td><td>승인 후 프로덕션 트랙으로 전환</td><td>☐</td></tr>
     </table>
 
+    <h4>2-D. 유저 — 돈·법 <span class="tag">실결제 전환으로 신규 · 2026-07-21</span></h4>
+    <p>결정 근거 PRD 9-6. <strong>기술 작업이 아니며 Claude 대행 불가.</strong></p>
+    <table>
+      <tr><th>#</th><th>할 일</th><th>내용</th><th>상태</th></tr>
+      <tr><td>D-1</td><td>⚠️ <strong>사업자등록·통신판매업 신고 필요 여부 확인</strong></td><td><strong>가장 먼저.</strong> 이 답이 나머지를 좌우한다. 확인처: <strong>국세청 126</strong>, 관할 구청 지역경제과(통신판매업), 홈택스 온라인 상담. <strong>이 문서·Claude 설명을 근거로 진행 금지 — 틀리면 가산세로 돌아온다</strong></td><td>☐</td></tr>
+      <tr><td>D-2</td><td>판매자 등록 (구글)</td><td>개발자 계정에 결제 프로필 등록 — 이름·주소·계좌·세금 정보. 상대는 구글이며 국가 신고가 아니다. 이거 없으면 유료 상품 판매 불가</td><td>☐</td></tr>
+      <tr><td>D-3</td><td>사업자등록 / 통신판매업 신고</td><td>D-1 결과 필요하다고 나오면 실행</td><td>☐</td></tr>
+      <tr><td>D-4</td><td><strong>환불 대응 방침 작성</strong></td><td>① 환불 사유 범위(기능 미작동/단순 변심/실수 구매) ② 기간 ③ 접수 경로 ④ 거절 시 통보 방식 → 스토어 등록 정보·앱 내 게시</td><td>☐</td></tr>
+      <tr><td>D-5</td><td>공개 연락처 확보</td><td>환불·문의 접수용 이메일. <strong>스토어에 공개 노출된다</strong></td><td>☐</td></tr>
+    </table>
+    <blockquote>
+      <p><strong>참고 — 구글 자동 환불:</strong> 구매 직후 짧은 시간 내 요청은 <strong>구글이 자동 처리</strong>하며 개발자 개입이 없다. 그 이후 요청만 개발자가 판단·응대한다. <strong>D-4 착수 시점:</strong> 지금 정할 필요 없다. 결제 구현 단계에서 채운다.</p>
+    </blockquote>
+    <h5>규모 완화 방침 (PRD 9-6)</h5>
+    <table>
+      <tr><th>항목</th><th>확정값</th></tr>
+      <tr><td>유료 상품</td><td><strong>1개</strong>, 최저가</td></tr>
+      <tr><td>홍보</td><td>자체 제작 콘텐츠 중심(유튜브·릴스 직접 제작), 유료 광고 최소 또는 0</td></tr>
+      <tr><td>목적</td><td>정산·수수료·세금·환불 흐름을 <strong>전부 겪되 금액 규모만 최소화</strong></td></tr>
+    </table>
+    <p>⚠️ <strong>완화가 줄여주지 않는 것:</strong> 사업자등록 의무는 금액이 아니라 "판매 행위" 자체가 기준일 수 있다. D-1에서 반드시 확인.</p>
+
     <h4>3. 실행 순서</h4>
-    <pre>[§1 목표 갈래: 비공개까지만 vs 공개까지]  ← 유저. 여기부터
+    <pre>[D-1 사업자·통신판매업 확인]  ← 유저. 병렬로 지금 착수
        │
-       ├──────── [A-2 빌드]   (계정 있으니 대기 없이 즉시 착수)
-       │          [A-3 매니페스트] [A-4 개인정보처리방침] [A-5 아이콘]
+[A-3 매니페스트] [A-4 방침] [A-5 아이콘제작→A-5′ 등록] [A-2 빌드]
        ↓                 │
 [B-1 앱 생성 → 서명 지문]  │
        ↓                 │
@@ -463,14 +542,16 @@
        ↓
 [B-2 비공개 트랙]→[B-3 데이터]→[B-4 등록정보]→[B-5 업로드]
        ↓
-[검증 §4]  ← 실기기 확인. "비공개까지만"이면 여기서 종료
+[검증 §4]  ← 실기기 확인
        ↓
-──── 공개까지 갈 때만 ────
+[C-1 테스터 12명 × 14일]  ← 최소 14일. 최대 병목. 생략 불가
        ↓
-[C-1 테스터 12명 × 14일]  ← 최소 14일. 최대 병목
+[C-2 프로덕션 신청 → 심사 최대 7일] → [C-3 공개 출시]
        ↓
-[C-2 프로덕션 신청 → 심사 최대 7일] → [C-3 공개 출시]</pre>
-    <p><strong>요점:</strong> 계정이 이미 있어 초반 대기가 사라졌다. 새 병목은 <strong>C-1(12명×14일)</strong> — 공개까지 갈 때만 발생하며 사람 섭외가 관건.</p>
+[D-2 판매자 등록] [D-3 사업자등록] [D-4 환불 방침] [D-5 연락처]
+       ↓
+[결제 구현 → Phase 3 §4]</pre>
+    <p><strong>요점:</strong> 병목 둘 — ① <strong>C-1(12명×14일)</strong>: 사람 섭외라 기술이 아니라 사람 문제. ② <strong>D-1</strong>: 답을 못 받으면 실결제 착수가 막히므로 <strong>지금 병렬 착수가 이득</strong>.</p>
 
     <h4>4. 검증 — 소유자 분리</h4>
     <table>
@@ -489,10 +570,10 @@
     <table>
       <tr><th>항목</th><th>값</th></tr>
       <tr><td>Claude 작업</td><td>반나절</td></tr>
-      <tr><td>유저 작업 (앱 등록, B)</td><td>1~2시간</td></tr>
-      <tr><td><strong>비공개까지만 — 전체</strong></td><td><strong>며칠</strong> (계정 있어 대기 없음)</td></tr>
-      <tr><td><strong>공개까지 — 전체</strong></td><td><strong>최소 3주 이상</strong> (14일 테스트 + 심사 최대 7일 + 준비)</td></tr>
-      <tr><td>비용</td><td><strong>$0</strong> (등록비 $25 이미 지불됨)</td></tr>
+      <tr><td>유저 작업 (빌드·아이콘·앱 등록)</td><td>반나절~1일</td></tr>
+      <tr><td><strong>전체 기간 (공개 출시 확정)</strong></td><td><strong>최소 3주 이상</strong> (14일 테스트 + 심사 최대 7일 + 준비)</td></tr>
+      <tr><td>스토어 비용</td><td><strong>$0</strong> (등록비 $25 이미 지불됨)</td></tr>
+      <tr><td><strong>⚠️ 신규 비용 (실결제)</strong></td><td>구글 수수료 매출의 15%(연 100만 달러 미만). <strong>사업자등록 시 부가세·종합소득세 정기 신고 부담이 상시 발생</strong> — D-1 확인 결과에 따름</td></tr>
     </table>
 
     <h4>6. 예상 마찰 지점</h4>
@@ -510,20 +591,25 @@
       <tr><th>의무</th><th>주기</th></tr>
       <tr><td>Android 타겟 API 레벨 상향 대응 (재빌드·재제출)</td><td><strong>매년.</strong> 앱을 수정하지 않아도 필수. 미이행 시 검색에서 제외</td></tr>
       <tr><td>개인정보처리방침 최신 유지</td><td>수집 항목 변경 시</td></tr>
+      <tr><td>데이터 안전 양식 재제출</td><td>로그인·동기화·결제 도입 시</td></tr>
       <tr><td>로그인 도입 시 계정 삭제 경로 제공 (앱 + 웹 양쪽)</td><td>로그인 도입 시</td></tr>
       <tr><td>별점·리뷰 대응</td><td>공개 출시(C 단계) 도달 시 상시</td></tr>
+      <tr><td><strong>환불 요청 응대</strong></td><td>실결제 시작 후 상시</td></tr>
+      <tr><td><strong>⚠️ 세금 신고 (사업자등록한 경우)</strong></td><td><strong>부가가치세 1월·7월 / 종합소득세 5월.</strong> 앱을 수정하지 않아도, <strong>매출이 0원이어도</strong> 무실적 신고 필요. 미이행 시 가산세</td></tr>
     </table>
+    <blockquote><p><strong>⚠️ 오해 방지:</strong> 위 세금 신고는 <strong>앱 변경과 무관하다.</strong> 앱을 고칠 때마다 국가에 신고하는 의무는 존재하지 않는다. 달력에 따라 정기적으로 돌아오는 의무이며, <strong>폐업 신고 전까지 계속된다</strong> — 앱을 내리고 학습을 끝내도 폐업 신고를 안 하면 의무는 남는다.</p></blockquote>
   </section>
 
   <!-- ============ Phase 3 할 일 ============ -->
   <section class="doc" id="phase3">
     <h2>🔐 Phase 3 — 로그인·동기화·결제·푸시 할 일 <span class="tag">☐ 착수 전</span></h2>
-    <blockquote><p><strong>실행 체크리스트.</strong> 왜 Firebase/IAP인지는 <a href="#prd-9">PRD §9-5</a>. 목적은 <strong>학습</strong> — 결제는 샌드박스, 실수익 없음. "할 일"이라고 말하면 현 단계에 맞는 다음 항목을 제시함.</p></blockquote>
+    <blockquote><p><strong>실행 체크리스트.</strong> 왜 Firebase/IAP인지는 <a href="#prd-9">PRD §9-5</a>, 왜 실결제인지는 §9-6. 목적은 <strong>학습(앱 개발 전 과정 경험)</strong> — 정산·세금·환불까지 학습 대상. "할 일"이라고 말하면 현 단계에 맞는 다음 항목을 제시함.</p></blockquote>
     <h4>0. 현재 상태</h4>
     <table>
       <tr><th>항목</th><th>상태</th></tr>
       <tr><td>전체 진행</td><td>☐ 착수 전 (0/4 단계)</td></tr>
       <tr><td>스택</td><td>Firebase(Auth·Firestore·FCM) + Google Play IAP</td></tr>
+      <tr><td><strong>결제 확정 (2026-07-21)</strong></td><td><strong>실결제.</strong> 유료 상품 1개·최저가. <s>샌드박스</s> 폐기 — PRD 9-6</td></tr>
       <tr><td>순서 제약</td><td>①계정 뿌리 → ②동기화 → ③푸시 / ④결제</td></tr>
       <tr><td>현재 병목</td><td>사전 준비 P — 유저 구글 계정으로 Firebase 프로젝트 생성(유저 몫)</td></tr>
     </table>
@@ -533,17 +619,21 @@
       <li>설정 키는 시크릿 → <code>.env</code> 관리(하드코딩 금지)</li>
     </ul>
     <h4>1. 계정·로그인 (뿌리)</h4>
-    <ul><li>☐ Firebase 연동 · 구글 로그인 · 이메일 로그인 · 로그인 화면 <strong>PC·모바일 양쪽</strong> · 게스트 모드 유지(회귀 방지) · 설정에 로그인 상태 표시 · lint/테스트 · (유저)실기기 로그인 확인</li></ul>
+    <ul><li>☐ Firebase 연동 · 구글 로그인 · 이메일 로그인 · 로그인 화면 <strong>PC·모바일 양쪽</strong> · <strong>게스트 모드 유지(회귀 방지 + ⚠️ 마케팅 포지셔닝의 전제 — 마케팅 플랜 §1이 "가입 없이 바로 쓰고, 원하면 로그인" 문구에 의존)</strong> · 설정에 로그인 상태 표시 · lint/테스트 · (유저)실기기 로그인 확인</li></ul>
     <h4>2. 데이터 동기화·백업 (핵심 — 유실 해소)</h4>
     <ul><li>☐ Firestore에 <code>state</code> 매핑 · 로컬↔클라우드 양방향 동기화 · 충돌 처리 · 유닛테스트 · (유저)<strong>기기 2대 교차 동기화 확인</strong> · (유저)브라우저 기록 삭제 후 복구 확인</li></ul>
     <h4>3. 푸시 알림</h4>
     <ul><li>☐ FCM 설정·권한 UX · 할 일·습관 리마인더 · (유저)실기기 알림 수신 확인</li></ul>
-    <h4>4. 결제 (IAP — 샌드박스, 실수익 없음)</h4>
-    <ul><li>☐ 유료 잠금 기능 1개 선정 · Play Console 인앱 상품 등록·라이선스 테스터 · Digital Goods API 연동 · Firebase 구매 검증·잠금 해제 · (유저)샌드박스 결제 완주</li></ul>
+    <h4>4. 결제 (IAP — <strong>실결제</strong>, 상품 1개·최저가)</h4>
+    <blockquote><p>근거 PRD 9-6. <strong>선행 조건: TWA 할 일 D단계</strong>(사업자·통신판매업 확인, 판매자 등록, 환불 방침, 연락처). <strong>D-1 답 없이 실결제 착수 금지.</strong></p></blockquote>
+    <ul><li>☐ 유료 잠금 기능 1개 선정 · <strong>최저가 책정</strong> · Play Console 인앱 상품 등록 · Digital Goods API 연동 · Firebase 구매 검증·잠금 해제 · <strong>환불 처리 흐름 구현(구매 취소 시 재잠금)</strong> · (유저)라이선스 테스터로 <strong>샌드박스 검증 먼저</strong> · (유저)<strong>실결제 1회 완주</strong>(결제→입금→수수료 차감 확인) · (유저)<strong>환불 1회 완주</strong> · (유저)정산 내역·세금 신고 자료 확인</li></ul>
+    <blockquote><p><strong>샌드박스는 폐기가 아니라 강등이다.</strong> 목표 달성 수단에서 <strong>개발 중 테스트 수단</strong>으로 역할이 바뀌었다.</p></blockquote>
+    <h4>5. 배포 시 갱신 의무 (누락 시 정책 위반)</h4>
+    <ul><li>☐ <strong>개인정보처리방침 갱신</strong>("수집 없음" 폐기, 계정·활동·결제 정보 명시) · <strong>데이터 안전 양식 재제출</strong> · <strong>계정 삭제 경로 제공</strong>(앱·웹 양쪽, 스토어 필수) · 마케팅 포지셔닝이 실제 앱과 일치하는지 재확인</li></ul>
     <h4>검증 소유자</h4>
     <ul>
       <li>Claude 자동: lint·기존 테스트·동기화 유닛테스트</li>
-      <li><strong>유저 수동(완료 조건):</strong> 실기기 로그인, 기기 2대 동기화, 유실 복구, 푸시 수신, 샌드박스 결제. 자동 검사로는 "됐다" 확정 불가 — 실기기·2대·스토어 환경 필요.</li>
+      <li><strong>유저 수동(완료 조건):</strong> 실기기 로그인, 기기 2대 동기화, 유실 복구, 푸시 수신, <strong>실결제 1회 + 환불 1회 + 정산 확인(샌드박스로 대체 불가)</strong>. 자동 검사로는 "됐다" 확정 불가 — 실기기·2대·스토어 환경 필요.</li>
     </ul>
   </section>
 
@@ -708,9 +798,11 @@
       <tr><td>TWA vs 네이티브 (이 문서의 출처)</td><td><a href="#prd-10">PRD §10</a></td><td>2026-07-15</td></tr>
       <tr><td>TWA 출시 경로 확정 — 가짜 비교축 붕괴</td><td><a href="#twa">TWA 할 일</a> · <a href="#prd-10">PRD §10-7</a></td><td>2026-07-17</td></tr>
       <tr><td>Phase 3 백엔드·결제 스택 — 전제 재해석 + 진짜 병목</td><td><a href="#prd-9">PRD §9-5</a></td><td>2026-07-19</td></tr>
+      <tr><td>실결제·공개 출시 전환 — 근거 철회 + 가짜 인과</td><td><a href="#prd-9">PRD §9-6</a> · <a href="#prd-10">§10-2</a></td><td>2026-07-21</td></tr>
     </table>
     <p><strong>B-2. 가짜 비교축 붕괴:</strong> "비공개냐 공개냐"를 유저 선택으로 적었으나, 개인 계정은 공개 출시 불가(비공개 강제)라 <strong>고를 여지가 없었다.</strong> 진짜 결정자(계정 종류)가 비교 축 밖에 있었다(원칙 4). 틀린 "자유 선택" 전제가 누락된 강제 관문(테스터 12명×14일)을 가리고 있었다.</p>
     <p><strong>B-3. Phase 3 스택:</strong> ① <strong>전제 재해석:</strong> "착수=목표를 학습→제품으로 전환"이란 이분 프레임이 가짜였다. 유저가 "학습은 유지, 로그인·결제 흐름을 학습 대상에 포함"으로 재정의 → 뒤집기조건 미발동. ② <strong>진짜 병목:</strong> "백엔드 A냐 B냐" 위에 "결제 어디서(IAP vs 웹)"가 상위 결정. ③ <strong>명시적 철회:</strong> 결제 미정 때 Supabase 권장 → IAP·푸시 확정으로 전제 바뀌자 소리 내어 철회, Firebase로 변경. ④ <strong>리스크 회피 먼저:</strong> 실결제 리스크를 감내 아닌 샌드박스로 회피.</p>
+    <p><strong>B-4. 실결제·공개 출시 전환:</strong> ① <strong>가짜 인과(원칙 4):</strong> "돈의 흐름을 배우려면 공개 테스트가 필요"라는 전제가 있었으나, 결제 기술 흐름은 라이선스 테스터로 <strong>비공개에서도 완주 가능</strong>이라 인과가 성립하지 않았다. 공개를 요구한 진짜 항목은 결제가 아니라 정산·세금·낯선 유저 반응이었다. <strong>전제를 검증 안 했으면 옳은 결론을 틀린 이유로 세울 뻔했다.</strong> ② <strong>근거 철회:</strong> 트리거 미발동 근거로 "홍보 행동 없음"을 썼는데 유저가 홍보를 학습 범위에 포함시키자 사실과 어긋남 → <strong>조용히 지우지 않고 철회 선언</strong>, "성공 기준이 숫자가 아니라 완주 여부"로 대체. 결론 동일, 이유만 교체(원칙 7). ③ <strong>불필요한 결정 강요(원칙 5):</strong> "비공개냐 공개냐 지금 정하라"고 요구했으나 비공개가 강제 선행이라 <strong>미뤄도 잃는 게 0</strong>이었다 → 요구 철회. <em>Claude가 결정 시점을 앞당기는 것도 오염이다.</em> ④ <strong>회피 불가 → 완화(원칙 8):</strong> 회피하면 목표 미달이라 1단계 불가 → 2단계로 상품 1개·최저가·소액 홍보 채택(학습 손실 0, 금액만 축소). ⑤ <strong>비교축 밖 발견:</strong> 무관해 보이던 마케팅 포지셔닝("로그인·설치 0")이 로그인·스토어 출시로 <strong>무효화</strong>됨을 발견. 안 물었으면 거짓 홍보 문구를 그대로 썼을 것이다.</p>
     <blockquote><p><strong>교훈:</strong> "A냐 B냐"가 주어지면 그 갈래가 정말 유저 통제 아래 있는지부터 확인하라. 외부 제약이 이미 답을 정했다면 결정이 아니라 사실 확인이고, 진짜 결정은 딴 데 있다.</p></blockquote>
   </section>
 
@@ -1106,15 +1198,28 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
   <!-- ============ 마케팅 플랜 ============ -->
   <section class="doc" id="marketing">
     <h2>📣 마케팅 플랜 <span class="tag">홍보할 때</span></h2>
-    <blockquote><strong>타겟:</strong> 수험생·학생 + 갓생러 MZ · <strong>예산:</strong> 소액(월 10~30만, 오가닉 중심) · <strong>최종 수정:</strong> 2026-07-15</blockquote>
+    <blockquote>
+      <p><strong>타겟:</strong> 수험생·학생 + 갓생러 MZ · <strong>예산:</strong> 소액 — <strong>자체 제작 콘텐츠 중심</strong>(유튜브·릴스 직접 제작), 유료 광고는 최소 또는 0 · <strong>최종 수정:</strong> 2026-07-21</p>
+      <p><strong>⚠️ 목적 유의:</strong> 홍보의 목적은 유저 수 극대화가 아니라 <strong>홍보→유입→매출→환불까지 한 바퀴를 겪는 것</strong>이다(PRD 10-2). 성과 판정 기준은 유저 수가 아니라 <strong>과정 완주 여부</strong>다.</p>
+    </blockquote>
 
-    <h3>1. 포지셔닝 — 한 문장 무기</h3>
+    <h3>1. 포지셔닝 — 한 문장 무기 <span class="tag">2026-07-21 재작성</span></h3>
     <p>경쟁 앱(열품타·타임스탬프·투두메이트) 대비 차별점 2개로 좁힌다.</p>
     <ul>
-      <li><strong>"기록만 하는 앱 말고, 처방까지 해주는 앱"</strong> — 공부시간 재는 앱은 많다. 스윗미는 데이터를 보고 무엇을 고쳐야 하는지 알려준다(처방전·인사이트).</li>
-      <li><strong>"설치·로그인·회원가입 0. 링크 누르면 끝."</strong> — 경쟁 앱은 가입·친구추가 부담이 있다. 스윗미는 진입장벽이 없다.</li>
+      <li><strong>"기록만 하는 앱 말고, 처방까지 해주는 앱"</strong> — 공부시간 재는 앱은 많다. 스윗미는 데이터를 보고 무엇을 고쳐야 하는지 알려준다(처방전·인사이트). <strong>변경 없음.</strong></li>
+      <li><strong>"가입 없이 바로 쓰고, 원하면 로그인해서 기기 간 동기화"</strong> — 경쟁 앱은 시작부터 가입·친구추가를 요구한다. 스윗미는 <strong>게스트로 즉시 시작</strong>하고, 로그인은 <em>기기를 옮기거나 데이터를 지키고 싶을 때만</em> 선택한다.</li>
     </ul>
     <p><strong>카피 코어:</strong> "공부시간 재지 말고, 공부습관 고쳐라"</p>
+    <h4>⚠️ 이전 문구 폐기 이력</h4>
+    <p>기존 문구 <s>"설치·로그인·회원가입 0. 링크 누르면 끝."</s> 은 <strong>폐기</strong>한다.</p>
+    <table>
+      <tr><th>무엇이 바뀌었나</th><th>왜 문구가 무효인가</th></tr>
+      <tr><td>Phase 3에서 로그인 도입</td><td>"회원가입 0"이 사실과 달라짐</td></tr>
+      <tr><td>Play 스토어 출시(TWA)</td><td>"설치 0"이 사실과 달라짐</td></tr>
+      <tr><td>유료 상품 1개 도입</td><td>"링크 누르면 끝"이 전부를 설명하지 못함</td></tr>
+    </table>
+    <p><strong>무기가 약해진 게 아니라 성격이 바뀌었다.</strong> 게스트 모드가 유지되므로 <em>진입장벽 0</em>이라는 실질은 그대로이고, 여기에 <em>동기화</em>라는 선택지가 얹힌다. 광고 문구가 실제 앱과 어긋나면 신뢰가 깨지므로 <strong>홍보 콘텐츠 제작 전에 이 재작성이 선행되어야 했다.</strong></p>
+    <blockquote><p><strong>⚠️ 콘텐츠 제작 시 금지 문구:</strong> "가입 없음", "로그인 없음", "설치 없음"을 <strong>무조건형으로 쓰지 않는다.</strong> 항상 "가입 없이도 쓸 수 있다"(선택형)로 표현한다.</p></blockquote>
 
     <h3>2. 채널 우선순위 (예산 대비 효율순)</h3>
     <table>
@@ -1181,8 +1286,9 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
       <tr><th>단계</th><th>기간(AI 기준)</th><th>마일스톤</th><th>핵심 목표</th><th>상태</th></tr>
       <tr><td>Phase 1</td><td>~1주</td><td>Core Logic</td><td>데이터 구조, 타이머·타임테이블·회고 집계 알고리즘</td><td class="done">✅ 완료</td></tr>
       <tr><td>Phase 2</td><td>~1~2주</td><td>MVP UI/UX</td><td>대시보드·분석·설정·캘린더, PC/모바일 셸, 화면 전환</td><td class="done">✅ 완료</td></tr>
-      <tr><td>Phase 3</td><td>~2~3주</td><td>Features</td><td>로그인·계정 동기화·백업, 푸시 알림, 인앱결제(IAP) 학습. <strong>스택 확정: Firebase + Google Play IAP</strong>. 세부 → <a href="#phase3">Phase 3 할 일</a></td><td class="todo">☐ 미착수 (스택 확정)</td></tr>
-      <tr><td>Phase 4</td><td>~1~2주 개발 <strong>+ 14일 관문(고정)</strong></td><td>Beta/Release</td><td>TWA로 Google Play 진입 — 비공개 테스트(개인 계정 의무) → 12명×14일 → 공개 심사</td><td class="todo">☐ 진행 예정</td></tr>
+      <tr><td>Phase 3</td><td>~2~3주</td><td>Features</td><td>로그인·계정 동기화·백업, 푸시 알림, 인앱결제(IAP). <strong>스택 확정: Firebase + Google Play IAP</strong>. <strong>결제는 실결제·상품 1개·최저가</strong>(PRD 9-6). 세부 → <a href="#phase3">Phase 3 할 일</a></td><td class="todo">☐ 미착수 (스택 확정)</td></tr>
+      <tr><td>Phase 4</td><td>~1~2주 개발 <strong>+ 14일 관문(고정)</strong></td><td>Beta/Release</td><td>TWA로 Google Play 진입 — 비공개 테스트(개인 계정 의무) → 12명×14일 → 프로덕션 심사 → <strong>공개 출시 확정</strong>. 실결제에 따른 판매자 등록·사업자 확인·환불 방침 포함. 세부 → <a href="#twa">TWA 할 일</a></td><td class="todo">☐ 진행 예정</td></tr>
+      <tr><td>Phase 5</td><td>상시</td><td>운영·홍보</td><td>자체 제작 콘텐츠 홍보, 별점·리뷰 대응, 환불 응대, 매년 타겟 API 재빌드, 세금 신고</td><td class="todo">☐ 신규 (2026-07-21)</td></tr>
     </table>
     <h4>AI가 줄이는 / 못 줄이는 구간</h4>
     <ul>
@@ -1193,6 +1299,8 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
     <ul>
       <li>Phase 3(서버·계정)이 수익화(§9)·데이터 유실 해소의 선행 조건.</li>
       <li>Phase 4는 Phase 3 없이 착수 가능하나 데이터 유실 리스크는 서버 도입 전까지 잔존(PRD §10-6).</li>
+      <li><strong>실결제(Phase 3 §4)는 Phase 4 D단계</strong>(사업자 확인·판매자 등록·환불 방침)<strong>가 선행 조건.</strong> 기술이 아니라 행정이 병목이므로 <strong>D-1(사업자·통신판매업 확인)은 지금 병렬 착수가 유리</strong>하다.</li>
+      <li><strong>☐ 미정 — 출시 순서:</strong> TWA를 먼저 출시하고 Phase 3를 나중에 할지, Phase 3 완료 후 출시할지. 이 순서가 개인정보처리방침·데이터 안전 양식의 내용을 결정한다.</li>
     </ul>
 
     <h3>3. 기술 스택 및 구조</h3>
@@ -1218,8 +1326,11 @@ npm run preview       # 빌드 결과 로컬 미리보기</pre>
       <tr><th>항목</th><th>상태</th><th>근거</th></tr>
       <tr><td>백엔드 스택</td><td>✅ 확정 — Firebase</td><td>PRD §9-5</td></tr>
       <tr><td>인증 방식·DB</td><td>✅ 확정 — Firebase Auth(구글+이메일)·Firestore</td><td>PRD §9-5</td></tr>
-      <tr><td>결제 방식</td><td>✅ 확정 — Google Play IAP(샌드박스)</td><td>PRD §9-5</td></tr>
+      <tr><td>결제 방식</td><td>✅ 확정 — Google Play IAP <strong>(실결제, 상품 1개·최저가)</strong></td><td>PRD §9-5 · <strong>§9-6</strong></td></tr>
+      <tr><td>출시 범위</td><td>✅ 확정 — <strong>공개 출시까지</strong> (12명×14일 관문 필수)</td><td>PRD §9-6 · §10-7</td></tr>
       <tr><td>계정 데이터 스키마</td><td>☐ Phase 3 설계 시 (Firestore 매핑)</td><td><a href="#phase3">Phase 3 할 일</a></td></tr>
+      <tr><td>사업자등록·통신판매업 필요 여부</td><td>☐ <strong>유저가 직접 확인</strong> (국세청 126·관할 구청)</td><td><a href="#twa">TWA 할 일 D-1</a></td></tr>
+      <tr><td>출시 순서 (TWA 먼저 vs Phase 3 먼저)</td><td>☐ 미정 — 개인정보처리방침 내용을 결정</td><td><a href="#twa">TWA 할 일 A-4</a></td></tr>
     </table>
   </section>
 </main>
