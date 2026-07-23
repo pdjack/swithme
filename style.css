@@ -3957,3 +3957,12 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     background: var(--pink) !important;
     color: #fff !important;
 }
+
+.account-msg {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    min-height: 1.2em;
+    margin-top: 2px;
+}
+.account-msg.is-error { color: var(--pink); }
+.account-msg.is-info { color: var(--text-dim); }
