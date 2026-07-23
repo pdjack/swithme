@@ -3867,3 +3867,93 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     background: var(--border, rgba(255,255,255,0.1));
     margin: 4px 2px;
 }
+
+/* ── 계정 패널 (Phase 3 §1 로그인) ───────────────────────── */
+.account-panel .account-signed-in,
+.account-panel .account-signed-out {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 360px;
+}
+.account-status {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+.account-signed-in .account-status { color: var(--success); }
+.account-email {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    word-break: break-all;
+}
+.account-hint {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+}
+.account-panel button {
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--text-main);
+}
+.account-panel button:hover { border-color: var(--primary); }
+.account-google-btn {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #fff !important;
+}
+.account-google-btn:hover { filter: brightness(1.1); }
+.account-divider-text {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin: 4px 0;
+}
+.account-panel input {
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+.account-panel input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+.account-email-btns {
+    display: flex;
+    gap: 10px;
+}
+.account-email-btns button { flex: 1; }
+.account-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 8px 0;
+}
+.account-danger-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--pink);
+}
+.account-danger-desc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+}
+.account-delete-btn {
+    color: var(--pink) !important;
+    border-color: var(--pink) !important;
+    align-self: flex-start;
+}
+.account-delete-btn:hover {
+    background: var(--pink) !important;
+    color: #fff !important;
+}

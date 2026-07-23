@@ -10,6 +10,7 @@ import { initStaticIcons } from './icons.js';
 import { setupAnalysisPeriodButtons, setupSnapshotControls } from './analysis.js';
 import { seedHabitsForDate, setupHabitEditor } from './habits.js';
 import { maybeStartTutorialOnLaunch } from './tutorial.js';
+import { setupAuth } from './auth.js';
 
 // 새 SW 활성화 시 자동 리로드
 if ('serviceWorker' in navigator) {
@@ -76,6 +77,9 @@ function init() {
     renderTimetable();
 
     initStaticIcons();
+
+    // 계정·로그인 초기화 (Phase 3 §1). 로그인 상태 감시 후 계정 패널 렌더.
+    setupAuth();
 
     maybeStartTutorialOnLaunch();
 }

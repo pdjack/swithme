@@ -167,6 +167,7 @@
                         <button class="settings-tab active" data-settings-tab="category">카테고리</button>
                         <button class="settings-tab" data-settings-tab="reflection">회고 항목</button>
                         <button class="settings-tab" data-settings-tab="habit">습관</button>
+                        <button class="settings-tab" data-settings-tab="account">계정</button>
                         <button class="settings-tab settings-tutorial-btn" onclick="openTutorialMenu(this)">튜토리얼 다시보기 ▾</button>
                     </div>
                     <!-- 카테고리 패널 -->
@@ -211,6 +212,13 @@
                                 <div id="habit-timetable-root" class="timetable-container"></div>
                             </section>
                         </div>
+                    </div>
+                    <!-- 계정 패널 (로그인/로그아웃/계정삭제) -->
+                    <div id="settings-tab-account" class="settings-tab-panel glass-card full-height account-panel" style="display: none;">
+                        <div class="card-title">
+                            <h3>Account</h3>
+                        </div>
+                        <!-- JS(setupAuth)가 로그인 상태에 맞춰 내용 렌더 -->
                     </div>
                 </section>
             </div>
@@ -569,6 +577,7 @@
                     <button class="m-settings-tab active" data-settings-tab="category">카테고리</button>
                     <button class="m-settings-tab" data-settings-tab="reflection">회고 항목</button>
                     <button class="m-settings-tab" data-settings-tab="habit">습관</button>
+                    <button class="m-settings-tab" data-settings-tab="account">계정</button>
                     <button class="m-settings-tab m-settings-tutorial-btn" onclick="openTutorialMenu(this)">튜토리얼 다시보기 ▾</button>
                 </div>
                 <!-- 카테고리 패널 -->
@@ -614,6 +623,10 @@
                             <div id="m-habit-timetable-root" class="m-timetable-container"></div>
                         </section>
                     </div>
+                </div>
+                <!-- 계정 패널 (모바일) -->
+                <div id="m-settings-tab-account" class="m-settings-tab-panel account-panel" style="display: none;">
+                    <!-- JS(setupAuth)가 로그인 상태에 맞춰 내용 렌더 -->
                 </div>
             </div>
         </main>
