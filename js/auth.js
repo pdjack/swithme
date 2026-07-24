@@ -38,7 +38,7 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-24-b';
+const APP_BUILD = 'v2026-07-24-c';
 
 const MIN_PASSWORD_LENGTH = 6;
 

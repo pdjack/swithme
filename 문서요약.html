@@ -596,7 +596,7 @@
     </table>
     <h4>⏸️ 다음 세션 이어가기 (2026-07-24 중단 지점)</h4>
     <ul>
-      <li><strong>완료:</strong> §P(Firebase 프로젝트·Auth·Firestore·Vercel env 전부) · §1(로그인 전부, 로컬 검증 완주) · §2 코드(B+ 동기화·충돌 창·테스트 40통과, 버그 4건 수정 — 회원가입 무반응·충돌 루프·<strong>로그아웃 후 계정 데이터 게스트 누수</strong>·<strong>게스트 삭제 후 재로그인 미복구</strong>: 게스트/로그인 저장소 분리) · Firestore 보안 규칙 게시(<code>uid==userId</code>, 쓰기 성공 확인)</li>
+      <li><strong>완료:</strong> §P(Firebase 프로젝트·Auth·Firestore·Vercel env 전부) · §1(로그인 전부, 로컬 검증 완주) · §2 코드(B+ 동기화·충돌 창·테스트 40통과, 버그 5건 수정 — 회원가입 무반응·충돌 루프·<strong>로그아웃 후 계정 데이터 게스트 누수</strong>·<strong>게스트 삭제 후 재로그인 미복구</strong>: 게스트/로그인 저장소 분리, +<strong>새로고침 직전 이탈 저장이 옛 메모리로 되살려 덮어쓰던 근본 원인</strong>: 새로고침 전 자동저장 중단으로 차단) · Firestore 보안 규칙 게시(<code>uid==userId</code>, 쓰기 성공 확인)</li>
       <li>✅ <strong>auth/sync 점검 후 3건 보강(2026-07-24):</strong> (1) <strong>계정 삭제 시 클라우드 문서 미삭제 버그</strong> — 인증 계정만 지워 저장된 데이터가 유령으로 남고 "모두 삭제" 안내가 거짓이었음 → 삭제 순서 교정(클라우드 문서 먼저→계정) + 보안 재확인 흐름 추가. (2) <strong>동기화 상태 표시</strong> — 조용한 실패를 계정 화면에 노출(동기화중/됨/실패/오프라인). (3) 로그인·회원가입 버튼 연타 방지.</li>
       <li>✅ <strong>해소됨 — 구글 로그인 승인 도메인:</strong> 원인은 테스트 주소가 다른 배포 URL(<code>swithme-delta.vercel.app</code> 등)이라 승인 목록 밖. <strong>결정(2026-07-24): 앞으로 <code>swithme.app</code>만 사용</strong> — 이미 등록돼 있어 그 주소로 접속 시 구글 로그인 통과.</li>
       <li>☐ <strong>그 다음 — §2 유저 실검증(완료 조건):</strong> ① 충돌 창 1회만 뜨는지 ② 로그아웃 후 게스트에 계정 할일 안 남는지 ③ 게스트 삭제 후 재로그인 복구 ④ 기기 2대 교차 동기화 ⑤ 브라우저 삭제 후 복구. 통과 시 §2 완료 → §3 푸시 착수.</li>

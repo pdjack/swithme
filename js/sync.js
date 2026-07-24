@@ -4,7 +4,7 @@
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth, isFirebaseConfigured } from './firebase.js';
-import { state, onLocalSave, DATA_UPDATED_AT_KEY } from './store.js';
+import { state, onLocalSave, DATA_UPDATED_AT_KEY, suspendLocalSave } from './store.js';
 
 // 동기화 필드 ↔ localStorage 키 매핑 (store.js flushSave와 일치, 타이머 제외).
 const LS_KEYS = {
@@ -196,6 +196,7 @@ function restoreGuestAndReload() {
     } else {
         clearSyncKeys(); // 스냅샷 없음(로그인 상태로 앱 재시작 등) → 게스트 빈 상태
     }
+    suspendLocalSave(); // 이탈 저장이 옛 메모리 state로 방금 복원분을 덮어쓰지 않게
     window.location.reload();
 }
 
@@ -217,6 +218,7 @@ async function reconcile(uid) {
         if (action === 'pull') {
             applyCloudToLocal(cloud);
             sessionStorage.setItem(SYNC_SESSION_KEY, uid); // 새로고침 후 재조정 스킵
+            suspendLocalSave(); // 이탈 저장이 옛 로컬 state로 방금 받은 클라우드분을 덮어쓰지 않게
             window.location.reload();
             return;
         }

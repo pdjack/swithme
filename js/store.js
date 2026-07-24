@@ -187,7 +187,19 @@ export function onLocalSave(cb) {
 // 사용자 데이터가 마지막으로 저장된 시각(ms). 로컬↔클라우드 최신 비교·표시에 사용.
 export const DATA_UPDATED_AT_KEY = 'switme_data_updated_at';
 
+// 저장 일시중단 플래그. 로그아웃 복원·클라우드 pull 직후 새로고침 시, 이탈 저장(flushSave)이
+// 메모리에 남은 옛 state를 다시 써서 방금 바꾼 localStorage를 덮어쓰는 것을 막는다.
+let saveSuspended = false;
+export function suspendLocalSave() {
+    saveSuspended = true;
+    if (saveTimerId) {
+        clearTimeout(saveTimerId);
+        saveTimerId = null;
+    }
+}
+
 function flushSave() {
+    if (saveSuspended) return;
     if (saveTimerId) {
         clearTimeout(saveTimerId);
         saveTimerId = null;
@@ -209,6 +221,7 @@ function flushSave() {
 }
 
 export function saveToLocal() {
+    if (saveSuspended) return;
     if (saveTimerId) clearTimeout(saveTimerId);
     saveTimerId = setTimeout(flushSave, 300);
 }
