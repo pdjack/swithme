@@ -586,14 +586,21 @@
     <h4>0. 현재 상태</h4>
     <table>
       <tr><th>항목</th><th>상태</th></tr>
-      <tr><td>전체 진행</td><td>☐ 착수 전 (0/4 단계)</td></tr>
+      <tr><td>전체 진행</td><td>✅ §P·§1 완료 · §2 동기화 <strong>코드 완료</strong>(유저 실검증 남음) · §3 푸시 다음 (1/4 단계)</td></tr>
       <tr><td>스택</td><td>Capacitor(iOS·Android) + Firebase(Auth·Firestore·FCM) + 이중 IAP(Google Play Billing·Apple StoreKit)</td></tr>
       <tr><td><strong>결제 확정 (2026-07-21)</strong></td><td><strong>실결제.</strong> <s>샌드박스</s> 폐기 — PRD 9-6</td></tr>
       <tr><td><strong>BM 확정 (2026-07-23)</strong></td><td><strong>토큰제 Freemium.</strong> 분석=토큰 소비. 획득 3라인: 보상형 광고+구독(월/년, 지급형)+토큰팩(consumable). 각 최저가 — PRD 9-7</td></tr>
       <tr><td><strong>출시 순서 확정 (2026-07-21)</strong></td><td><strong>Phase 3 먼저 → 출시.</strong> 단 ④결제는 출시 이후 (아래 순환 의존)</td></tr>
       <tr><td>순서 제약</td><td>①계정 뿌리 → ②동기화 → ③푸시 <strong>[출시 전]</strong> / ④결제 <strong>[출시 후]</strong></td></tr>
-      <tr><td>현재 병목</td><td>사전 준비 P — 유저 구글 계정으로 Firebase 프로젝트 생성(유저 몫)</td></tr>
+      <tr><td>현재 병목</td><td>§2 유저 실검증 — 구글 로그인 승인 도메인 이슈 해결 후 2대 교차·유실 복구 확인</td></tr>
     </table>
+    <h4>⏸️ 다음 세션 이어가기 (2026-07-24 중단 지점)</h4>
+    <ul>
+      <li><strong>완료:</strong> §P(Firebase 프로젝트·Auth·Firestore·Vercel env 전부) · §1(로그인 전부, 로컬 검증 완주) · §2 코드(B+ 동기화·충돌 창·테스트 40통과, 버그 2건 수정) · Firestore 보안 규칙 게시(<code>uid==userId</code>, 쓰기 성공 확인)</li>
+      <li>🔴 <strong>지금 막힌 것 — 구글 로그인 승인 도메인:</strong> 배포 웹서 "이 도메인은 로그인이 허용되지 않았습니다". <code>swithme.app</code>은 등록됨. <strong>원인 추정:</strong> 테스트 주소가 다른 배포 URL(<code>swithme-delta.vercel.app</code> 등). <strong>다음 첫 액션:</strong> 로그인 시도한 정확한 URL 확인 → Firebase Authentication → Settings → 승인 도메인에 추가.</li>
+      <li>☐ <strong>그 다음 — §2 유저 실검증(완료 조건):</strong> ① 충돌 창 1회만 뜨는지 ② 기기 2대 교차 동기화 ③ 브라우저 삭제 후 복구. 통과 시 §2 완료 → §3 푸시 착수.</li>
+      <li>⚠️ <strong>알려진 잔여 UX(버그 아님):</strong> 새 세션 첫 로그인 시 충돌 창 1회 뜰 수 있음(습관 시드 등 정규화 차이). 무한 반복은 수정됨.</li>
+    </ul>
     <h4>⚠️ 순환 의존 — Phase 3는 출시를 사이에 두고 쪼개진다</h4>
     <p>"Phase 3 전부 완료 → 출시"는 <strong>물리적으로 불가능</strong>하다. §4(결제)의 인앱 상품 등록은 <strong>Play Console에 앱이 생성돼 있어야</strong> 가능하므로, <strong>출시가 결제의 선행 조건</strong>이다.</p>
     <pre>§P 사전준비 → §1 로그인 → §2 동기화 → §3 푸시     ← [출시 전]
