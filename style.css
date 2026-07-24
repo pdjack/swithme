@@ -3989,44 +3989,6 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     opacity: 0.6;
 }
 
-.account-verify-banner {
-    margin: 0.75rem 0;
-    padding: 0.9rem;
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-}
-.account-verify-desc {
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: var(--text-dim);
-    margin: 0 0 0.75rem;
-}
-.account-verify-banner button {
-    display: block;
-    width: 100%;
-    margin-bottom: 0.5rem;
-}
-.account-verify-spam {
-    display: inline-block;
-    margin-top: 0.4rem;
-    font-size: 0.82rem;
-    color: var(--text-dim);
-}
-/* 회원가입 직후 인증 안내 — 소프트 배너보다 강조(accent 테두리). */
-.account-signup-notice {
-    margin: 0.75rem 0;
-    padding: 0.9rem;
-    border: 1px solid var(--primary, #0056b3);
-    border-radius: 12px;
-    background: rgba(0, 86, 179, 0.12);
-}
-.account-signup-notice button {
-    display: block;
-    width: 100%;
-    margin-bottom: 0.5rem;
-}
-
 /* ── 동기화 충돌 선택 창 (Phase 3 §2) ───────────────────── */
 .sync-conflict-overlay {
     position: fixed;

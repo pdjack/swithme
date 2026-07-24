@@ -39,14 +39,13 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-24-g';
+const APP_BUILD = 'v2026-07-24-h';
 
 const MIN_PASSWORD_LENGTH = 6;
 
-// 회원가입 직후 세션에서만 켜지는 플래그 — '인증 안내 화면'을 이 순간에만 노출한다.
-// 미인증 계정이 나중에 재로그인할 때는 꺼진 상태라 소프트 배너로 렌더된다.
-// (로그아웃·페이지 새로고침·인증 완료 시 초기화)
-let justSignedUp = false;
+// 로그아웃 화면으로 재렌더된 직후 한 번 띄울 안내 — {text, kind}.
+// 회원가입 성공(초록) / 미인증 로그인 거부(빨강)처럼 세션이 끊긴 뒤 메시지를 전달할 때 쓴다.
+let pendingNotice = null;
 
 // 입력값 사전 검증 — Firebase 호출 전에 명확한 안내를 보장(무반응 방지).
 function validateCredentials(email, password) {
@@ -68,7 +67,19 @@ async function loginWithGoogle() {
 
 async function loginWithEmail(email, password) {
     try {
-        await signInWithEmailAndPassword(auth, email, password);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        // 이메일 인증 강제: 미인증 계정은 로그인 거부 + 인증메일 재발송 후 로그아웃.
+        // (구글 계정은 emailVerified=true라 이 경로에 안 걸린다.)
+        if (!cred.user.emailVerified) {
+            try {
+                await sendEmailVerification(cred.user);
+            } catch (e) {
+                console.warn('[auth] 인증 메일 재발송 실패:', e && e.message);
+            }
+            pendingNotice = { text: '이메일 인증 후 로그인해 주세요. 인증 메일을 다시 보냈어요.', kind: 'error' };
+            await signOut(auth);
+            return '';
+        }
         return '';
     } catch (err) {
         return authErrorMessage(err);
@@ -78,14 +89,15 @@ async function loginWithEmail(email, password) {
 async function signupWithEmail(email, password) {
     try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        // 회원가입 시 이메일 인증 강제 — 가입 직후 인증 안내 화면을 띄운다.
-        // 인증 전엔 동기화 차단(sync.js가 emailVerified 게이트).
-        justSignedUp = true;
         try {
             await sendEmailVerification(cred.user);
         } catch (e) {
             console.warn('[auth] 인증 메일 발송 실패:', e && e.message);
         }
+        // 인증 강제: 가입 즉시 로그아웃해 미인증 세션을 남기지 않는다.
+        // 유저는 메일 링크 클릭 후 로그인해야 계정을 쓸 수 있다.
+        pendingNotice = { text: `인증 메일을 ${email} 로 보냈어요. 메일 속 링크를 누른 뒤 로그인해 주세요.`, kind: 'info' };
+        await signOut(auth);
         return '';
     } catch (err) {
         return authErrorMessage(err);
@@ -93,7 +105,6 @@ async function signupWithEmail(email, password) {
 }
 
 async function logout() {
-    justSignedUp = false;
     try {
         await signOut(auth);
     } catch (err) {
@@ -145,49 +156,8 @@ async function deleteAccount() {
 // ── UI 렌더 ─────────────────────────────────────────────
 // 로그인 상태에 따라 계정 패널 내용을 채운다. PC·모바일 양쪽 셸 대상.
 function accountPanelHTML(user) {
-    // 회원가입 직후(이 세션 한정) — 인증 안내 화면. 가입 시 인증 강제의 UI 표현.
-    // 앱 사용은 자유(트랩 없음). 인증 완료/재발송/스팸 안내 + 계정 컨트롤 제공.
-    if (user && !user.emailVerified && justSignedUp) {
-        const label = user.email || user.displayName || '';
-        return `
-            <div class="account-signed-in">
-                <p class="account-status">✉ 이메일 인증이 필요합니다</p>
-                <div class="account-signup-notice">
-                    <p class="account-verify-desc"><strong>${label}</strong> 로 인증 메일을 보냈어요.<br />메일 속 링크를 누른 뒤 아래 "인증 완료했어요"를 눌러 주세요.</p>
-                    <button class="account-verify-done ghost-btn">인증 완료했어요</button>
-                    <button class="account-verify-resend ghost-btn">인증 메일 다시 보내기</button>
-                    <span class="account-verify-spam">📮 인증 메일이 스팸함에 갈 수 있어요. 안 보이면 스팸함을 확인해 주세요.</span>
-                    <p class="account-msg" role="alert"></p>
-                </div>
-                <button class="account-logout-btn ghost-btn">로그아웃</button>
-                <hr class="account-divider" />
-                <p class="account-danger-label">⚠ 계정 삭제 (되돌릴 수 없음)</p>
-                <p class="account-danger-desc">클라우드에 저장된 데이터가 모두 삭제됩니다.</p>
-                <button class="account-delete-btn danger-btn">계정 삭제</button>
-            </div>`;
-    }
-    // 이메일 미인증 계정 재로그인 — 로그인·앱 사용은 자유(트랩 없음), 인증 배너로 동기화만 유도.
-    // 인증 전엔 sync.js가 동기화를 잠근다. 구글은 emailVerified=true라 여기 안 걸림.
-    if (user && !user.emailVerified) {
-        const label = user.email || user.displayName || '로그인됨';
-        return `
-            <div class="account-signed-in">
-                <p class="account-status">✓ 로그인됨</p>
-                <p class="account-email">${label}</p>
-                <div class="account-verify-banner">
-                    <p class="account-verify-desc">✉ 이메일 인증 전이에요. 인증하면 <strong>다른 기기와 자동 동기화</strong>됩니다. (인증 없이도 앱은 그대로 쓸 수 있어요)</p>
-                    <button class="account-verify-done ghost-btn">인증 완료했어요</button>
-                    <button class="account-verify-resend ghost-btn">인증 메일 다시 보내기</button>
-                    <span class="account-verify-spam">📮 인증 메일이 스팸함에 갈 수 있어요. 안 보이면 스팸함을 확인해 주세요.</span>
-                    <p class="account-msg" role="alert"></p>
-                </div>
-                <button class="account-logout-btn ghost-btn">로그아웃</button>
-                <hr class="account-divider" />
-                <p class="account-danger-label">⚠ 계정 삭제 (되돌릴 수 없음)</p>
-                <p class="account-danger-desc">클라우드에 저장된 데이터가 모두 삭제됩니다.</p>
-                <button class="account-delete-btn danger-btn">계정 삭제</button>
-            </div>`;
-    }
+    // 이메일 인증을 강제하므로 로그인 상태의 user는 항상 emailVerified=true다.
+    // (미인증 이메일 계정은 로그인 시점에 거부·로그아웃되어 이 함수에 user로 도달하지 못한다.)
     if (user) {
         const label = user.email || user.displayName || '로그인됨';
         return `
@@ -253,42 +223,6 @@ function updateSyncStatusUI(status) {
     });
 }
 
-// 인증 완료 확인 — 메일 링크 클릭 후 상태 재조회. 인증됐으면 새로고침해 동기화 진입.
-// (reload()는 onAuthStateChanged를 재발화하지 않으므로 새로고침으로 sync 게이트를 다시 태운다)
-async function confirmVerification(panel) {
-    const user = auth.currentUser;
-    if (!user) return;
-    setPanelBusy(panel, true);
-    showMsg(panel, '확인 중…', 'info');
-    try {
-        await user.reload();
-    } catch (err) {
-        console.warn('[auth] 인증 상태 갱신 실패:', err && err.message);
-    }
-    if (auth.currentUser && auth.currentUser.emailVerified) {
-        showMsg(panel, '인증 완료! 잠시 후 동기화를 시작합니다.', 'info');
-        window.location.reload();
-    } else {
-        setPanelBusy(panel, false);
-        showMsg(panel, '아직 인증 전이에요. 메일의 링크를 누른 뒤 다시 시도해 주세요.', 'error');
-    }
-}
-
-// 인증 메일 재발송.
-async function resendVerification(panel) {
-    const user = auth.currentUser;
-    if (!user) return;
-    setPanelBusy(panel, true);
-    showMsg(panel, '인증 메일을 보내는 중…', 'info');
-    try {
-        await sendEmailVerification(user);
-        showMsg(panel, '인증 메일을 다시 보냈어요. 메일함을 확인해 주세요.', 'info');
-    } catch (err) {
-        showMsg(panel, authErrorMessage(err), 'error');
-    }
-    setPanelBusy(panel, false);
-}
-
 // 이메일 로그인·회원가입 공통 흐름: 사전 검증 → 진행중 표시 → Firebase 호출 → 결과 표시.
 async function runEmailAction(panel, action, workingText) {
     const { email, password } = readCredentials(panel);
@@ -314,13 +248,6 @@ function bindPanel(panel, user) {
     build.textContent = `빌드 ${APP_BUILD}`;
     panel.appendChild(build);
 
-    if (user && !user.emailVerified) {
-        panel.querySelector('.account-verify-done')?.addEventListener('click', () => confirmVerification(panel));
-        panel.querySelector('.account-verify-resend')?.addEventListener('click', () => resendVerification(panel));
-        panel.querySelector('.account-logout-btn')?.addEventListener('click', logout);
-        panel.querySelector('.account-delete-btn')?.addEventListener('click', deleteAccount);
-        return;
-    }
     if (user) {
         panel.querySelector('.account-logout-btn')?.addEventListener('click', logout);
         panel.querySelector('.account-delete-btn')?.addEventListener('click', deleteAccount);
@@ -344,8 +271,16 @@ function bindPanel(panel, user) {
 }
 
 function renderAccountPanels(user) {
-    bindPanel(document.getElementById('settings-tab-account'), user);
-    bindPanel(document.getElementById('m-settings-tab-account'), user);
+    const panels = [
+        document.getElementById('settings-tab-account'),
+        document.getElementById('m-settings-tab-account'),
+    ];
+    panels.forEach(panel => bindPanel(panel, user));
+    // 세션이 끊긴 뒤(회원가입·미인증 로그인 거부) 로그아웃 화면에 한 번 안내를 띄운다.
+    if (!user && pendingNotice) {
+        panels.forEach(panel => panel && showMsg(panel, pendingNotice.text, pendingNotice.kind));
+        pendingNotice = null;
+    }
 }
 
 export function setupAuth() {
