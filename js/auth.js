@@ -11,6 +11,7 @@ import {
     deleteUser,
     reauthenticateWithPopup,
     reauthenticateWithCredential,
+    sendEmailVerification,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from './firebase.js';
 import { deleteCloudData } from './sync.js';
@@ -38,7 +39,7 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-24-c';
+const APP_BUILD = 'v2026-07-24-d';
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -71,7 +72,13 @@ async function loginWithEmail(email, password) {
 
 async function signupWithEmail(email, password) {
     try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        // 이메일 주인 확인(강제). 인증 전엔 동기화 차단(sync.js가 emailVerified 게이트).
+        try {
+            await sendEmailVerification(cred.user);
+        } catch (e) {
+            console.warn('[auth] 인증 메일 발송 실패:', e && e.message);
+        }
         return '';
     } catch (err) {
         return authErrorMessage(err);
@@ -130,6 +137,19 @@ async function deleteAccount() {
 // ── UI 렌더 ─────────────────────────────────────────────
 // 로그인 상태에 따라 계정 패널 내용을 채운다. PC·모바일 양쪽 셸 대상.
 function accountPanelHTML(user) {
+    // 이메일 미인증 계정 — 인증 대기 화면(구글은 emailVerified=true라 여기 안 걸림).
+    if (user && !user.emailVerified) {
+        const label = user.email || '';
+        return `
+            <div class="account-verify-pending">
+                <p class="account-status">✉ 이메일 인증이 필요합니다</p>
+                <p class="account-verify-desc">${label} 로 인증 메일을 보냈어요.<br />메일 속 링크를 누른 뒤 아래 "인증 완료했어요"를 눌러 주세요.</p>
+                <button class="account-verify-done ghost-btn">인증 완료했어요</button>
+                <button class="account-verify-resend ghost-btn">인증 메일 다시 보내기</button>
+                <button class="account-logout-btn ghost-btn">로그아웃</button>
+                <p class="account-msg" role="alert"></p>
+            </div>`;
+    }
     if (user) {
         const label = user.email || user.displayName || '로그인됨';
         return `
@@ -195,6 +215,42 @@ function updateSyncStatusUI(status) {
     });
 }
 
+// 인증 완료 확인 — 메일 링크 클릭 후 상태 재조회. 인증됐으면 새로고침해 동기화 진입.
+// (reload()는 onAuthStateChanged를 재발화하지 않으므로 새로고침으로 sync 게이트를 다시 태운다)
+async function confirmVerification(panel) {
+    const user = auth.currentUser;
+    if (!user) return;
+    setPanelBusy(panel, true);
+    showMsg(panel, '확인 중…', 'info');
+    try {
+        await user.reload();
+    } catch (err) {
+        console.warn('[auth] 인증 상태 갱신 실패:', err && err.message);
+    }
+    if (auth.currentUser && auth.currentUser.emailVerified) {
+        showMsg(panel, '인증 완료! 잠시 후 동기화를 시작합니다.', 'info');
+        window.location.reload();
+    } else {
+        setPanelBusy(panel, false);
+        showMsg(panel, '아직 인증 전이에요. 메일의 링크를 누른 뒤 다시 시도해 주세요.', 'error');
+    }
+}
+
+// 인증 메일 재발송.
+async function resendVerification(panel) {
+    const user = auth.currentUser;
+    if (!user) return;
+    setPanelBusy(panel, true);
+    showMsg(panel, '인증 메일을 보내는 중…', 'info');
+    try {
+        await sendEmailVerification(user);
+        showMsg(panel, '인증 메일을 다시 보냈어요. 메일함을 확인해 주세요.', 'info');
+    } catch (err) {
+        showMsg(panel, authErrorMessage(err), 'error');
+    }
+    setPanelBusy(panel, false);
+}
+
 // 이메일 로그인·회원가입 공통 흐름: 사전 검증 → 진행중 표시 → Firebase 호출 → 결과 표시.
 async function runEmailAction(panel, action, workingText) {
     const { email, password } = readCredentials(panel);
@@ -220,6 +276,12 @@ function bindPanel(panel, user) {
     build.textContent = `빌드 ${APP_BUILD}`;
     panel.appendChild(build);
 
+    if (user && !user.emailVerified) {
+        panel.querySelector('.account-verify-done')?.addEventListener('click', () => confirmVerification(panel));
+        panel.querySelector('.account-verify-resend')?.addEventListener('click', () => resendVerification(panel));
+        panel.querySelector('.account-logout-btn')?.addEventListener('click', logout);
+        return;
+    }
     if (user) {
         panel.querySelector('.account-logout-btn')?.addEventListener('click', logout);
         panel.querySelector('.account-delete-btn')?.addEventListener('click', deleteAccount);

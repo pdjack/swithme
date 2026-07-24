@@ -262,8 +262,10 @@ export function setupSync() {
     let wasSignedIn = false;
     let sawGuest = false;
     onAuthStateChanged(auth, (user) => {
-        currentUid = user ? user.uid : null;
-        if (user) {
+        // 이메일 인증 강제(B): 미인증 계정은 동기화 대상에서 제외 — 게스트처럼 로컬만 사용.
+        const active = user && user.emailVerified;
+        currentUid = active ? user.uid : null;
+        if (active) {
             // 게스트 상태를 실제로 거쳐 로그인한 경우에만 게스트 데이터를 스냅샷.
             // (로그인 상태로 앱을 재시작한 경우엔 로컬이 계정 데이터라 스냅샷 대상 아님)
             if (sawGuest) saveGuestSnapshot();
