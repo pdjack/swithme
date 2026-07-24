@@ -37,6 +37,9 @@ function authErrorMessage(err) {
     return map[code] || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.';
 }
 
+// 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
+const APP_BUILD = 'v2026-07-24-b';
+
 const MIN_PASSWORD_LENGTH = 6;
 
 // 입력값 사전 검증 — Firebase 호출 전에 명확한 안내를 보장(무반응 방지).
@@ -210,6 +213,12 @@ async function runEmailAction(panel, action, workingText) {
 function bindPanel(panel, user) {
     if (!panel) return;
     panel.innerHTML = accountPanelHTML(user);
+
+    // 배포 버전 줄 — 어느 상태든 항상 표시(구버전 캐시 판별).
+    const build = document.createElement('p');
+    build.className = 'account-build';
+    build.textContent = `빌드 ${APP_BUILD}`;
+    panel.appendChild(build);
 
     if (user) {
         panel.querySelector('.account-logout-btn')?.addEventListener('click', logout);
