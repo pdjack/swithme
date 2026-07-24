@@ -3989,20 +3989,27 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     opacity: 0.6;
 }
 
+.account-verify-banner {
+    margin: 0.75rem 0;
+    padding: 0.9rem;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+}
 .account-verify-desc {
     font-size: 0.9rem;
     line-height: 1.5;
     color: var(--text-dim);
-    margin: 0.5rem 0 1rem;
+    margin: 0 0 0.75rem;
 }
-.account-verify-pending button {
+.account-verify-banner button {
     display: block;
     width: 100%;
     margin-bottom: 0.5rem;
 }
 .account-verify-spam {
     display: inline-block;
-    margin-top: 0.6rem;
+    margin-top: 0.4rem;
     font-size: 0.82rem;
     color: var(--text-dim);
 }

@@ -39,7 +39,7 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-24-e';
+const APP_BUILD = 'v2026-07-24-f';
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -137,17 +137,26 @@ async function deleteAccount() {
 // ── UI 렌더 ─────────────────────────────────────────────
 // 로그인 상태에 따라 계정 패널 내용을 채운다. PC·모바일 양쪽 셸 대상.
 function accountPanelHTML(user) {
-    // 이메일 미인증 계정 — 인증 대기 화면(구글은 emailVerified=true라 여기 안 걸림).
+    // 이메일 미인증 계정 — 로그인·앱 사용은 자유(트랩 없음), 인증 배너로 동기화만 유도.
+    // 인증 전엔 sync.js가 동기화를 잠근다. 구글은 emailVerified=true라 여기 안 걸림.
     if (user && !user.emailVerified) {
-        const label = user.email || '';
+        const label = user.email || user.displayName || '로그인됨';
         return `
-            <div class="account-verify-pending">
-                <p class="account-status">✉ 이메일 인증이 필요합니다</p>
-                <p class="account-verify-desc">${label} 로 인증 메일을 보냈어요.<br />메일 속 링크를 누른 뒤 아래 "인증 완료했어요"를 눌러 주세요.<br /><span class="account-verify-spam">📮 인증 메일이 스팸함에 갈 수 있어요. 안 보이면 스팸함을 확인해 주세요.</span></p>
-                <button class="account-verify-done ghost-btn">인증 완료했어요</button>
-                <button class="account-verify-resend ghost-btn">인증 메일 다시 보내기</button>
+            <div class="account-signed-in">
+                <p class="account-status">✓ 로그인됨</p>
+                <p class="account-email">${label}</p>
+                <div class="account-verify-banner">
+                    <p class="account-verify-desc">✉ 이메일 인증 전이에요. 인증하면 <strong>다른 기기와 자동 동기화</strong>됩니다. (인증 없이도 앱은 그대로 쓸 수 있어요)</p>
+                    <button class="account-verify-done ghost-btn">인증 완료했어요</button>
+                    <button class="account-verify-resend ghost-btn">인증 메일 다시 보내기</button>
+                    <span class="account-verify-spam">📮 인증 메일이 스팸함에 갈 수 있어요. 안 보이면 스팸함을 확인해 주세요.</span>
+                    <p class="account-msg" role="alert"></p>
+                </div>
                 <button class="account-logout-btn ghost-btn">로그아웃</button>
-                <p class="account-msg" role="alert"></p>
+                <hr class="account-divider" />
+                <p class="account-danger-label">⚠ 계정 삭제 (되돌릴 수 없음)</p>
+                <p class="account-danger-desc">클라우드에 저장된 데이터가 모두 삭제됩니다.</p>
+                <button class="account-delete-btn danger-btn">계정 삭제</button>
             </div>`;
     }
     if (user) {
@@ -280,6 +289,7 @@ function bindPanel(panel, user) {
         panel.querySelector('.account-verify-done')?.addEventListener('click', () => confirmVerification(panel));
         panel.querySelector('.account-verify-resend')?.addEventListener('click', () => resendVerification(panel));
         panel.querySelector('.account-logout-btn')?.addEventListener('click', logout);
+        panel.querySelector('.account-delete-btn')?.addEventListener('click', deleteAccount);
         return;
     }
     if (user) {
