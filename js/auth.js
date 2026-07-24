@@ -39,9 +39,14 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-24-f';
+const APP_BUILD = 'v2026-07-24-g';
 
 const MIN_PASSWORD_LENGTH = 6;
+
+// 회원가입 직후 세션에서만 켜지는 플래그 — '인증 안내 화면'을 이 순간에만 노출한다.
+// 미인증 계정이 나중에 재로그인할 때는 꺼진 상태라 소프트 배너로 렌더된다.
+// (로그아웃·페이지 새로고침·인증 완료 시 초기화)
+let justSignedUp = false;
 
 // 입력값 사전 검증 — Firebase 호출 전에 명확한 안내를 보장(무반응 방지).
 function validateCredentials(email, password) {
@@ -73,7 +78,9 @@ async function loginWithEmail(email, password) {
 async function signupWithEmail(email, password) {
     try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        // 이메일 주인 확인(강제). 인증 전엔 동기화 차단(sync.js가 emailVerified 게이트).
+        // 회원가입 시 이메일 인증 강제 — 가입 직후 인증 안내 화면을 띄운다.
+        // 인증 전엔 동기화 차단(sync.js가 emailVerified 게이트).
+        justSignedUp = true;
         try {
             await sendEmailVerification(cred.user);
         } catch (e) {
@@ -86,6 +93,7 @@ async function signupWithEmail(email, password) {
 }
 
 async function logout() {
+    justSignedUp = false;
     try {
         await signOut(auth);
     } catch (err) {
@@ -137,7 +145,28 @@ async function deleteAccount() {
 // ── UI 렌더 ─────────────────────────────────────────────
 // 로그인 상태에 따라 계정 패널 내용을 채운다. PC·모바일 양쪽 셸 대상.
 function accountPanelHTML(user) {
-    // 이메일 미인증 계정 — 로그인·앱 사용은 자유(트랩 없음), 인증 배너로 동기화만 유도.
+    // 회원가입 직후(이 세션 한정) — 인증 안내 화면. 가입 시 인증 강제의 UI 표현.
+    // 앱 사용은 자유(트랩 없음). 인증 완료/재발송/스팸 안내 + 계정 컨트롤 제공.
+    if (user && !user.emailVerified && justSignedUp) {
+        const label = user.email || user.displayName || '';
+        return `
+            <div class="account-signed-in">
+                <p class="account-status">✉ 이메일 인증이 필요합니다</p>
+                <div class="account-signup-notice">
+                    <p class="account-verify-desc"><strong>${label}</strong> 로 인증 메일을 보냈어요.<br />메일 속 링크를 누른 뒤 아래 "인증 완료했어요"를 눌러 주세요.</p>
+                    <button class="account-verify-done ghost-btn">인증 완료했어요</button>
+                    <button class="account-verify-resend ghost-btn">인증 메일 다시 보내기</button>
+                    <span class="account-verify-spam">📮 인증 메일이 스팸함에 갈 수 있어요. 안 보이면 스팸함을 확인해 주세요.</span>
+                    <p class="account-msg" role="alert"></p>
+                </div>
+                <button class="account-logout-btn ghost-btn">로그아웃</button>
+                <hr class="account-divider" />
+                <p class="account-danger-label">⚠ 계정 삭제 (되돌릴 수 없음)</p>
+                <p class="account-danger-desc">클라우드에 저장된 데이터가 모두 삭제됩니다.</p>
+                <button class="account-delete-btn danger-btn">계정 삭제</button>
+            </div>`;
+    }
+    // 이메일 미인증 계정 재로그인 — 로그인·앱 사용은 자유(트랩 없음), 인증 배너로 동기화만 유도.
     // 인증 전엔 sync.js가 동기화를 잠근다. 구글은 emailVerified=true라 여기 안 걸림.
     if (user && !user.emailVerified) {
         const label = user.email || user.displayName || '로그인됨';
