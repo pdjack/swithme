@@ -23,9 +23,13 @@ function authErrorMessage(err) {
         'auth/weak-password': '비밀번호는 6자 이상이어야 합니다.',
         'auth/operation-not-allowed': '이메일 로그인이 아직 활성화되지 않았습니다. 관리자에게 문의하세요.',
         'auth/network-request-failed': '네트워크 오류입니다. 연결을 확인해 주세요.',
+        'auth/unauthorized-domain': '이 도메인은 로그인이 허용되지 않았습니다. (Firebase 승인된 도메인에 추가 필요)',
+        'auth/popup-blocked': '팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 시도해 주세요.',
         'auth/popup-closed-by-user': '로그인 창이 닫혔습니다.',
         'auth/requires-recent-login': '보안을 위해 다시 로그인한 뒤 계정 삭제를 진행해 주세요.',
     };
+    // 미매핑 코드는 원인 추적 위해 콘솔에 실제 코드 노출(사용자 문구는 일반 안내).
+    if (code && !map[code]) console.warn('[auth] 미처리 에러 코드:', code, err && err.message);
     return map[code] || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.';
 }
 
