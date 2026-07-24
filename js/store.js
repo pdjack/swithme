@@ -177,6 +177,16 @@ state.tasks = state.tasks.map(t => ({ ...t, date: t.date || state.selectedDate }
 // 빠른 연속 조작 시 직렬화를 한 번으로 병합 (300ms)
 let saveTimerId = null;
 
+// 로컬 저장 발생 시 알림받을 구독자(예: 클라우드 동기화). 순환참조 없이 store→sync 통지.
+const localSaveSubscribers = new Set();
+export function onLocalSave(cb) {
+    localSaveSubscribers.add(cb);
+    return () => localSaveSubscribers.delete(cb);
+}
+
+// 사용자 데이터가 마지막으로 저장된 시각(ms). 로컬↔클라우드 최신 비교·표시에 사용.
+export const DATA_UPDATED_AT_KEY = 'switme_data_updated_at';
+
 function flushSave() {
     if (saveTimerId) {
         clearTimeout(saveTimerId);
@@ -194,6 +204,8 @@ function flushSave() {
     if (Number.isFinite(state.timer.totalDuration) && state.timer.totalDuration > 0) {
         localStorage.setItem('switme_timer_last_duration', String(state.timer.totalDuration));
     }
+    localStorage.setItem(DATA_UPDATED_AT_KEY, String(Date.now()));
+    localSaveSubscribers.forEach(cb => { try { cb(); } catch { /* noop */ } });
 }
 
 export function saveToLocal() {

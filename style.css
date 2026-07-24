@@ -3966,3 +3966,64 @@ body.m-subject-dragging .subject-row { touch-action: none; }
 }
 .account-msg.is-error { color: var(--pink); }
 .account-msg.is-info { color: var(--text-dim); }
+
+/* ── 동기화 충돌 선택 창 (Phase 3 §2) ───────────────────── */
+.sync-conflict-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.sync-conflict-card {
+    max-width: 380px;
+    width: 100%;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.sync-conflict-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.sync-conflict-desc {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-main);
+}
+.sync-conflict-meta {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+}
+.sync-conflict-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+.sync-conflict-btns button {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--text-main);
+}
+.sync-use-cloud {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #fff !important;
+}
+.sync-conflict-btns button:hover { filter: brightness(1.15); }

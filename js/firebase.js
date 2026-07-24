@@ -3,6 +3,7 @@
 // 웹 apiKey는 공개 식별자이며 진짜 보안은 Firestore 규칙·Auth 도메인 제한이 담당.
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -18,3 +19,4 @@ export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey);
 
 export const firebaseApp = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 export const auth = firebaseApp ? getAuth(firebaseApp) : null;
+export const db = firebaseApp ? getFirestore(firebaseApp) : null;

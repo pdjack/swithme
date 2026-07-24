@@ -11,6 +11,7 @@ import { setupAnalysisPeriodButtons, setupSnapshotControls } from './analysis.js
 import { seedHabitsForDate, setupHabitEditor } from './habits.js';
 import { maybeStartTutorialOnLaunch } from './tutorial.js';
 import { setupAuth } from './auth.js';
+import { setupSync } from './sync.js';
 
 // 새 SW 활성화 시 자동 리로드
 if ('serviceWorker' in navigator) {
@@ -80,6 +81,9 @@ function init() {
 
     // 계정·로그인 초기화 (Phase 3 §1). 로그인 상태 감시 후 계정 패널 렌더.
     setupAuth();
+
+    // 데이터 동기화 초기화 (Phase 3 §2). 로그인 시 로컬↔클라우드 조정 + 변경 자동 업로드.
+    setupSync();
 
     maybeStartTutorialOnLaunch();
 }

@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// swithme 데이터 동기화 보안 규칙 (Phase 3 §2)
+// 원칙: 로그인한 본인만 자기 문서(users/{uid})를 읽고 쓴다.
+// - 비로그인 요청 차단(request.auth == null → 거부)
+// - 남의 문서 접근 차단(uid 불일치 → 거부)
+// - 그 외 모든 경로 기본 차단
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
