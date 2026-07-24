@@ -2,7 +2,7 @@
 
 ## 개요
 
-SwitMe는 PWA로 구성되어 있어 브라우저 외에 **독립 앱으로 설치**하여 사용할 수 있다. `vite-plugin-pwa`를 통해 Service Worker와 Web App Manifest가 빌드 시 자동 생성된다.
+swithme는 PWA로 구성되어 있어 브라우저 외에 **독립 앱으로 설치**하여 사용할 수 있다. `vite-plugin-pwa`를 통해 Service Worker와 Web App Manifest가 빌드 시 자동 생성된다.
 
 ---
 

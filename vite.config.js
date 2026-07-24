@@ -7,8 +7,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'SwitMe - Deep Focus Dashboard',
-        short_name: 'SwitMe',
+        name: 'swithme - Deep Focus Dashboard',
+        short_name: 'swithme',
         description: '몰입형 학습 관리 대시보드',
         theme_color: '#0f0f23',
         background_color: '#0f0f23',

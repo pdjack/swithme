@@ -39,7 +39,7 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-24-d';
+const APP_BUILD = 'v2026-07-24-e';
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -143,7 +143,7 @@ function accountPanelHTML(user) {
         return `
             <div class="account-verify-pending">
                 <p class="account-status">✉ 이메일 인증이 필요합니다</p>
-                <p class="account-verify-desc">${label} 로 인증 메일을 보냈어요.<br />메일 속 링크를 누른 뒤 아래 "인증 완료했어요"를 눌러 주세요.</p>
+                <p class="account-verify-desc">${label} 로 인증 메일을 보냈어요.<br />메일 속 링크를 누른 뒤 아래 "인증 완료했어요"를 눌러 주세요.<br /><span class="account-verify-spam">📮 인증 메일이 스팸함에 갈 수 있어요. 안 보이면 스팸함을 확인해 주세요.</span></p>
                 <button class="account-verify-done ghost-btn">인증 완료했어요</button>
                 <button class="account-verify-resend ghost-btn">인증 메일 다시 보내기</button>
                 <button class="account-logout-btn ghost-btn">로그아웃</button>

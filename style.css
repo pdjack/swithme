@@ -4000,6 +4000,12 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     width: 100%;
     margin-bottom: 0.5rem;
 }
+.account-verify-spam {
+    display: inline-block;
+    margin-top: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+}
 
 /* ── 동기화 충돌 선택 창 (Phase 3 §2) ───────────────────── */
 .sync-conflict-overlay {
