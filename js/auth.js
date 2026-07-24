@@ -15,6 +15,7 @@ import {
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from './firebase.js';
 import { deleteCloudData } from './sync.js';
+import { showNoticeModal } from './modal.js';
 
 // 로그인 실패 메시지 한글화 (자주 나오는 것만).
 function authErrorMessage(err) {
@@ -43,8 +44,9 @@ const APP_BUILD = 'v2026-07-24-h';
 
 const MIN_PASSWORD_LENGTH = 6;
 
-// 로그아웃 화면으로 재렌더된 직후 한 번 띄울 안내 — {text, kind}.
-// 회원가입 성공(초록) / 미인증 로그인 거부(빨강)처럼 세션이 끊긴 뒤 메시지를 전달할 때 쓴다.
+// 로그아웃 화면으로 재렌더된 직후 한 번 띄울 인라인 안내 — {text, kind}.
+// 미인증 로그인 거부(빨강)처럼 세션이 끊긴 뒤 메시지를 전달할 때 쓴다.
+// (회원가입 성공은 인라인 대신 중앙 팝업 showNoticeModal로 안내한다.)
 let pendingNotice = null;
 
 // 입력값 사전 검증 — Firebase 호출 전에 명확한 안내를 보장(무반응 방지).
@@ -96,8 +98,12 @@ async function signupWithEmail(email, password) {
         }
         // 인증 강제: 가입 즉시 로그아웃해 미인증 세션을 남기지 않는다.
         // 유저는 메일 링크 클릭 후 로그인해야 계정을 쓸 수 있다.
-        pendingNotice = { text: `인증 메일을 ${email} 로 보냈어요. 메일 속 링크를 누른 뒤 로그인해 주세요.`, kind: 'info' };
         await signOut(auth);
+        // 성공은 인라인 대신 중앙 팝업으로 강조 — 메일 발송을 놓치지 않게 한다.
+        await showNoticeModal({
+            title: '인증 메일을 보냈어요',
+            message: `${email} 로 인증 메일을 보냈어요. 메일 속 링크를 누른 뒤 로그인해 주세요.`,
+        });
         return '';
     } catch (err) {
         return authErrorMessage(err);
@@ -276,7 +282,7 @@ function renderAccountPanels(user) {
         document.getElementById('m-settings-tab-account'),
     ];
     panels.forEach(panel => bindPanel(panel, user));
-    // 세션이 끊긴 뒤(회원가입·미인증 로그인 거부) 로그아웃 화면에 한 번 안내를 띄운다.
+    // 세션이 끊긴 뒤(미인증 로그인 거부) 로그아웃 화면에 한 번 안내를 띄운다.
     if (!user && pendingNotice) {
         panels.forEach(panel => panel && showMsg(panel, pendingNotice.text, pendingNotice.kind));
         pendingNotice = null;
