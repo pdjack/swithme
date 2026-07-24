@@ -147,6 +147,44 @@ function askConflict(localMs, cloudMs) {
 const SYNC_SESSION_KEY = 'switme_synced_session';
 let reconciling = false;
 
+// ── 게스트/로그인 데이터 분리 ──────────────────────────────────────
+// 게스트와 계정이 같은 localStorage를 공유하므로, 로그아웃해도 계정 데이터가
+// 게스트에 남는 누수가 있었다. 로그인 순간 게스트 상태를 세션에 스냅샷해 두고,
+// 로그아웃 시 그 스냅샷으로 되돌린다(스냅샷 없으면 게스트를 빈 상태로).
+const GUEST_SNAPSHOT_KEY = 'switme_guest_snapshot';
+const SNAPSHOT_LS_KEYS = [...Object.values(LS_KEYS), DATA_UPDATED_AT_KEY];
+
+// 게스트→로그인 전환 시 1회만 저장(pull 새로고침 넘어 유지되도록 이미 있으면 보존).
+function saveGuestSnapshot() {
+    if (sessionStorage.getItem(GUEST_SNAPSHOT_KEY) !== null) return;
+    const snap = {};
+    for (const k of SNAPSHOT_LS_KEYS) snap[k] = localStorage.getItem(k);
+    try { sessionStorage.setItem(GUEST_SNAPSHOT_KEY, JSON.stringify(snap)); } catch { /* noop */ }
+}
+
+function clearSyncKeys() {
+    for (const k of SNAPSHOT_LS_KEYS) localStorage.removeItem(k);
+}
+
+// 로그아웃 시: 스냅샷 복원(계정 데이터 제거) 후 새로고침으로 메모리 상태까지 게스트로 재초기화.
+function restoreGuestAndReload() {
+    const raw = sessionStorage.getItem(GUEST_SNAPSHOT_KEY);
+    if (raw !== null) {
+        try {
+            const snap = JSON.parse(raw);
+            for (const k of SNAPSHOT_LS_KEYS) {
+                const v = snap[k];
+                if (v === null || v === undefined) localStorage.removeItem(k);
+                else localStorage.setItem(k, v);
+            }
+        } catch { clearSyncKeys(); }
+        sessionStorage.removeItem(GUEST_SNAPSHOT_KEY);
+    } else {
+        clearSyncKeys(); // 스냅샷 없음(로그인 상태로 앱 재시작 등) → 게스트 빈 상태
+    }
+    window.location.reload();
+}
+
 async function reconcile(uid) {
     if (reconciling) return;
     // 이 세션서 이미 조정 완료 → 재질문·루프 방지. 정규화된 로컬만 올려 클라우드 수렴.
@@ -194,13 +232,24 @@ function scheduleCloudPush() {
 export function setupSync() {
     if (!isFirebaseConfigured || !auth || !db) return;
     onLocalSave(scheduleCloudPush);
+    let wasSignedIn = false;
+    let sawGuest = false;
     onAuthStateChanged(auth, (user) => {
         currentUid = user ? user.uid : null;
         if (user) {
+            // 게스트 상태를 실제로 거쳐 로그인한 경우에만 게스트 데이터를 스냅샷.
+            // (로그인 상태로 앱을 재시작한 경우엔 로컬이 계정 데이터라 스냅샷 대상 아님)
+            if (sawGuest) saveGuestSnapshot();
+            wasSignedIn = true;
             reconcile(user.uid);
         } else {
-            // 로그아웃 → 다음 로그인 땐 다시 조정하도록 세션 플래그 해제
-            sessionStorage.removeItem(SYNC_SESSION_KEY);
+            sawGuest = true;
+            sessionStorage.removeItem(SYNC_SESSION_KEY); // 다음 로그인 때 재조정
+            if (wasSignedIn) {
+                // 로그인→로그아웃 전환: 게스트로 복원 후 새로고침
+                wasSignedIn = false;
+                restoreGuestAndReload();
+            }
         }
     });
 }
