@@ -1,7 +1,7 @@
 // 데이터 동기화 (Phase 3 §2) — 로그인 시 로컬↔클라우드 조정 + 로그인 중 변경 자동 업로드.
 // 규칙(B+): 한쪽이 비면 있는 쪽 채택(안 물음), 둘 다 있고 다르면 유저에게 선택 요청.
 // 저장 대상은 사용자 생성 데이터 9종. 타이머·뷰 상태는 기기별이라 제외.
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth, isFirebaseConfigured } from './firebase.js';
 import { state, onLocalSave, DATA_UPDATED_AT_KEY } from './store.js';
@@ -20,6 +20,13 @@ const LS_KEYS = {
 };
 const SYNC_FIELDS = Object.keys(LS_KEYS);
 const SCHEMA_VERSION = 1;
+
+// ── 동기화 상태 알림 (UI 가시화) ────────────────────────────────────
+// 조용한 실패(네트워크·권한·1MB 초과)를 사용자에게 노출. auth.js 계정 패널이 수신.
+// state: 'syncing' | 'synced' | 'error' | 'offline'
+function emitSyncStatus(status) {
+    window.dispatchEvent(new window.CustomEvent('sync-status', { detail: { state: status } }));
+}
 
 // ── 순수 판정 로직 (유닛테스트 대상) ────────────────────────────────
 // 사용자가 실제로 만든 콘텐츠가 하나도 없으면 "비었다"로 본다.
@@ -99,6 +106,13 @@ async function pushToCloud(uid) {
 async function fetchCloud(uid) {
     const snap = await getDoc(userDocRef(uid));
     return snap.exists() ? snap.data() : null;
+}
+
+// 계정 삭제 시 클라우드 문서 제거. 인증이 살아있을 때(계정 삭제 전) 호출해야 규칙 통과.
+// 이미 없으면 조용히 통과(멱등). auth.js deleteAccount가 계정 삭제 직전 호출.
+export async function deleteCloudData(uid) {
+    if (!db || !uid) return;
+    await deleteDoc(userDocRef(uid));
 }
 
 // ── 충돌 선택 창 (양쪽 셸 공용, 화면 중앙 오버레이) ────────────────
@@ -208,9 +222,14 @@ async function reconcile(uid) {
         }
         // push·noop: 이 세션 조정 완료 표시 후 클라우드를 현재 로컬로 맞춤
         sessionStorage.setItem(SYNC_SESSION_KEY, uid);
-        if (action === 'push') await pushToCloud(uid);
+        if (action === 'push') {
+            emitSyncStatus('syncing');
+            await pushToCloud(uid);
+        }
+        emitSyncStatus('synced');
     } catch (err) {
         console.warn('[sync] reconcile 실패:', err && err.message);
+        emitSyncStatus(navigator.onLine ? 'error' : 'offline');
     } finally {
         reconciling = false;
     }
@@ -225,7 +244,13 @@ function scheduleCloudPush() {
     if (!currentUid) return;
     if (pushTimerId) clearTimeout(pushTimerId);
     pushTimerId = setTimeout(() => {
-        pushToCloud(currentUid).catch(err => console.warn('[sync] 업로드 실패:', err && err.message));
+        emitSyncStatus('syncing');
+        pushToCloud(currentUid)
+            .then(() => emitSyncStatus('synced'))
+            .catch(err => {
+                console.warn('[sync] 업로드 실패:', err && err.message);
+                emitSyncStatus(navigator.onLine ? 'error' : 'offline');
+            });
     }, PUSH_DEBOUNCE_MS);
 }
 

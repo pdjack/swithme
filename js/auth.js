@@ -2,14 +2,18 @@
 // 게스트 모드 유지: 로그인 안 하면 기존과 100% 동일하게 로컬 사용(회귀 방지).
 import {
     GoogleAuthProvider,
+    EmailAuthProvider,
     signInWithPopup,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
     deleteUser,
+    reauthenticateWithPopup,
+    reauthenticateWithCredential,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from './firebase.js';
+import { deleteCloudData } from './sync.js';
 
 // 로그인 실패 메시지 한글화 (자주 나오는 것만).
 function authErrorMessage(err) {
@@ -79,15 +83,43 @@ async function logout() {
     }
 }
 
-// 계정 삭제 (스토어 필수 요건 §5-3). 되돌릴 수 없음 — 이중 확인.
+// 보안 확인(재인증) — 계정 삭제 등 민감 작업에서 requires-recent-login 발생 시 사용.
+// 구글 계정은 팝업 재인증, 이메일 계정은 비밀번호 재입력.
+async function reauthenticate(user) {
+    const providerId = user.providerData && user.providerData[0] && user.providerData[0].providerId;
+    if (providerId === 'google.com') {
+        await reauthenticateWithPopup(user, new GoogleAuthProvider());
+        return;
+    }
+    const password = prompt('보안 확인을 위해 비밀번호를 다시 입력해 주세요.');
+    if (!password) throw new Error('reauth-cancelled');
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+}
+
+// 계정 완전 삭제 (스토어 필수 요건 §5-3). 되돌릴 수 없음 — 이중 확인.
+// 순서 필수: 클라우드 문서 먼저 삭제(인증 살아있을 때만 규칙 통과) → 그다음 계정 삭제.
+// requires-recent-login 시 재인증 후 재시도(문서 삭제는 멱등).
 async function deleteAccount() {
     const user = auth && auth.currentUser;
     if (!user) return;
     if (!confirm('계정을 삭제하면 클라우드에 저장된 데이터가 모두 사라집니다. 되돌릴 수 없습니다. 계속할까요?')) return;
     try {
+        await deleteCloudData(user.uid);
         await deleteUser(user);
         alert('계정이 삭제되었습니다.');
     } catch (err) {
+        if (err && err.code === 'auth/requires-recent-login') {
+            try {
+                await reauthenticate(user);
+                await deleteCloudData(user.uid);
+                await deleteUser(user);
+                alert('계정이 삭제되었습니다.');
+            } catch (retryErr) {
+                if (retryErr && retryErr.message === 'reauth-cancelled') return;
+                alert(authErrorMessage(retryErr));
+            }
+            return;
+        }
         alert(authErrorMessage(err));
     }
 }
@@ -101,6 +133,7 @@ function accountPanelHTML(user) {
             <div class="account-signed-in">
                 <p class="account-status">✓ 로그인됨</p>
                 <p class="account-email">${label}</p>
+                <p class="account-sync-status" role="status"></p>
                 <button class="account-logout-btn ghost-btn">로그아웃</button>
                 <hr class="account-divider" />
                 <p class="account-danger-label">⚠ 계정 삭제 (되돌릴 수 없음)</p>
@@ -139,15 +172,39 @@ function showMsg(panel, text, kind = 'error') {
     el.classList.toggle('is-info', kind === 'info');
 }
 
+// 처리 중 버튼 비활성화 — 로그인·회원가입 연타로 중복 요청·혼란 에러 방지.
+function setPanelBusy(panel, busy) {
+    panel.querySelectorAll('button').forEach(btn => { btn.disabled = busy; });
+}
+
+// 동기화 상태 표시 문구 (sync.js가 window 'sync-status' 이벤트로 통지).
+const SYNC_STATUS_TEXT = {
+    syncing: '동기화 중…',
+    synced: '✓ 동기화됨',
+    error: '⚠ 동기화 실패 — 나중에 다시 시도합니다',
+    offline: '오프라인 — 연결되면 자동 동기화됩니다',
+};
+function updateSyncStatusUI(status) {
+    const text = SYNC_STATUS_TEXT[status] || '';
+    document.querySelectorAll('.account-sync-status').forEach(el => {
+        el.textContent = text;
+        el.dataset.state = status;
+    });
+}
+
 // 이메일 로그인·회원가입 공통 흐름: 사전 검증 → 진행중 표시 → Firebase 호출 → 결과 표시.
 async function runEmailAction(panel, action, workingText) {
     const { email, password } = readCredentials(panel);
     const invalid = validateCredentials(email, password);
     if (invalid) return showMsg(panel, invalid, 'error');
+    setPanelBusy(panel, true);
     showMsg(panel, workingText, 'info');
     const errorText = await action(email, password);
-    // 성공 시 onAuthStateChanged가 패널을 로그인 화면으로 재렌더하므로 여기선 실패만 표시.
-    if (errorText) showMsg(panel, errorText, 'error');
+    // 성공 시 onAuthStateChanged가 패널을 로그인 화면으로 재렌더하므로 여기선 실패만 처리.
+    if (errorText) {
+        showMsg(panel, errorText, 'error');
+        setPanelBusy(panel, false);
+    }
 }
 
 function bindPanel(panel, user) {
@@ -160,9 +217,13 @@ function bindPanel(panel, user) {
         return;
     }
     panel.querySelector('.account-google-btn')?.addEventListener('click', async () => {
+        setPanelBusy(panel, true);
         showMsg(panel, '구글 로그인 창을 여는 중…', 'info');
         const errorText = await loginWithGoogle();
-        if (errorText) showMsg(panel, errorText, 'error');
+        if (errorText) {
+            showMsg(panel, errorText, 'error');
+            setPanelBusy(panel, false);
+        }
     });
     panel.querySelector('.account-login-btn')?.addEventListener('click', () =>
         runEmailAction(panel, loginWithEmail, '로그인 중…')
@@ -178,6 +239,9 @@ function renderAccountPanels(user) {
 }
 
 export function setupAuth() {
+    // 동기화 상태 통지 수신(sync.js) — 계정 패널의 동기화 상태 줄을 갱신.
+    window.addEventListener('sync-status', (e) => updateSyncStatusUI(e.detail && e.detail.state));
+
     // Firebase 미설정(.env 없음) 시 게스트 모드로만 동작 — 계정 패널은 로그아웃 화면 고정.
     if (!isFirebaseConfigured || !auth) {
         renderAccountPanels(null);

@@ -3967,6 +3967,20 @@ body.m-subject-dragging .subject-row { touch-action: none; }
 .account-msg.is-error { color: var(--pink); }
 .account-msg.is-info { color: var(--text-dim); }
 
+.account-panel button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.account-sync-status {
+    font-size: 0.82rem;
+    line-height: 1.4;
+    min-height: 1.1em;
+    color: var(--text-dim);
+}
+.account-sync-status[data-state="synced"] { color: var(--success); }
+.account-sync-status[data-state="error"] { color: var(--pink); }
+.account-sync-status[data-state="offline"] { color: var(--text-dim); }
+
 /* ── 동기화 충돌 선택 창 (Phase 3 §2) ───────────────────── */
 .sync-conflict-overlay {
     position: fixed;
