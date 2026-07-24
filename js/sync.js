@@ -141,9 +141,19 @@ function askConflict(localMs, cloudMs) {
 }
 
 // ── 로그인 시 조정 ─────────────────────────────────────────────────
+// 조정은 브라우저 세션당 1회만. 앱 로딩 시 데이터 정규화(날짜 채움·습관 시드)로
+// 로컬이 미세 변형되므로, pull 후 새로고침하면 재조정이 또 "다름"을 만들어 충돌 창이
+// 무한 반복된다. 세션 플래그로 1회 제한하고, 이후엔 정규화된 로컬을 업로드해 수렴시킨다.
+const SYNC_SESSION_KEY = 'switme_synced_session';
 let reconciling = false;
+
 async function reconcile(uid) {
     if (reconciling) return;
+    // 이 세션서 이미 조정 완료 → 재질문·루프 방지. 정규화된 로컬만 올려 클라우드 수렴.
+    if (sessionStorage.getItem(SYNC_SESSION_KEY) === uid) {
+        scheduleCloudPush();
+        return;
+    }
     reconciling = true;
     try {
         const cloud = await fetchCloud(uid);
@@ -152,13 +162,15 @@ async function reconcile(uid) {
         if (action === 'conflict') {
             action = await askConflict(localUpdatedAt(), Number(cloud && cloud.updatedAt));
         }
-        if (action === 'push') {
-            await pushToCloud(uid);
-        } else if (action === 'pull') {
+        if (action === 'pull') {
             applyCloudToLocal(cloud);
+            sessionStorage.setItem(SYNC_SESSION_KEY, uid); // 새로고침 후 재조정 스킵
             window.location.reload();
+            return;
         }
-        // noop: 아무것도 안 함
+        // push·noop: 이 세션 조정 완료 표시 후 클라우드를 현재 로컬로 맞춤
+        sessionStorage.setItem(SYNC_SESSION_KEY, uid);
+        if (action === 'push') await pushToCloud(uid);
     } catch (err) {
         console.warn('[sync] reconcile 실패:', err && err.message);
     } finally {
@@ -184,7 +196,12 @@ export function setupSync() {
     onLocalSave(scheduleCloudPush);
     onAuthStateChanged(auth, (user) => {
         currentUid = user ? user.uid : null;
-        if (user) reconcile(user.uid);
+        if (user) {
+            reconcile(user.uid);
+        } else {
+            // 로그아웃 → 다음 로그인 땐 다시 조정하도록 세션 플래그 해제
+            sessionStorage.removeItem(SYNC_SESSION_KEY);
+        }
     });
 }
 
