@@ -128,6 +128,15 @@ async function resetPassword(email) {
         });
         return '';
     } catch (err) {
+        // 가입 안 된 메일이면 "메일 확인해 보세요"가 아니라 막다른 길을 끊는 안내를 준다.
+        // (이 분기는 Firebase 콘솔의 이메일 열거 보호가 꺼져 있을 때만 도달한다.)
+        if (err && err.code === 'auth/user-not-found') {
+            await showNoticeModal({
+                title: '가입된 계정이 없어요',
+                message: `${email} 로 가입한 계정이 없어요. 회원가입으로 계정을 먼저 만들어 주세요.`,
+            });
+            return '';
+        }
         return authErrorMessage(err);
     }
 }
