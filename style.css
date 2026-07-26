@@ -3933,6 +3933,18 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     gap: 10px;
 }
 .account-email-btns button { flex: 1; }
+/* 비밀번호 재설정 — 버튼이 아니라 보조 링크로 보이게(주 동작인 로그인·회원가입과 구분) */
+.account-reset-link {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    padding: 2px 0;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-decoration: underline;
+    cursor: pointer;
+}
+.account-reset-link:hover { color: var(--text-main); }
 .account-divider {
     border: none;
     border-top: 1px solid var(--border);

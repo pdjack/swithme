@@ -12,6 +12,7 @@ import {
     reauthenticateWithPopup,
     reauthenticateWithCredential,
     sendEmailVerification,
+    sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from './firebase.js';
 import { deleteCloudData } from './sync.js';
@@ -22,10 +23,13 @@ function authErrorMessage(err) {
     const code = err && err.code ? err.code : '';
     const map = {
         'auth/invalid-email': '이메일 형식이 올바르지 않습니다.',
-        'auth/user-not-found': '가입되지 않은 이메일입니다.',
+        'auth/user-not-found': '가입되지 않은 이메일입니다. 회원가입을 먼저 해 주세요.',
         'auth/wrong-password': '비밀번호가 틀렸습니다.',
         'auth/invalid-credential': '이메일 또는 비밀번호가 올바르지 않습니다.',
-        'auth/email-already-in-use': '이미 가입된 이메일입니다.',
+        // 미인증 방치 계정으로 재가입 시도하면 여기 걸린다. 막다른 길이 되지 않도록
+        // 인증 메일 재발송(로그인) · 비밀번호 재설정 두 출구를 함께 안내한다(§1-10).
+        'auth/email-already-in-use':
+            '이미 가입된 메일이에요. 인증을 안 하셨다면 로그인하시면 인증 메일을 다시 보내드려요. 비밀번호가 기억나지 않으면 아래 "비밀번호를 잊으셨나요?"를 눌러주세요.',
         'auth/weak-password': '비밀번호는 6자 이상이어야 합니다.',
         'auth/operation-not-allowed': '이메일 로그인이 아직 활성화되지 않았습니다. 관리자에게 문의하세요.',
         'auth/network-request-failed': '네트워크 오류입니다. 연결을 확인해 주세요.',
@@ -40,9 +44,10 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-24-h';
+const APP_BUILD = 'v2026-07-26-a';
 
 const MIN_PASSWORD_LENGTH = 6;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 로그아웃 화면으로 재렌더된 직후 한 번 띄울 인라인 안내 — {text, kind}.
 // 미인증 로그인 거부(빨강)처럼 세션이 끊긴 뒤 메시지를 전달할 때 쓴다.
@@ -52,7 +57,7 @@ let pendingNotice = null;
 // 입력값 사전 검증 — Firebase 호출 전에 명확한 안내를 보장(무반응 방지).
 function validateCredentials(email, password) {
     if (!email || !password) return '이메일과 비밀번호를 모두 입력해 주세요.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return '이메일 형식이 올바르지 않습니다.';
+    if (!EMAIL_PATTERN.test(email)) return '이메일 형식이 올바르지 않습니다.';
     if (password.length < MIN_PASSWORD_LENGTH) return `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.`;
     return '';
 }
@@ -103,6 +108,21 @@ async function signupWithEmail(email, password) {
         await showNoticeModal({
             title: '인증 메일을 보냈어요',
             message: `${email} 로 인증 메일을 보냈어요. 메일 속 링크를 누른 뒤 로그인해 주세요.`,
+        });
+        return '';
+    } catch (err) {
+        return authErrorMessage(err);
+    }
+}
+
+// 비밀번호 재설정 — 미인증 방치 계정의 유일한 탈출구이기도 하다(§1-10 막다른 길 금지).
+// 비밀번호는 필요 없으므로 이메일 형식만 검증한다.
+async function resetPassword(email) {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        await showNoticeModal({
+            title: '비밀번호 재설정 메일을 보냈어요',
+            message: `${email} 로 보냈어요. 메일 속 링크에서 새 비밀번호를 정한 뒤 로그인해 주세요. 메일이 안 보이면 스팸함도 확인해 주세요.`,
         });
         return '';
     } catch (err) {
@@ -190,6 +210,7 @@ function accountPanelHTML(user) {
                 <button class="account-login-btn ghost-btn">로그인</button>
                 <button class="account-signup-btn ghost-btn">회원가입</button>
             </div>
+            <button type="button" class="account-reset-link">비밀번호를 잊으셨나요?</button>
             <p class="account-msg" role="alert"></p>
         </div>`;
 }
@@ -274,6 +295,17 @@ function bindPanel(panel, user) {
     panel.querySelector('.account-signup-btn')?.addEventListener('click', () =>
         runEmailAction(panel, signupWithEmail, '회원가입 중…')
     );
+    panel.querySelector('.account-reset-link')?.addEventListener('click', async () => {
+        const { email } = readCredentials(panel);
+        if (!EMAIL_PATTERN.test(email)) {
+            return showMsg(panel, '재설정 메일을 받을 이메일을 입력한 뒤 눌러주세요.', 'error');
+        }
+        setPanelBusy(panel, true);
+        showMsg(panel, '재설정 메일을 보내는 중…', 'info');
+        const errorText = await resetPassword(email);
+        showMsg(panel, errorText || '', errorText ? 'error' : 'info');
+        setPanelBusy(panel, false);
+    });
 }
 
 function renderAccountPanels(user) {
