@@ -44,7 +44,7 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-26-a';
+const APP_BUILD = 'v2026-07-26-b';
 
 const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -120,9 +120,11 @@ async function signupWithEmail(email, password) {
 async function resetPassword(email) {
     try {
         await sendPasswordResetEmail(auth, email);
+        // 문구 주의: Firebase는 계정 존재 여부를 숨기려고 미가입 메일에도 에러 없이 성공을 돌려주고
+        // 실제 메일은 보내지 않는다. 따라서 "보냈다"고 단정하면 거짓 안내가 된다(조건부로 표현).
         await showNoticeModal({
-            title: '비밀번호 재설정 메일을 보냈어요',
-            message: `${email} 로 보냈어요. 메일 속 링크에서 새 비밀번호를 정한 뒤 로그인해 주세요. 메일이 안 보이면 스팸함도 확인해 주세요.`,
+            title: '재설정 메일을 요청했어요',
+            message: `${email} 로 가입한 계정이 있다면 재설정 링크가 도착합니다. 메일 속 링크에서 새 비밀번호를 정한 뒤 로그인해 주세요. 몇 분 지나도 안 오면 스팸함을 확인하고, 그래도 없으면 그 메일로는 가입한 적이 없는 것이니 회원가입을 해 주세요.`,
         });
         return '';
     } catch (err) {
