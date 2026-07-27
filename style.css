@@ -900,6 +900,13 @@ h1, h2, h3, .timer-val { font-family: 'Outfit', sans-serif; }
 .form-group input:focus { border-color: var(--primary); }
 
 .modal-btns { display: flex; gap: 12px; margin-top: 32px; }
+.confirm-modal-input {
+    width: 100%; margin-top: 16px; padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px; color: white; font-size: 14px; outline: none;
+}
+.confirm-modal-input:focus { border-color: var(--primary); }
 .confirm-modal-message {
     color: var(--text-dim, #b6b6b6);
     font-size: 14px;

@@ -5,7 +5,11 @@ import {
     EmailAuthProvider,
     signInWithPopup,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
+    sendSignInLinkToEmail,
+    isSignInWithEmailLink,
+    signInWithEmailLink,
+    getAdditionalUserInfo,
+    updatePassword,
     signOut,
     onAuthStateChanged,
     deleteUser,
@@ -16,7 +20,7 @@ import {
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from './firebase.js';
 import { deleteCloudData } from './sync.js';
-import { showNoticeModal } from './modal.js';
+import { showNoticeModal, showPromptModal } from './modal.js';
 
 // 로그인 실패 메시지 한글화 (자주 나오는 것만).
 function authErrorMessage(err) {
@@ -26,11 +30,12 @@ function authErrorMessage(err) {
         'auth/user-not-found': '가입되지 않은 이메일입니다. 회원가입을 먼저 해 주세요.',
         'auth/wrong-password': '비밀번호가 틀렸습니다.',
         'auth/invalid-credential': '이메일 또는 비밀번호가 올바르지 않습니다.',
-        // 미인증 방치 계정으로 재가입 시도하면 여기 걸린다. 막다른 길이 되지 않도록
-        // 인증 메일 재발송(로그인) · 비밀번호 재설정 두 출구를 함께 안내한다(§1-10).
-        'auth/email-already-in-use':
-            '이미 가입된 메일이에요. 인증을 안 하셨다면 로그인하시면 인증 메일을 다시 보내드려요. 비밀번호가 기억나지 않으면 아래 "비밀번호를 잊으셨나요?"를 눌러주세요.',
+        'auth/email-already-in-use': '이미 가입된 메일이에요. 로그인해 주세요.',
         'auth/weak-password': '비밀번호는 6자 이상이어야 합니다.',
+        // 가입 링크는 1회용이며 유효기간이 있다. 만료·재사용 시 여기로 온다.
+        'auth/invalid-action-code': '가입 링크가 만료되었거나 이미 사용됐어요. 회원가입을 다시 요청해 주세요.',
+        'auth/expired-action-code': '가입 링크의 유효기간이 지났어요. 회원가입을 다시 요청해 주세요.',
+        'auth/invalid-email-verification': '가입을 요청한 이메일과 다릅니다. 링크를 받은 이메일을 입력해 주세요.',
         'auth/operation-not-allowed': '이메일 로그인이 아직 활성화되지 않았습니다. 관리자에게 문의하세요.',
         'auth/network-request-failed': '네트워크 오류입니다. 연결을 확인해 주세요.',
         'auth/unauthorized-domain': '이 도메인은 로그인이 허용되지 않았습니다. (Firebase 승인된 도메인에 추가 필요)',
@@ -44,7 +49,10 @@ function authErrorMessage(err) {
 }
 
 // 배포 버전 표시 — 계정 탭 하단에 노출. 캐시/구버전 판별용(새 배포마다 갱신).
-const APP_BUILD = 'v2026-07-26-b';
+const APP_BUILD = 'v2026-07-27-a';
+
+// 가입 링크를 요청한 이메일 보관 키 — 링크 클릭 시 같은 브라우저면 재입력 없이 완료된다.
+const SIGNUP_EMAIL_KEY = 'swithme:signupEmail';
 
 const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -76,7 +84,8 @@ async function loginWithEmail(email, password) {
     try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         // 이메일 인증 강제: 미인증 계정은 로그인 거부 + 인증메일 재발송 후 로그아웃.
-        // (구글 계정은 emailVerified=true라 이 경로에 안 걸린다.)
+        // 링크 가입(§1-10)·구글 계정은 항상 인증 상태라 이 경로에 안 걸린다.
+        // 남는 대상은 옛 비밀번호 가입 방식으로 만들어진 기존 계정뿐이다(방어용 유지).
         if (!cred.user.emailVerified) {
             try {
                 await sendEmailVerification(cred.user);
@@ -93,25 +102,124 @@ async function loginWithEmail(email, password) {
     }
 }
 
-async function signupWithEmail(email, password) {
+// ── 회원가입 = 이메일 링크 방식 (§1-10) ──────────────────
+// 핵심: 링크를 보내는 시점에는 계정이 만들어지지 않는다. 유저가 메일 링크를 눌러야
+// 그 순간 계정이 최초 생성되며(이미 인증된 상태), 안 누르면 Firebase에 흔적이 남지 않는다.
+// 덕분에 "미인증 방치 계정"이라는 상태 자체가 존재하지 않고, 같은 메일로 언제든 재요청 가능하다.
+
+// 링크 클릭 시 돌아올 주소. Firebase 승인된 도메인이어야 한다(swithme.app · localhost).
+function emailLinkSettings() {
+    return {
+        url: window.location.origin + window.location.pathname,
+        handleCodeInApp: true,
+    };
+}
+
+function storeSignupEmail(email) {
+    // 프라이빗 모드 등 저장 불가 환경에서도 진행은 가능해야 한다(링크 열 때 재입력받음).
     try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        try {
-            await sendEmailVerification(cred.user);
-        } catch (e) {
-            console.warn('[auth] 인증 메일 발송 실패:', e && e.message);
-        }
-        // 인증 강제: 가입 즉시 로그아웃해 미인증 세션을 남기지 않는다.
-        // 유저는 메일 링크 클릭 후 로그인해야 계정을 쓸 수 있다.
-        await signOut(auth);
-        // 성공은 인라인 대신 중앙 팝업으로 강조 — 메일 발송을 놓치지 않게 한다.
+        localStorage.setItem(SIGNUP_EMAIL_KEY, email);
+    } catch (e) {
+        console.warn('[auth] 가입 이메일 임시 저장 실패:', e && e.message);
+    }
+}
+
+function readSignupEmail() {
+    try {
+        return localStorage.getItem(SIGNUP_EMAIL_KEY) || '';
+    } catch {
+        return '';
+    }
+}
+
+function clearSignupEmail() {
+    try {
+        localStorage.removeItem(SIGNUP_EMAIL_KEY);
+    } catch {
+        /* 저장소 접근 불가 — 무시해도 흐름에 영향 없음 */
+    }
+}
+
+// 주소창에서 1회용 링크 파라미터 제거 — 새로고침 시 만료된 코드로 재시도하는 것을 막는다.
+function stripEmailLinkFromUrl() {
+    try {
+        window.history.replaceState({}, '', window.location.origin + window.location.pathname);
+    } catch (e) {
+        console.warn('[auth] 주소 정리 실패:', e && e.message);
+    }
+}
+
+async function requestSignupLink(email) {
+    try {
+        await sendSignInLinkToEmail(auth, email, emailLinkSettings());
+        storeSignupEmail(email);
         await showNoticeModal({
-            title: '인증 메일을 보냈어요',
-            message: `${email} 로 인증 메일을 보냈어요. 메일 속 링크를 누른 뒤 로그인해 주세요.`,
+            title: '가입 링크를 보냈어요',
+            message: `${email} 로 가입 링크를 보냈어요. 메일 속 링크를 누르면 계정이 만들어집니다. 링크를 누르기 전까지는 계정이 만들어지지 않으니, 안 왔으면 스팸함을 확인한 뒤 다시 요청해 주세요.`,
         });
         return '';
     } catch (err) {
         return authErrorMessage(err);
+    }
+}
+
+// 가입 링크로 처음 들어온 계정에 로그인용 비밀번호를 정하게 한다.
+// 건너뛰어도 계정은 살아있고, 다음 로그인은 "비밀번호를 잊으셨나요?"로 정할 수 있다(막다른 길 금지).
+async function setInitialPassword(user) {
+    const password = await showPromptModal({
+        title: '가입 완료 — 비밀번호를 정해주세요',
+        message: '다음부터 이메일과 비밀번호로 로그인합니다.',
+        placeholder: `비밀번호 (${MIN_PASSWORD_LENGTH}자 이상)`,
+        inputType: 'password',
+        okText: '시작하기',
+        cancelText: '나중에',
+        validate: v => (v.length >= MIN_PASSWORD_LENGTH ? '' : `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상이어야 합니다.`),
+    });
+    if (!password) {
+        await showNoticeModal({
+            title: '비밀번호 없이 시작합니다',
+            message: '지금은 로그인된 상태라 그대로 쓰시면 됩니다. 다음에 로그인할 때는 로그인 화면의 "비밀번호를 잊으셨나요?"로 비밀번호를 정해 주세요.',
+        });
+        return;
+    }
+    try {
+        await updatePassword(user, password);
+    } catch (err) {
+        await showNoticeModal({
+            title: '비밀번호를 저장하지 못했어요',
+            message: `${authErrorMessage(err)} 로그인 화면의 "비밀번호를 잊으셨나요?"로 다시 정할 수 있어요.`,
+        });
+    }
+}
+
+// 앱 진입 시 주소가 가입 링크인지 확인하고, 맞으면 계정 생성(=최초 로그인)을 완료한다.
+async function completeSignupFromLink() {
+    if (!auth || !isSignInWithEmailLink(auth, window.location.href)) return;
+    let email = readSignupEmail();
+    if (!email) {
+        // 다른 기기·브라우저에서 링크를 열면 요청자 확인이 필요하다(링크 도용 방지).
+        email = await showPromptModal({
+            title: '이메일을 확인해 주세요',
+            message: '가입을 요청한 이메일을 입력하면 계정 생성이 완료됩니다.',
+            placeholder: '이메일',
+            inputType: 'email',
+            okText: '계정 만들기',
+            validate: v => (EMAIL_PATTERN.test(v) ? '' : '이메일 형식이 올바르지 않습니다.'),
+        });
+        if (!email) {
+            stripEmailLinkFromUrl();
+            return;
+        }
+    }
+    try {
+        const cred = await signInWithEmailLink(auth, email, window.location.href);
+        clearSignupEmail();
+        stripEmailLinkFromUrl();
+        const info = getAdditionalUserInfo(cred);
+        if (info && info.isNewUser) await setInitialPassword(cred.user);
+    } catch (err) {
+        stripEmailLinkFromUrl();
+        await showNoticeModal({ title: '가입을 완료하지 못했어요', message: authErrorMessage(err) });
     }
 }
 
@@ -221,6 +329,7 @@ function accountPanelHTML(user) {
                 <button class="account-login-btn ghost-btn">로그인</button>
                 <button class="account-signup-btn ghost-btn">회원가입</button>
             </div>
+            <p class="account-hint account-signup-hint">회원가입은 이메일만 입력하면 됩니다. 메일 속 링크를 눌러야 계정이 만들어지고, 비밀번호는 그때 정합니다.</p>
             <button type="button" class="account-reset-link">비밀번호를 잊으셨나요?</button>
             <p class="account-msg" role="alert"></p>
         </div>`;
@@ -303,9 +412,18 @@ function bindPanel(panel, user) {
     panel.querySelector('.account-login-btn')?.addEventListener('click', () =>
         runEmailAction(panel, loginWithEmail, '로그인 중…')
     );
-    panel.querySelector('.account-signup-btn')?.addEventListener('click', () =>
-        runEmailAction(panel, signupWithEmail, '회원가입 중…')
-    );
+    // 회원가입은 이메일만 받는다 — 계정이 아직 없으니 비밀번호를 정할 대상도 없다(§1-10).
+    panel.querySelector('.account-signup-btn')?.addEventListener('click', async () => {
+        const { email } = readCredentials(panel);
+        if (!EMAIL_PATTERN.test(email)) {
+            return showMsg(panel, '가입할 이메일을 입력한 뒤 눌러주세요.', 'error');
+        }
+        setPanelBusy(panel, true);
+        showMsg(panel, '가입 링크를 보내는 중…', 'info');
+        const errorText = await requestSignupLink(email);
+        showMsg(panel, errorText || '', errorText ? 'error' : 'info');
+        setPanelBusy(panel, false);
+    });
     panel.querySelector('.account-reset-link')?.addEventListener('click', async () => {
         const { email } = readCredentials(panel);
         if (!EMAIL_PATTERN.test(email)) {
@@ -344,6 +462,9 @@ export function setupAuth() {
     onAuthStateChanged(auth, (user) => {
         renderAccountPanels(user);
     });
+
+    // 가입 링크로 들어왔다면 여기서 계정이 최초 생성된다(§1-10). 링크가 아니면 즉시 반환.
+    completeSignupFromLink();
 }
 
 window.setupAuth = setupAuth;
