@@ -10,8 +10,8 @@
 - **프론트엔드:** HTML5, Vanilla CSS, Vanilla JavaScript (ES6+)
 - **디자인 시스템:** 다크 모드, 글래스모피즘(Glassmorphism), 현대적 타이포그래피(Inter, Outfit), 부드러운 그라데이션과 마이크로 인터랙션
 - **상태 관리:** `localStorage` 기반 클라이언트 사이드 저장(1차). 로그인 시 Firestore와 양방향 동기화.
-- **백엔드(Firebase, ✅ 부분 구현):** ✅ Auth(구글·이메일) · ✅ Firestore(계정 데이터 동기화·백업, 접근 제한은 루트 `firestore.rules`) / ☐ FCM·APNs(푸시) · ☐ **이중 IAP**(Google Play Billing + Apple StoreKit) 결제 검증. 결정 근거 PRD §9-5, 세부 태스크 `docs/phase3-할일.md`. 설정 키는 `.env`로 관리(하드코딩 금지).
-- **앱 셸(Phase 4 확정, ☐ 미구현):** 하이브리드 — **Capacitor**로 기존 웹을 네이티브 WebView에 담아 iOS·Android 동시 빌드. 결정 근거 PRD §10, 세부 `docs/하이브리드-출시-할일.md`.
+- **백엔드(Firebase, ✅ 부분 구현):** ✅ Auth(구글·이메일) · ✅ Firestore(계정 데이터 동기화·백업, 접근 제한은 루트 `firestore.rules`) / ☐ **이중 IAP**(Google Play Billing + Apple StoreKit) 결제 검증. ~~FCM·APNs 푸시~~ 는 2026-07-28 폐기 — 알림은 서버 없는 **기기 로컬 알림**으로 확정(`docs/phase3-할일.md` §3). 결정 근거 PRD §9-5. 설정 키는 `.env`로 관리(하드코딩 금지).
+- **앱 셸(Capacitor, ◐ 도입 착수 2026-07-28):** 하이브리드 — 기존 웹 빌드를 네이티브 WebView에 담아 iOS·Android 빌드. 앱 ID `app.swithme`, 설정은 루트 `capacitor.config.json`, 웹 빌드 출력 `dist`를 셸에 연결. **Android 셸 생성 완료 / iOS 셸 보류(CocoaPods 미설치).** 결정 근거 PRD §10, 세부 `docs/하이브리드-출시-할일.md`.
 - **코드 품질:** ESLint (Flat Config) + Prettier
 - **테스트:** Vitest + jsdom (`tests/` 디렉토리)
 - **PWA:** `vite-plugin-pwa`를 통한 오프라인 지원, Service Worker 자동 생성
@@ -30,6 +30,7 @@
 | `npm test` | Vitest watch 모드 |
 | `npm run test:run` | Vitest 단일 실행 |
 | `npm run docs` | 유저 읽기용 통합본 `문서요약.html` 재생성 (원본 마크다운 → HTML) |
+| `npm run cap:sync` | 웹 빌드 후 네이티브 셸(`android/`)에 반영. 웹 코드 변경을 앱에서 확인하기 전 필수 |
 
 ---
 

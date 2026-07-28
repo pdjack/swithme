@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">swithme</string>
+    <string name="title_activity_main">swithme</string>
+    <string name="package_name">app.swithme</string>
+    <string name="custom_url_scheme">app.swithme</string>
+</resources>
