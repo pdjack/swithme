@@ -1,5 +1,18 @@
 import { state, saveToLocal, localDateKey } from './store.js';
 import { icon } from './icons.js';
+import {
+    CANDY_GATING_ENABLED,
+    isUnlocked,
+    periodCandyCost,
+    unlockKeyOf,
+    readCandy,
+    writeCandy,
+    spendCandy,
+    renderCandyLock,
+    openCandyShortageModal,
+    refreshPeriodCostLabels,
+    renderCandyBadges,
+} from './candy.js';
 
 /**
  * Analysis Module — v2.0
@@ -610,6 +623,25 @@ function renderReflectionMemos(scope = 'pc') {
     `).join('');
 }
 
+// ── 사탕 게이팅 ────────────────────────────────────────
+function hasPeriodAccess(period) {
+    if (!CANDY_GATING_ENABLED) return true;
+    if (isSnapshotMode()) return true;
+    return isUnlocked(readCandy(), period, localDateKey(new Date()));
+}
+
+// 잠금 카드의 "사탕 쓰고 열기" — 차감 성공 시 해당 기간을 오늘 하루 해제.
+function unlockPeriodWithCandy(period) {
+    const cost = periodCandyCost(period);
+    const next = spendCandy(readCandy(), cost, unlockKeyOf(period, localDateKey(new Date())));
+    if (!next) {
+        openCandyShortageModal(period);
+        return;
+    }
+    writeCandy(next);
+    renderAnalysisDashboard();
+}
+
 // ── 엔트리 ─────────────────────────────────────────────
 export function renderAnalysisDashboard(arg) {
     // 하위 호환: 숫자(일수) 인자 또는 {mode, days|startKey, endKey} 객체 허용
@@ -622,6 +654,14 @@ export function renderAnalysisDashboard(arg) {
             activePeriod = { mode: 'preset', days: arg.days };
         }
     }
+
+    // 사탕 게이팅 — 저장된 스냅샷 재열람은 언제나 무료(이미 값을 치른 결과).
+    if (!hasPeriodAccess(activePeriod)) {
+        renderCandyLock(activePeriod);
+        refreshSnapshotUiState();
+        return;
+    }
+    renderCandyLock(null);
 
     let insightData, prescription;
     if (isSnapshotMode()) {
@@ -761,6 +801,17 @@ export function setupAnalysisPeriodButtons() {
         );
     }
 
+    // 잠금 카드는 매번 다시 그려지므로 위임으로 처리.
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.candy-unlock-btn')) {
+            unlockPeriodWithCandy(activePeriod);
+        } else if (e.target.closest('.candy-get-btn')) {
+            openCandyShortageModal(activePeriod);
+        }
+    });
+
+    refreshPeriodCostLabels();
+    renderCandyBadges();
     setupTrendViewToggles();
 }
 

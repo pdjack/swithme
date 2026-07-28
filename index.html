@@ -230,6 +230,7 @@
                     <div class="analysis-actions-bar">
                         <h2 class="analysis-title">분석</h2>
                         <div class="analysis-actions">
+                            <span id="candy-balance-badge" class="candy-balance-badge" style="display:none;"></span>
                             <button id="save-snapshot-btn" class="snapshot-action-btn" type="button">
                                 <i data-lucide="bookmark-plus"></i><span>이 분석 저장</span>
                             </button>
@@ -266,6 +267,9 @@
                             <button type="button" class="period-apply-btn" id="period-custom-apply">적용</button>
                         </div>
                     </div>
+
+                    <!-- 사탕 잠금 카드 (게이팅 ON일 때만 노출) -->
+                    <div id="analysis-lock" class="analysis-lock" style="display:none;"></div>
 
                     <!-- 분석 대시보드 -->
                     <div id="analysis-dashboard" class="analysis-dashboard">
@@ -470,6 +474,7 @@
                 <div class="analysis-actions-bar m-actions-bar">
                     <h2 class="analysis-title">분석</h2>
                     <div class="analysis-actions">
+                        <span id="m-candy-balance-badge" class="candy-balance-badge" style="display:none;"></span>
                         <button id="m-save-snapshot-btn" class="snapshot-action-btn" type="button">
                             <i data-lucide="bookmark-plus"></i>
                         </button>
@@ -505,7 +510,10 @@
                     </div>
                 </div>
 
-                <div class="m-analysis-dashboard">
+                <!-- 사탕 잠금 카드 (게이팅 ON일 때만 노출) -->
+                <div id="m-analysis-lock" class="analysis-lock" style="display:none;"></div>
+
+                <div id="m-analysis-dashboard" class="m-analysis-dashboard">
                     <div class="m-score-card glass-card">
                         <div class="s-header">
                             <i data-lucide="gauge"></i>

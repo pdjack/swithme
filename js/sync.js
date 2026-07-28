@@ -5,6 +5,14 @@ import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth, isFirebaseConfigured } from './firebase.js';
 import { state, onLocalSave, DATA_UPDATED_AT_KEY, suspendLocalSave } from './store.js';
+import {
+    CANDY_LS_KEY,
+    readCandy,
+    writeCandy,
+    normalizeCandy,
+    mergeCandyFromGuest,
+    drainedGuestCandy,
+} from './candy.js';
 
 // 동기화 필드 ↔ localStorage 키 매핑 (store.js flushSave와 일치, 타이머 제외).
 const LS_KEYS = {
@@ -98,8 +106,15 @@ function userDocRef(uid) {
     return doc(db, 'users', uid);
 }
 
+// 사탕은 SYNC_FIELDS 밖에서 따로 다룬다 — 충돌 창의 "한쪽 통째로 덮어쓰기"가 아니라
+// 자체 병합 규칙(free=MAX / paid=SUM)을 쓰기 때문. 클라우드 문서엔 같이 실어 보낸다.
 async function pushToCloud(uid) {
-    const payload = { ...readLocalData(), updatedAt: localUpdatedAt() || Date.now(), schemaVersion: SCHEMA_VERSION };
+    const payload = {
+        ...readLocalData(),
+        candy: readCandy(),
+        updatedAt: localUpdatedAt() || Date.now(),
+        schemaVersion: SCHEMA_VERSION,
+    };
     await setDoc(userDocRef(uid), payload);
 }
 
@@ -166,13 +181,15 @@ let reconciling = false;
 // 게스트에 남는 누수가 있었다. 로그인 순간 게스트 상태를 세션에 스냅샷해 두고,
 // 로그아웃 시 그 스냅샷으로 되돌린다(스냅샷 없으면 게스트를 빈 상태로).
 const GUEST_SNAPSHOT_KEY = 'switme_guest_snapshot';
-const SNAPSHOT_LS_KEYS = [...Object.values(LS_KEYS), DATA_UPDATED_AT_KEY];
+const SNAPSHOT_LS_KEYS = [...Object.values(LS_KEYS), DATA_UPDATED_AT_KEY, CANDY_LS_KEY];
 
 // 게스트→로그인 전환 시 1회만 저장(pull 새로고침 넘어 유지되도록 이미 있으면 보존).
+// 사탕만은 "이동"이라 스냅샷에 0으로 적는다 — 로그아웃해 게스트로 돌아와도 되살아나지 않게.
 function saveGuestSnapshot() {
     if (sessionStorage.getItem(GUEST_SNAPSHOT_KEY) !== null) return;
     const snap = {};
     for (const k of SNAPSHOT_LS_KEYS) snap[k] = localStorage.getItem(k);
+    snap[CANDY_LS_KEY] = JSON.stringify(drainedGuestCandy(readCandy()));
     try { sessionStorage.setItem(GUEST_SNAPSHOT_KEY, JSON.stringify(snap)); } catch { /* noop */ }
 }
 
@@ -200,7 +217,19 @@ function restoreGuestAndReload() {
     window.location.reload();
 }
 
-async function reconcile(uid) {
+// 사탕 조정. 게스트를 거쳐 로그인했으면 이관 규칙(free=MAX / paid=SUM)으로 합치고,
+// 로그인 상태로 앱을 재시작한 경우엔 클라우드 값을 그대로 따른다(로컬이 곧 계정 데이터라
+// 두 번 합치면 구매분이 불어난다). 세션당 1회만 도는 reconcile 안에서만 호출된다.
+function reconcileCandy(cloud, fromGuest) {
+    const local = readCandy();
+    const cloudCandy = cloud && cloud.candy;
+    const merged = fromGuest
+        ? mergeCandyFromGuest(local, cloudCandy)
+        : (cloudCandy ? normalizeCandy(cloudCandy) : local);
+    writeCandy(merged, { notify: false });
+}
+
+async function reconcile(uid, fromGuest = false) {
     if (reconciling) return;
     // 이 세션서 이미 조정 완료 → 재질문·루프 방지. 정규화된 로컬만 올려 클라우드 수렴.
     if (sessionStorage.getItem(SYNC_SESSION_KEY) === uid) {
@@ -211,6 +240,7 @@ async function reconcile(uid) {
     try {
         const cloud = await fetchCloud(uid);
         const local = readLocalData();
+        reconcileCandy(cloud, fromGuest);
         let action = decideSync(local, cloud);
         if (action === 'conflict') {
             action = await askConflict(localUpdatedAt(), Number(cloud && cloud.updatedAt));
@@ -227,6 +257,8 @@ async function reconcile(uid) {
         if (action === 'push') {
             emitSyncStatus('syncing');
             await pushToCloud(uid);
+        } else {
+            scheduleCloudPush(); // 병합된 사탕 잔량을 클라우드에 반영
         }
         emitSyncStatus('synced');
     } catch (err) {
@@ -270,7 +302,7 @@ export function setupSync() {
             // (로그인 상태로 앱을 재시작한 경우엔 로컬이 계정 데이터라 스냅샷 대상 아님)
             if (sawGuest) saveGuestSnapshot();
             wasSignedIn = true;
-            reconcile(user.uid);
+            reconcile(user.uid, sawGuest);
         } else {
             sawGuest = true;
             sessionStorage.removeItem(SYNC_SESSION_KEY); // 다음 로그인 때 재조정

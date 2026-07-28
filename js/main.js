@@ -12,6 +12,7 @@ import { seedHabitsForDate, setupHabitEditor } from './habits.js';
 import { maybeStartTutorialOnLaunch } from './tutorial.js';
 import { setupAuth } from './auth.js';
 import { setupSync } from './sync.js';
+import { setupCandy } from './candy.js';
 
 // 새 SW 활성화 시 자동 리로드
 if ('serviceWorker' in navigator) {
@@ -68,6 +69,8 @@ function init() {
     // 모바일 UI(관찰자·버튼) 준비 후 복원된 상태를 양쪽 화면에 반영
     if (window.updateTimerDisplayExtended) window.updateTimerDisplayExtended();
     refreshTimerControls();
+    // 사탕(토큰) 초기화 (Phase 3 §4-A). 월 1개 자동 지급 + 잔량 표시. 기간 버튼보다 먼저.
+    setupCandy();
     setupAnalysisPeriodButtons();
     setupSnapshotControls();
     setupHabitEditor();

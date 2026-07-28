@@ -4068,3 +4068,147 @@ body.m-subject-dragging .subject-row { touch-action: none; }
     color: #fff !important;
 }
 .sync-conflict-btns button:hover { filter: brightness(1.15); }
+
+/* ── 사탕(토큰) 시스템 (Phase 3 §4-A) ───────────────────── */
+/* 게이팅 스위치가 꺼져 있으면 JS가 display:none 을 유지해 아래 UI는 보이지 않는다. */
+.candy-balance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(255, 138, 178, 0.14);
+    border: 1px solid rgba(255, 138, 178, 0.35);
+    color: #FF8AB2;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.candy-balance-badge svg { width: 15px; height: 15px; }
+
+.period-btn .period-cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #FF8AB2;
+    opacity: 0.9;
+}
+.period-btn .period-cost svg { width: 12px; height: 12px; }
+
+.analysis-lock {
+    display: flex;
+    justify-content: center;
+    padding: 32px 12px;
+}
+.candy-lock-card {
+    max-width: 380px;
+    width: 100%;
+    padding: 28px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.candy-lock-icon { color: #FF8AB2; line-height: 0; }
+.candy-lock-icon svg { width: 28px; height: 28px; }
+.candy-lock-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.candy-lock-desc {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-dim);
+}
+.candy-lock-balance {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+.candy-lock-balance strong { color: #FF8AB2; }
+.candy-unlock-btn,
+.candy-get-btn {
+    margin-top: 6px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.candy-unlock-btn { background: var(--primary); color: #fff; }
+.candy-get-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 138, 178, 0.5);
+    color: #FF8AB2;
+}
+.candy-unlock-btn:hover,
+.candy-get-btn:hover { filter: brightness(1.15); }
+
+.candy-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.candy-modal-card {
+    max-width: 360px;
+    width: 100%;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.candy-modal-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.candy-modal-desc {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+}
+.candy-modal-ways {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    font-size: 0.88rem;
+    color: var(--text-main);
+}
+.candy-modal-ways li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.candy-modal-ways svg { width: 14px; height: 14px; color: #FF8AB2; flex-shrink: 0; }
+.candy-modal-ways em {
+    margin-left: auto;
+    font-style: normal;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+.candy-modal-close {
+    margin-top: 4px;
+    padding: 11px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.candy-modal-close:hover { filter: brightness(1.3); }
