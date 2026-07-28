@@ -130,7 +130,7 @@ const MAIN_STEPS = [
                 <li><b>제안 ⚡</b> — 약점을 콕 집어 개선 방법을 추천.</li>
                 <li><b>회고 메모 📓</b> — 그 기간 메모를 한 화면에서 다시 읽기.</li>
             </ol>
-            <p class="tut-tip">💡 <b>이 분석 저장</b> 버튼으로 지금 상태를 보관 → 한 달 뒤·시험 후 다시 열어 변화 비교. '저장됨'에서 언제든 다시 열기.</p>
+            <p class="tut-tip">💡 분석을 볼 때마다 그 상태가 <b>자동으로 저장</b>돼요 → 한 달 뒤·시험 후 '저장됨'에서 다시 열어 변화 비교.</p>
         `,
         mobile: '#m-insight-list',
         desktop: '#insight-list',
@@ -281,7 +281,7 @@ const CONTEXT_STEPS = {
                 <li><b>제안 ⚡</b> — 약점 보완 행동 추천.</li>
                 <li><b>회고 메모 모음 📓</b> — 그 기간 메모 다시 읽기.</li>
             </ol>
-            <p class="tut-tip">💡 <b>이 분석 저장</b> 버튼으로 지금 상태 보관 → 나중에 변화 비교. '저장됨' 버튼으로 언제든 다시 열어보기.</p>
+            <p class="tut-tip">💡 분석을 볼 때마다 <b>자동 저장</b> → 나중에 '저장됨' 버튼으로 다시 열어 변화 비교.</p>
         `,
         mobile: '#m-analyze-panel',
         desktop: '#analyze-canvas',

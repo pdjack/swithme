@@ -231,9 +231,6 @@
                         <h2 class="analysis-title">분석</h2>
                         <div class="analysis-actions">
                             <span id="candy-balance-badge" class="candy-balance-badge" style="display:none;"></span>
-                            <button id="save-snapshot-btn" class="snapshot-action-btn" type="button">
-                                <i data-lucide="bookmark-plus"></i><span>이 분석 저장</span>
-                            </button>
                             <button id="open-snapshots-btn" class="snapshot-action-btn" type="button">
                                 <i data-lucide="folder"></i><span>저장됨</span>
                                 <span id="snapshot-count-badge" class="snapshot-count-badge" style="display:none;">0</span>
@@ -475,9 +472,6 @@
                     <h2 class="analysis-title">분석</h2>
                     <div class="analysis-actions">
                         <span id="m-candy-balance-badge" class="candy-balance-badge" style="display:none;"></span>
-                        <button id="m-save-snapshot-btn" class="snapshot-action-btn" type="button">
-                            <i data-lucide="bookmark-plus"></i>
-                        </button>
                         <button id="m-open-snapshots-btn" class="snapshot-action-btn" type="button">
                             <i data-lucide="folder"></i>
                             <span id="m-snapshot-count-badge" class="snapshot-count-badge" style="display:none;">0</span>
@@ -812,26 +806,6 @@
                 <button id="confirm-modal-middle" class="btn-reset confirm-modal-danger" style="display:none;">폐기</button>
                 <button id="confirm-modal-cancel" class="btn-reset">취소</button>
                 <button id="confirm-modal-ok" class="btn-start">삭제</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 분석 스냅샷 저장 모달 -->
-    <div id="snapshot-save-modal" class="modal">
-        <div class="modal-content glass-card">
-            <h2>분석 저장</h2>
-            <div class="form-group">
-                <label>이름</label>
-                <input type="text" id="snapshot-save-name" placeholder="예: 1학기 중간 전 30일" maxlength="60">
-            </div>
-            <div class="form-group">
-                <label>메모 (선택)</label>
-                <input type="text" id="snapshot-save-memo" placeholder="이 분석에 대한 짧은 메모" maxlength="120">
-            </div>
-            <p id="snapshot-save-period" class="snapshot-save-period"></p>
-            <div class="modal-btns">
-                <button id="snapshot-save-cancel" class="btn-reset">취소</button>
-                <button id="snapshot-save-confirm" class="btn-start">저장</button>
             </div>
         </div>
     </div>

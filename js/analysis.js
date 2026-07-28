@@ -688,6 +688,7 @@ export function renderAnalysisDashboard(arg) {
 
     refreshSnapshotUiState();
     updateTrendViewHint();
+    autoSaveCurrentAnalysis();
 }
 
 function updateTrendViewHint() {
@@ -863,9 +864,50 @@ function buildSnapshotPayload(name, memo) {
     };
 }
 
-function saveSnapshot(payload) {
+// 자동 스냅샷 보관 상한. 초과 시 오래된 자동 스냅샷부터 정리한다.
+const AUTO_SNAPSHOT_LIMIT = 60;
+
+function periodKeyOf(period) {
+    return period.mode === 'custom'
+        ? `custom-${period.startKey}-${period.endKey}`
+        : `preset-${period.days}`;
+}
+
+function autoSnapshotName(period, dateKeys) {
+    const today = new Date();
+    const stamp = `${today.getMonth() + 1}/${today.getDate()}`;
+    if (period.mode === 'preset') return `최근 ${period.days}일 · ${stamp}`;
+    const compact = (k) => k.slice(5).replace('-', '/');
+    return `${compact(dateKeys[0])}~${compact(dateKeys[dateKeys.length - 1])} · ${stamp}`;
+}
+
+/**
+ * 분석 화면을 실제로 본 시점의 결과를 자동 보관한다.
+ * 보관 단위는 (날짜 + 기간) 하나. 같은 날 같은 기간을 다시 보면 최신 내용으로 덮어써 개수가 늘지 않는다.
+ */
+function autoSaveCurrentAnalysis() {
+    if (isSnapshotMode()) return;
+    const dateKeys = currentDateKeys();
+    if (dateKeys.length === 0) return;
+
+    const autoKey = `${localDateKey(new Date())}|${periodKeyOf(activePeriod)}`;
+    const payload = buildSnapshotPayload(autoSnapshotName(activePeriod, dateKeys), '');
+    if (!payload) return;
+    payload.auto = true;
+    payload.autoKey = autoKey;
+
     if (!Array.isArray(state.analysisResults)) state.analysisResults = [];
-    state.analysisResults.unshift(payload);
+    const list = state.analysisResults.filter(s => s.autoKey !== autoKey);
+    list.unshift(payload);
+
+    // 상한은 자동 스냅샷에만 적용. 수동 저장본은 유저가 이름을 붙여 남긴 것이므로 정리하지 않는다.
+    let autoCount = 0;
+    state.analysisResults = list.filter(s => {
+        if (!s.auto) return true;
+        autoCount += 1;
+        return autoCount <= AUTO_SNAPSHOT_LIMIT;
+    });
+
     saveToLocal();
     updateSnapshotCountBadge();
 }
@@ -916,9 +958,7 @@ function refreshSnapshotUiState() {
         '.period-btn',
         '.period-date-input',
         '#period-custom-apply',
-        '#m-period-custom-apply',
-        '#save-snapshot-btn',
-        '#m-save-snapshot-btn'
+        '#m-period-custom-apply'
     ];
     disableTargets.forEach(sel => {
         document.querySelectorAll(sel).forEach(el => {
@@ -950,7 +990,7 @@ function renderSnapshotList() {
     const clearBtn = document.getElementById('snapshot-clear-all');
     if (clearBtn) clearBtn.style.display = snaps.length > 0 ? '' : 'none';
     if (snaps.length === 0) {
-        body.innerHTML = `<div class="snapshot-list-empty">저장된 분석이 없습니다. 분석 화면에서 "이 분석 저장"을 눌러 보관하세요.</div>`;
+        body.innerHTML = `<div class="snapshot-list-empty">저장된 분석이 없습니다. 분석을 보면 자동으로 저장됩니다.</div>`;
         return;
     }
     body.innerHTML = snaps.map(s => {
@@ -998,26 +1038,6 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-function openSnapshotSaveModal() {
-    if (isSnapshotMode()) return;
-    const dateKeys = currentDateKeys();
-    if (dateKeys.length === 0) return;
-    const modal = document.getElementById('snapshot-save-modal');
-    const nameEl = document.getElementById('snapshot-save-name');
-    const memoEl = document.getElementById('snapshot-save-memo');
-    const periodEl = document.getElementById('snapshot-save-period');
-    if (nameEl) nameEl.value = '';
-    if (memoEl) memoEl.value = '';
-    if (periodEl) periodEl.textContent = `기간: ${formatPeriodLabel(activePeriod, dateKeys)}`;
-    if (modal) modal.classList.add('active');
-    setTimeout(() => nameEl && nameEl.focus(), 50);
-}
-
-function closeSnapshotSaveModal() {
-    const modal = document.getElementById('snapshot-save-modal');
-    if (modal) modal.classList.remove('active');
-}
-
 function openSnapshotListModal() {
     renderSnapshotList();
     const modal = document.getElementById('snapshot-list-modal');
@@ -1030,33 +1050,11 @@ function closeSnapshotListModal() {
 }
 
 export function setupSnapshotControls() {
-    // 저장 버튼
-    ['save-snapshot-btn', 'm-save-snapshot-btn'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', openSnapshotSaveModal);
-    });
     // 목록 버튼
     ['open-snapshots-btn', 'm-open-snapshots-btn'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.addEventListener('click', openSnapshotListModal);
     });
-    // 저장 모달
-    const saveCancel = document.getElementById('snapshot-save-cancel');
-    if (saveCancel) saveCancel.addEventListener('click', closeSnapshotSaveModal);
-    const saveConfirm = document.getElementById('snapshot-save-confirm');
-    if (saveConfirm) {
-        saveConfirm.addEventListener('click', () => {
-            const nameEl = document.getElementById('snapshot-save-name');
-            const memoEl = document.getElementById('snapshot-save-memo');
-            const payload = buildSnapshotPayload(nameEl ? nameEl.value : '', memoEl ? memoEl.value : '');
-            if (!payload) {
-                closeSnapshotSaveModal();
-                return;
-            }
-            saveSnapshot(payload);
-            closeSnapshotSaveModal();
-        });
-    }
     // 목록 모달 닫기
     const listClose = document.getElementById('snapshot-list-close');
     if (listClose) listClose.addEventListener('click', closeSnapshotListModal);
@@ -1074,7 +1072,7 @@ export function setupSnapshotControls() {
         });
     }
     // 배경 클릭 시 닫기
-    ['snapshot-save-modal', 'snapshot-list-modal'].forEach(id => {
+    ['snapshot-list-modal'].forEach(id => {
         const modal = document.getElementById(id);
         if (modal) {
             modal.addEventListener('click', (e) => {

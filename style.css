@@ -3114,13 +3114,6 @@ body.m-subject-dragging .subject-row { touch-action: none; }
 }
 .banner-exit-btn:hover { filter: brightness(1.1); }
 
-/* 저장 모달 — 기간 표시 */
-.snapshot-save-period {
-    color: var(--text-dim);
-    font-size: 12px;
-    margin: -4px 0 8px;
-}
-
 /* 스냅샷 목록 모달 */
 .snapshot-list-content {
     max-width: 520px;
