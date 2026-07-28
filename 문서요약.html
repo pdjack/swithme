@@ -1241,7 +1241,11 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 </thead>
 <tbody><tr>
 <td>전체 진행</td>
-<td>◐ <strong>착수 (2026-07-28)</strong> — A-2 완료(Capacitor 8, Android·iOS 셸 생성). <strong>iOS는 빌드 불가 — Xcode 26 요구 vs 보유 15.4</strong></td>
+<td>◐ <strong>착수 (2026-07-28)</strong> — A-2 완료(Capacitor 8, Android·iOS 셸 생성)</td>
+</tr>
+<tr>
+<td><strong>iOS 결정 (2026-07-28)</strong></td>
+<td><strong>③ 후순위 확정.</strong> Xcode 26 요구 vs 보유 15.4로 빌드 불가 → <strong>Android 단독 진행.</strong> 재검토는 A-1 또는 B-I1 착수 시 (A-2 메모의 대응표)</td>
 </tr>
 <tr>
 <td><strong>착수 계기 (2026-07-28)</strong></td>
@@ -1385,7 +1389,33 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 <p><strong>✅ A-2 진행 상태 (2026-07-28)</strong></p>
 <ul>
 <li>✅ Capacitor 8 설치 + 앱 ID <code>app.swithme</code>·앱 이름 <code>swithme</code>·빌드 출력 연결. <strong>Android·iOS 셸 프로젝트 모두 생성 완료.</strong> 웹 빌드·lint·테스트(57건) 정상.</li>
-<li>⚠️ <strong>iOS는 셸만 있고 빌드는 못 한다 — Xcode 버전 벽.</strong> Capacitor 8은 <strong>Xcode 26.0 이상</strong>을 요구하는데 이 Mac은 <strong>Xcode 15.4 / macOS 14.8.3(Sonoma)</strong> 이다. Xcode 26은 더 높은 macOS를 요구하므로 <strong>macOS 업그레이드 없이는 iOS 빌드 자체가 불가능</strong>하다. 선택지는 셋: ① macOS·Xcode 업그레이드 ② Capacitor를 6·7로 낮춤(Xcode 15·16 지원) ③ iOS를 뒤로 미루고 Android로 진행. <strong>미결 — B-I1 착수 전까지 결정 필요.</strong></li>
+<li>⚠️ <strong>iOS는 셸만 있고 빌드는 못 한다 — Xcode 버전 벽.</strong> Capacitor 8은 <strong>Xcode 26.0 이상</strong>을 요구하는데 이 Mac은 <strong>Xcode 15.4 / macOS 14.8.3(Sonoma)</strong> 이다.</li>
+</ul>
+<p><strong>✅ 결정 (2026-07-28): ③ iOS 후순위.</strong> 지금은 Android만으로 진행한다. 근거 — iOS 빌드는 Apple 개발자 계정(A-1, $99/년) 등록 이후에나 실제로 필요하고, 그 전까지 필요한 작업(§3 알림 구현·실기기 검증)은 Android만으로 전부 가능하다. 지금 OS를 갈아엎으면 작업 중단 위험만 떠안는다.</p>
+<p><strong>재검토 시점: A-1(Apple 계정 등록) 또는 B-I1(iOS 빌드) 착수 시.</strong> 그때 아래 둘 중 선택한다.</p>
+<table>
+<thead>
+<tr>
+<th>대응</th>
+<th>필요한 것</th>
+<th>대가</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>① macOS·Xcode 업그레이드</td>
+<td>macOS 14.8.3 → <strong>15.6(Sequoia) 이상</strong> + Xcode 26</td>
+<td>메이저 OS 업그레이드. 수십 GB, 다른 개발 도구가 깨질 수 있음</td>
+</tr>
+<tr>
+<td>② Capacitor를 7로 낮춤</td>
+<td><strong>Xcode 16.0만 설치</strong>(최소 macOS 14.5 — <strong>현 OS로 가능</strong>)</td>
+<td>OS는 안 건드림. 대신 구버전 Capacitor에 묶임</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>버전 사실 (2026-07-28 확인):</strong> Xcode 16.0 = macOS 14.5+ / Xcode 16.1<del>16.4 = macOS 15.1</del>15.3 / Xcode 26.0 = macOS 15.6 / Xcode 26.4+ = macOS 26.2. <strong>즉 OS를 안 올리고 갈 수 있는 최대치는 Xcode 16.0이며, 이는 Capacitor 7의 요구선과 일치한다.</strong></p>
+</blockquote>
+<ul>
 <li><strong>정정:</strong> 같은 날 이 문서에 &quot;iOS 보류 사유 = CocoaPods 미설치&quot;라고 적었으나 <strong>사실이 아니었다.</strong> 실제로 실행해 보지 않고 추정으로 쓴 것이다. Capacitor 8은 CocoaPods 없이 동작하며(Swift Package Manager 기본), iOS 셸 생성도 정상 성공했다. <strong>CocoaPods는 설치할 필요가 없다.</strong></li>
 <li>착수 이유: <code>docs/phase3-할일.md</code> §3 알림이 셸 없이는 만들어도 검증이 불가능하기 때문(순환 의존 2).</li>
 </ul>
@@ -1409,7 +1439,7 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 <tbody><tr>
 <td><strong>A-1(신규)</strong></td>
 <td><strong>Apple 개발자 계정 등록</strong></td>
-<td>$99/년. iOS 출시 필수. 등록·본인확인에 수일 소요 가능 → <strong>일찍 착수</strong></td>
+<td>$99/년. iOS 출시 필수. 등록·본인확인에 수일 소요 가능. ⚠️ <strong>iOS 후순위 결정(2026-07-28)에 따라 지금은 급하지 않다</strong> — 이 항목에 착수하는 순간 A-2 메모의 빌드 환경 대응(①/②)도 함께 정해야 한다</td>
 <td>☐</td>
 </tr>
 <tr>
@@ -1808,7 +1838,7 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 </tr>
 <tr>
 <td><strong>셸 착수 (2026-07-28)</strong></td>
-<td><strong>Capacitor 8 도입 완료 — Android·iOS 셸 생성.</strong> 단 iOS는 Xcode 버전이 낮아 빌드 불가(미결) — <code>docs/하이브리드-출시-할일.md</code> A-2. <strong>§3 알림 검증은 Android로 진행 가능</strong></td>
+<td><strong>Capacitor 8 도입 완료 — Android·iOS 셸 생성.</strong> iOS는 Xcode 버전 미충족으로 <strong>후순위 확정(③)</strong> — <code>docs/하이브리드-출시-할일.md</code> A-2. <strong>§3 알림 구현·검증은 Android 단독으로 진행</strong></td>
 </tr>
 <tr>
 <td><strong>스택 확정</strong></td>
@@ -3778,7 +3808,7 @@ npm run preview       # 빌드 결과 로컬 미리보기
 </tr>
 <tr>
 <td>iOS 빌드 환경</td>
-<td>☐ <strong>미정 (2026-07-28)</strong> — Capacitor 8이 Xcode 26을 요구하나 보유 Xcode 15.4·macOS 14.8.3. ① macOS·Xcode 업그레이드 ② Capacitor 6·7로 낮춤 ③ iOS 후순위</td>
+<td>✅ <strong>확정 (2026-07-28) — ③ iOS 후순위.</strong> 지금은 Android만으로 진행. 환경 대응(OS 업그레이드 / Capacitor 낮추기)은 iOS가 실제로 필요해질 때 재선택. <strong>뒤집는 시점: Apple 개발자 계정 등록(A-1) 또는 B-I1 iOS 빌드 착수</strong></td>
 <td><code>docs/하이브리드-출시-할일.md</code> A-2</td>
 </tr>
 </tbody></table>
