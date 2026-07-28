@@ -19,9 +19,15 @@ import { icon } from './icons.js';
 import { saveToLocal, localDateKey } from './store.js';
 
 // ── 스위치 ──────────────────────────────────────────────────────────
-// 획득 라인(광고·구독·토큰팩)이 스토어 출시 후에야 열리므로, 그전까지 켜면
-// 분석이 월 1회로 잠긴다. 출시 후 §4-B·§4-C 완료 시점에 true 로 바꾼다.
-export const CANDY_GATING_ENABLED = false;
+// 획득 라인(광고·구독·토큰팩)이 스토어 출시 후에야 열리므로, 평시엔 꺼 둔다.
+// 지금은 UI·차감·해제 흐름을 유저가 손으로 확인하려고 임시로 켜 둔 상태다.
+// (2026-07-28 테스트 목적. 출시 전 정식 ON 절차는 docs/phase3-할일.md §4-A 체크리스트)
+export const CANDY_GATING_ENABLED = true;
+
+// ⚠️ 테스트 전용. 획득 라인(§4-B·§4-C)이 붙으면 이 상수와 관련 버튼을 지운다.
+// 실제 결제·광고 없이 차감·잠금해제 흐름을 밟아보기 위한 임시 수단.
+export const CANDY_TEST_GRANT_ENABLED = true;
+const CANDY_TEST_GRANT_AMOUNT = 5;
 
 export const CANDY_LS_KEY = 'switme_candy';
 
@@ -236,6 +242,9 @@ export function renderCandyLock(period) {
                 ${enough
                     ? `<button type="button" class="candy-unlock-btn">사탕 ${cost}개 쓰고 열기</button>`
                     : `<button type="button" class="candy-get-btn">사탕 얻는 방법</button>`}
+                ${CANDY_TEST_GRANT_ENABLED
+                    ? `<button type="button" class="candy-test-grant-btn">🧪 테스트용 사탕 ${CANDY_TEST_GRANT_AMOUNT}개 받기</button>`
+                    : ''}
             </div>`;
     });
 }
@@ -256,12 +265,23 @@ export function openCandyShortageModal(period) {
                 <li>${icon('candy', 14)} 사탕 꾸러미 구매 <em>준비 중</em></li>
                 <li>${icon('candy', 14)} 구독하고 매달 받기 <em>준비 중</em></li>
             </ul>
+            ${CANDY_TEST_GRANT_ENABLED
+                ? `<button type="button" class="candy-test-grant-btn">🧪 테스트용 사탕 ${CANDY_TEST_GRANT_AMOUNT}개 받기</button>`
+                : ''}
             <button type="button" class="candy-modal-close">닫기</button>
         </div>`;
     document.body.appendChild(overlay);
     const close = () => overlay.remove();
     overlay.querySelector('.candy-modal-close').addEventListener('click', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
+// ⚠️ 테스트 전용 — 구매 사탕 지급. 실제 획득 라인이 붙으면 이 함수와 버튼을 지운다.
+export function grantTestCandy() {
+    const c = readCandy();
+    writeCandy({ ...c, paid: c.paid + CANDY_TEST_GRANT_AMOUNT });
+    document.querySelectorAll('.candy-modal-overlay').forEach(el => el.remove());
+    if (typeof window.renderAnalysisDashboard === 'function') window.renderAnalysisDashboard();
 }
 
 // ── 앱 진입 시 1회 ──────────────────────────────────────────────────
@@ -272,6 +292,13 @@ export function setupCandy() {
     writeCandy(candy, { notify: false });
     refreshPeriodCostLabels();
     renderCandyBadges();
+
+    // ⚠️ 테스트 전용 위임 — 획득 라인이 붙으면 이 블록을 지운다.
+    if (CANDY_TEST_GRANT_ENABLED) {
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.candy-test-grant-btn')) grantTestCandy();
+        });
+    }
 }
 
 window.setupCandy = setupCandy;
