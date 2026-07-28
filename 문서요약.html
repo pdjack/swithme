@@ -385,7 +385,7 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 </tr>
 <tr>
 <td><strong>앱 셸</strong></td>
-<td>Capacitor — 웹 빌드를 네이티브 셸에 담아 Android·iOS 빌드. ◐ 도입 착수(2026-07-28, Android 셸 생성 / iOS 보류). 근거 §10</td>
+<td>Capacitor 8 — 웹 빌드를 네이티브 셸에 담아 Android·iOS 빌드. ◐ 도입 착수(2026-07-28): 양 플랫폼 셸 생성 완료, <strong>iOS 빌드는 Xcode 26 요구로 보류</strong>. 근거 §10</td>
 </tr>
 </tbody></table>
 <h3>아키텍처</h3>
@@ -1241,7 +1241,7 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 </thead>
 <tbody><tr>
 <td>전체 진행</td>
-<td>◐ <strong>착수 (2026-07-28)</strong> — A-2 Capacitor 도입·Android 셸 생성 완료. iOS 셸은 CocoaPods 미설치로 보류</td>
+<td>◐ <strong>착수 (2026-07-28)</strong> — A-2 완료(Capacitor 8, Android·iOS 셸 생성). <strong>iOS는 빌드 불가 — Xcode 26 요구 vs 보유 15.4</strong></td>
 </tr>
 <tr>
 <td><strong>착수 계기 (2026-07-28)</strong></td>
@@ -1343,7 +1343,7 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 <td>Capacitor 도입·구성</td>
 <td>프로젝트에 Capacitor 설치, <code>capacitor.config</code> 작성(앱 ID·이름·webDir=빌드 출력), 웹 빌드를 네이티브 셸에 연결. <code>android</code>/<code>ios</code> 플랫폼 프로젝트 생성</td>
 <td>없음</td>
-<td>◐ <strong>Android 완료 (2026-07-28)</strong> · iOS 보류 ↓</td>
+<td>✅ <strong>완료 (2026-07-28)</strong> — Android·iOS 셸 모두 생성. <strong>단 iOS는 빌드 불가</strong> ↓</td>
 </tr>
 <tr>
 <td><strong>A-3</strong></td>
@@ -1382,10 +1382,11 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 </tr>
 </tbody></table>
 <blockquote>
-<p><strong>◐ A-2 진행 상태 (2026-07-28)</strong></p>
+<p><strong>✅ A-2 진행 상태 (2026-07-28)</strong></p>
 <ul>
-<li>✅ Capacitor 설치 + 앱 ID <code>app.swithme</code>·앱 이름 <code>swithme</code>·빌드 출력 연결, <strong>Android 셸 프로젝트 생성 완료</strong>. 웹 빌드·lint·테스트(57건) 모두 정상.</li>
-<li>☐ <strong>iOS 셸 보류 — CocoaPods 미설치.</strong> 이 Mac에 CocoaPods가 없어 iOS 프로젝트 생성이 실패한다. 설치는 유저 몫(관리자 권한 필요할 수 있음). 설치 후 Claude가 iOS 셸 생성을 이어서 한다.</li>
+<li>✅ Capacitor 8 설치 + 앱 ID <code>app.swithme</code>·앱 이름 <code>swithme</code>·빌드 출력 연결. <strong>Android·iOS 셸 프로젝트 모두 생성 완료.</strong> 웹 빌드·lint·테스트(57건) 정상.</li>
+<li>⚠️ <strong>iOS는 셸만 있고 빌드는 못 한다 — Xcode 버전 벽.</strong> Capacitor 8은 <strong>Xcode 26.0 이상</strong>을 요구하는데 이 Mac은 <strong>Xcode 15.4 / macOS 14.8.3(Sonoma)</strong> 이다. Xcode 26은 더 높은 macOS를 요구하므로 <strong>macOS 업그레이드 없이는 iOS 빌드 자체가 불가능</strong>하다. 선택지는 셋: ① macOS·Xcode 업그레이드 ② Capacitor를 6·7로 낮춤(Xcode 15·16 지원) ③ iOS를 뒤로 미루고 Android로 진행. <strong>미결 — B-I1 착수 전까지 결정 필요.</strong></li>
+<li><strong>정정:</strong> 같은 날 이 문서에 &quot;iOS 보류 사유 = CocoaPods 미설치&quot;라고 적었으나 <strong>사실이 아니었다.</strong> 실제로 실행해 보지 않고 추정으로 쓴 것이다. Capacitor 8은 CocoaPods 없이 동작하며(Swift Package Manager 기본), iOS 셸 생성도 정상 성공했다. <strong>CocoaPods는 설치할 필요가 없다.</strong></li>
 <li>착수 이유: <code>docs/phase3-할일.md</code> §3 알림이 셸 없이는 만들어도 검증이 불가능하기 때문(순환 의존 2).</li>
 </ul>
 </blockquote>
@@ -1450,7 +1451,7 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 <tr>
 <td><strong>B-I1</strong></td>
 <td>iOS 앱 빌드</td>
-<td>Xcode로 Capacitor ios 프로젝트 archive·서명</td>
+<td>Xcode로 Capacitor ios 프로젝트 archive·서명. ⚠️ <strong>선행 미결:</strong> 현재 Xcode 15.4로는 불가(Capacitor 8은 Xcode 26 요구). A-2 메모의 선택지 ①②③ 중 결정 먼저</td>
 <td>☐</td>
 </tr>
 <tr>
@@ -1807,7 +1808,7 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 </tr>
 <tr>
 <td><strong>셸 착수 (2026-07-28)</strong></td>
-<td><strong>Capacitor 도입 완료 (Android 셸 생성).</strong> iOS 셸은 CocoaPods 미설치로 보류 — <code>docs/하이브리드-출시-할일.md</code> A-2</td>
+<td><strong>Capacitor 8 도입 완료 — Android·iOS 셸 생성.</strong> 단 iOS는 Xcode 버전이 낮아 빌드 불가(미결) — <code>docs/하이브리드-출시-할일.md</code> A-2. <strong>§3 알림 검증은 Android로 진행 가능</strong></td>
 </tr>
 <tr>
 <td><strong>스택 확정</strong></td>
@@ -1888,7 +1889,7 @@ main { flex: 1 1 auto; min-width: 0; padding: 32px 40px 120px; }
 <ul>
 <li><strong>§1-10 유저 실메일 검증</strong> (아래 §1 참조) — 코드는 완료(가입 = 이메일 링크 방식으로 재구현). 실메일 왕복만 남음</li>
 <li><strong>§1-11 App Check 도입</strong> — 계정 열거 대응. §4 결제 전에 처리 (2026-07-27 신설)</li>
-<li><strong>§3 알림</strong> — 규격 확정됨. 착수 조건 두 가지: ① 하이브리드 셸(Android 셸은 2026-07-28 생성 완료) ② §3-B 미정(알림 기준 플랜 탭) 유저 결정</li>
+<li><strong>§3 알림</strong> — 규격 확정됨. 착수 조건 두 가지: ① 하이브리드 셸(2026-07-28 생성 완료, Android로 검증 가능) ② §3-B 미정(알림 기준 플랜 탭) 유저 결정</li>
 </ul>
 <blockquote>
 <p><strong>2026-07-28 추가:</strong> §4-A 사탕(토큰) 시스템은 출시 전에 미리 구현해 뒀다(게이팅 OFF). 위 세 갈래와 무관하게 진행됨.</p>
@@ -3671,7 +3672,7 @@ npm run preview       # 빌드 결과 로컬 미리보기
 <td><del>2</del>3주 개발 <strong>+ 14일 관문(Android, 고정)</strong></td>
 <td>Beta/Release</td>
 <td><strong>하이브리드 앱(Capacitor)으로 Google Play + Apple App Store 동시 진입</strong> — Android는 비공개 테스트(개인 계정 의무) 12명×14일 → 프로덕션 심사, iOS는 TestFlight → App Store 심사 → <strong>공개 출시 확정</strong>. 실결제에 따른 판매자 등록·사업자 확인·환불 방침 포함. 세부 → <code>docs/하이브리드-출시-할일.md</code></td>
-<td>◐ <strong>착수 (2026-07-28)</strong> — Capacitor 도입·Android 셸 생성 완료(iOS 셸 보류). <strong>Phase 3 알림이 셸을 요구해 순서를 당겼다</strong></td>
+<td>◐ <strong>착수 (2026-07-28)</strong> — Capacitor 8 도입, Android·iOS 셸 생성 완료. <strong>iOS 빌드는 Xcode 버전 벽으로 막힘(미결).</strong> Phase 3 알림이 셸을 요구해 순서를 당겼다</td>
 </tr>
 <tr>
 <td>Phase 5</td>
@@ -3711,7 +3712,7 @@ npm run preview       # 빌드 결과 로컬 미리보기
 <h3>프론트엔드 / 백엔드</h3>
 <ul>
 <li><strong>프론트엔드:</strong> HTML5 + Vanilla JS(ES6+) + Vanilla CSS. PWA(<code>vite-plugin-pwa</code>, Service Worker).</li>
-<li><strong>앱 셸:</strong> ✅ 확정 — 하이브리드(Capacitor). ◐ <strong>도입 착수 (2026-07-28)</strong> — Android 셸 프로젝트 생성 완료, iOS 셸 보류(CocoaPods 미설치). 결정 근거·기각안·뒤집힘 조건은 PRD §10.</li>
+<li><strong>앱 셸:</strong> ✅ 확정 — 하이브리드(Capacitor 8). ◐ <strong>도입 착수 (2026-07-28)</strong> — Android·iOS 셸 프로젝트 생성 완료. <strong>iOS는 빌드 환경 미충족</strong>(Xcode 26 요구 vs 보유 15.4) → 대응 미결. 결정 근거·기각안·뒤집힘 조건은 PRD §10.</li>
 <li><strong>백엔드:</strong> ✅ <strong>확정 — Firebase(BaaS)</strong>. ✅ 인증(Firebase Auth: 구글+이메일)·DB 동기화(Firestore) <strong>구현 완료</strong>(2026-07-26 실검증). ☐ 푸시(FCM)·결제 검증 미착수. Firebase는 iOS·Android SDK를 정식 지원. 결제는 <strong>이중 IAP</strong>(Google Play Billing + Apple StoreKit). 결정 근거·기각안·뒤집힘 조건은 PRD §9-5.</li>
 </ul>
 <h3>모듈화 계획 (UI ↔ 비즈니스 로직 분리)</h3>
@@ -3774,6 +3775,11 @@ npm run preview       # 빌드 결과 로컬 미리보기
 <td>알림 기준 플랜 탭</td>
 <td>☐ <strong>미정</strong> — 현재 보고 있는 탭 하나(추천) vs 모든 플랜 탭 합산</td>
 <td><code>docs/phase3-할일.md</code> §3-B</td>
+</tr>
+<tr>
+<td>iOS 빌드 환경</td>
+<td>☐ <strong>미정 (2026-07-28)</strong> — Capacitor 8이 Xcode 26을 요구하나 보유 Xcode 15.4·macOS 14.8.3. ① macOS·Xcode 업그레이드 ② Capacitor 6·7로 낮춤 ③ iOS 후순위</td>
+<td><code>docs/하이브리드-출시-할일.md</code> A-2</td>
 </tr>
 </tbody></table>
 

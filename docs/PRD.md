@@ -113,7 +113,7 @@
 | **코드 품질** | ESLint (Flat Config) + Prettier |
 | **테스트** | Vitest + jsdom |
 | **배포** | Vercel (GitHub 푸시 → 자동 빌드·배포) |
-| **앱 셸** | Capacitor — 웹 빌드를 네이티브 셸에 담아 Android·iOS 빌드. ◐ 도입 착수(2026-07-28, Android 셸 생성 / iOS 보류). 근거 §10 |
+| **앱 셸** | Capacitor 8 — 웹 빌드를 네이티브 셸에 담아 Android·iOS 빌드. ◐ 도입 착수(2026-07-28): 양 플랫폼 셸 생성 완료, **iOS 빌드는 Xcode 26 요구로 보류**. 근거 §10 |
 
 ### 아키텍처
 
