@@ -1,1 +1,14 @@
-{}
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && node execution/build-docs-summary.mjs --if-stale"
+          }
+        ]
+      }
+    ]
+  }
+}

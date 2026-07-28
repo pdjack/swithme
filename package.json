@@ -13,7 +13,8 @@
     "lint:fix": "eslint js/ --fix",
     "format": "prettier --write 'js/**/*.js'",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "docs": "node execution/build-docs-summary.mjs"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "jsdom": "^29.0.1",
+    "marked": "^18.0.7",
     "prettier": "^3.8.1",
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^1.2.0",

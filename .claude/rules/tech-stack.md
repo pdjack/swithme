@@ -29,6 +29,7 @@
 | `npm run format` | Prettier 포매팅 |
 | `npm test` | Vitest watch 모드 |
 | `npm run test:run` | Vitest 단일 실행 |
+| `npm run docs` | 유저 읽기용 통합본 `문서요약.html` 재생성 (원본 마크다운 → HTML) |
 
 ---
 

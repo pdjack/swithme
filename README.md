@@ -49,6 +49,12 @@ npm test              # Vitest watch 모드
 npm run test:run      # 단일 실행
 ```
 
+### 문서 통합본
+```bash
+npm run docs          # docs/ 등 읽기용 문서 → 문서요약.html 재생성
+```
+> `문서요약.html`은 자동 생성물입니다. 직접 수정하지 말고 원본 마크다운을 고친 뒤 위 명령으로 다시 만드세요.
+
 ### 빌드 (PWA 포함)
 ```bash
 npm run build         # 프로덕션 빌드 (Service Worker + manifest 자동 생성)
