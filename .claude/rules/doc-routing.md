@@ -18,9 +18,12 @@
 | PC/모바일 공통 기능 구현 | 3개 모두 | `ui-ux-guide.md`, `tech-stack.md` |
 | 아이콘 추가/변경 | `extract-js-api.py` (아이콘 키 확인) | `ui-ux-guide.md` (아이콘 규칙) |
 | 새 탭/캔버스 추가 | 3개 모두 | `ui-ux-guide.md` |
-| 기능 기획/분석 관련 | — | `docs/PRD.md` + `활용정보/` + `directives/` 플랜 문서 |
-| 신규 문서 작성/마커 표기 | — | `doc-conventions.md` |
-| 협업 방식·Plan 운영 | — | `collaboration.md` |
+| 기능 기획/분석 관련 | — | `docs/PRD.md` + `활용정보/` |
+| 신규 문서 작성/마커 표기 | — | `.claude/rules/doc-conventions.md` |
+| 협업 방식·Plan 운영 | — | `.claude/rules/collaboration.md` |
+| 백엔드·외부 API·실행 스크립트 작업 | — | `.claude/rules/로드맵-운영원칙.md` |
+
+> **규칙 문서 경로**: `tech-stack.md`·`doc-conventions.md`·`collaboration.md`·`doc-routing.md`·`로드맵-운영원칙.md`는 `.claude/rules/`에, `ui-ux-guide.md`·`INDEX.md`는 `directives/`에 있다.
 
 > **스크립트 경로**: 모두 `execution/` 디렉토리에 위치. `python3 execution/<스크립트명>` 으로 실행.
 
@@ -35,17 +38,18 @@
 
 | 트리거 (변경 유형) | 수정 대상 문서 | 비고 |
 |---|---|---|
+| **할 일 문서의 한 단계(§)가 완료됨** (기능이 실제로 동작하게 됨) | `CLAUDE.md` 정체성 + `.claude/rules/tech-stack.md` + `docs/PRD.md`(§3·§4·§8) + `docs/로드맵.md` + `README.md` | **필수.** 실행 문서(`docs/*-할일.md`)만 갱신하고 상위 문서를 방치하면 "서버 없음" 같은 낡은 서술이 남아 이후 판단을 오염시킨다. 2026-07-28 대규모 정정의 원인이 이 누락이었다 |
 | 프로젝트 정체성/로드맵 변경 | `CLAUDE.md` | 정체성 섹션 |
 | 핵심 운영 규칙(매번 적용) 변경 | `CLAUDE.md` | 핵심 규칙 섹션 |
 | 기술 스택/npm 스크립트/코드 컨벤션 변경 | `.claude/rules/tech-stack.md` | |
 | 협업 원칙/Plan 운영/짧은 동의 해석 변경 | `.claude/rules/collaboration.md` | |
 | 문서 작성 규칙(SRP/마커/어휘) 변경 | `.claude/rules/doc-conventions.md` | |
-| 새 rules 파일 추가/삭제 | `CLAUDE.md` 라우팅 표 + 본 문서 | 양쪽 모두 갱신 |
 | 새 directive 파일 추가/삭제 | `directives/INDEX.md` | 지침 목록 테이블 |
-| PC/모바일 간 UI 불일치 발견/수정 | `directives/ui-ux-guide.md` | 불일치 목록(섹션 3) 갱신 |
+| PC/모바일 간 UI 불일치 발견/수정 | `directives/ui-ux-guide.md` | "현재 불일치 목록"(§4) 갱신 |
 | UI/UX 규칙 변경 (네이밍, 이벤트, 상태 등) | `directives/ui-ux-guide.md` | 해당 규칙 섹션 |
-| PWA/배포 설정 변경 | `.claude/rules/pwa-deploy.md` | 미생성 시 새로 작성 |
-| 유저 읽기용 문서 변경 (`docs/*` 전체, `README.md`, `directives/ui-ux-guide.md`, `directives/INDEX.md`, `활용정보/*`) | `문서요약.html` | 해당 섹션 동기 갱신. `docs/` 안 모든 문서가 대상. 문서 추가/삭제 시 `CLAUDE.md`의 "유저 읽기용 문서" 표도 갱신. 파일명 `문서요약.html` 고정. 프로젝트 Stop 훅 `.claude/hooks/check-docs-summary-sync.sh`가 미갱신 자동 감지 |
+| PWA/배포 설정 변경 | `docs/pwa-deploy.md` | 기존 문서. 새로 만들지 말 것 |
+| `docs/`에 문서 추가/삭제 | `CLAUDE.md` "유저가 읽어야 하는 문서" 표 | 유저는 원본 마크다운을 직접 읽는다. 통합 HTML 사본은 2026-07-28 폐기 — 다시 만들지 않는다 |
+| 새 rules 파일 추가/삭제 | `CLAUDE.md` 라우팅 표 + 본 문서 두 표 | 양쪽 모두 갱신 |
 | **하이브리드 앱 출시 작업 진행/완료** (유저 "할 일" 발화 포함) | `docs/하이브리드-출시-할일.md` | 해당 항목 ☐ → ✅ + §0 진행 상태 갱신. 결정 근거·리스크는 `docs/PRD.md` §10에 있으니 중복 기재 금지 |
 | **Phase 3 작업 진행/완료** (로그인·동기화·결제·푸시) | `docs/phase3-할일.md` | 해당 항목 ☐ → ✅ + §0 진행 상태 갱신. 결정 근거는 `docs/PRD.md` §9-5에 있으니 중복 기재 금지 |
 | **의사결정 원칙·방법론 추가/수정** | `docs/합리적-의사결정-원칙.md` | 범용 문서(swithme 종속 아님). 트리거는 글로벌 `~/.claude/CLAUDE.md`에 있으니 **내용 중복 기재 금지**. 새 결정 사례 발생 시 부록 B에 등재 |
